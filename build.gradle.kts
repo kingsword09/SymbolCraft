@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
+    
     // Optional local jars (place svg-to-compose-jvm and its runtime deps in libs/)
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 

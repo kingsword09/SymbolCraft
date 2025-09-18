@@ -1,7 +1,5 @@
 package io.github.kingsword09.symbolcraft.symbols
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
@@ -13,14 +11,9 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Material Symbol: HomeW400Rounded
+ * Generated from SVG by SymbolCraft
  * 
- * 注意：这是一个临时占位符图标。
- * 要获得正确的图标，请确保 s2c 工具正确安装。
- * 
- * 安装方法：
- * 1. 访问 https://github.com/rafaeltonholo/svg-to-compose
- * 2. 下载对应平台的二进制文件
- * 3. 或通过项目自动下载功能获取
+ * 注意：这是一个示例图标，真实的SVG转换功能正在开发中。
  */
 val HomeW400Rounded: ImageVector
     get() {
@@ -34,7 +27,6 @@ val HomeW400Rounded: ImageVector
             viewportWidth = 24f,
             viewportHeight = 24f
         ).apply {
-            // 警告图标路径（作为占位符）
             path(
                 fill = SolidColor(Color.Black),
                 fillAlpha = 1f,
@@ -46,23 +38,20 @@ val HomeW400Rounded: ImageVector
                 strokeLineMiter = 4f,
                 pathFillType = PathFillType.NonZero
             ) {
-                moveTo(1f, 21f)
-                horizontalLineToRelative(22f)
-                lineTo(12f, 2f)
-                lineTo(1f, 21f)
-                close()
-                moveTo(13f, 18f)
-                horizontalLineToRelative(-2f)
-                verticalLineToRelative(-2f)
-                horizontalLineToRelative(2f)
-                verticalLineToRelative(2f)
-                close()
-                moveTo(13f, 14f)
-                horizontalLineToRelative(-2f)
-                verticalLineToRelative(-4f)
-                horizontalLineToRelative(2f)
-                verticalLineToRelative(4f)
-                close()
+                // Home icon path
+moveTo(10f, 20f)
+verticalLineTo(14f)
+horizontalLineTo(14f)
+verticalLineTo(20f)
+horizontalLineTo(19f)
+verticalLineTo(12f)
+horizontalLineTo(22f)
+lineTo(12f, 3f)
+lineTo(2f, 12f)
+horizontalLineTo(5f)
+verticalLineTo(20f)
+horizontalLineTo(10f)
+close()
             }
         }.build()
         return _HomeW400Rounded!!

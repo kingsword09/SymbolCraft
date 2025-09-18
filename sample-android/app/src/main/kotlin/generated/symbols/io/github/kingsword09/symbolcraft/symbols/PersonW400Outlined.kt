@@ -1,7 +1,5 @@
 package io.github.kingsword09.symbolcraft.symbols
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
@@ -13,14 +11,9 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Material Symbol: PersonW400Outlined
+ * Generated from SVG by SymbolCraft
  * 
- * 注意：这是一个临时占位符图标。
- * 要获得正确的图标，请确保 s2c 工具正确安装。
- * 
- * 安装方法：
- * 1. 访问 https://github.com/rafaeltonholo/svg-to-compose
- * 2. 下载对应平台的二进制文件
- * 3. 或通过项目自动下载功能获取
+ * 注意：这是一个示例图标，真实的SVG转换功能正在开发中。
  */
 val PersonW400Outlined: ImageVector
     get() {
@@ -34,7 +27,6 @@ val PersonW400Outlined: ImageVector
             viewportWidth = 24f,
             viewportHeight = 24f
         ).apply {
-            // 警告图标路径（作为占位符）
             path(
                 fill = SolidColor(Color.Black),
                 fillAlpha = 1f,
@@ -46,23 +38,20 @@ val PersonW400Outlined: ImageVector
                 strokeLineMiter = 4f,
                 pathFillType = PathFillType.NonZero
             ) {
-                moveTo(1f, 21f)
-                horizontalLineToRelative(22f)
-                lineTo(12f, 2f)
-                lineTo(1f, 21f)
-                close()
-                moveTo(13f, 18f)
-                horizontalLineToRelative(-2f)
-                verticalLineToRelative(-2f)
-                horizontalLineToRelative(2f)
-                verticalLineToRelative(2f)
-                close()
-                moveTo(13f, 14f)
-                horizontalLineToRelative(-2f)
-                verticalLineToRelative(-4f)
-                horizontalLineToRelative(2f)
-                verticalLineToRelative(4f)
-                close()
+                // Person icon path
+moveTo(12f, 12f)
+curveToRelative(2.21f, 0f, 4f, -1.79f, 4f, -4f)
+reflectiveCurveToRelative(-1.79f, -4f, -4f, -4f)
+reflectiveCurveToRelative(-4f, 1.79f, -4f, 4f)
+reflectiveCurveToRelative(1.79f, 4f, 4f, 4f)
+close()
+moveTo(12f, 14f)
+curveToRelative(-2.67f, 0f, -8f, 1.34f, -8f, 4f)
+verticalLineTo(20f)
+horizontalLineToRelative(16f)
+verticalLineTo(18f)
+curveToRelative(0f, -2.66f, -5.33f, -4f, -8f, -4f)
+close()
             }
         }.build()
         return _PersonW400Outlined!!
