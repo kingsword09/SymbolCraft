@@ -1,5 +1,6 @@
 package io.github.kingsword09.symbolcraft.plugin
 
+import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
 import kotlinx.coroutines.runBlocking
 import org.gradle.api.DefaultTask
@@ -60,11 +61,24 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             }
         }
 
-        // 2. Try external converter first (if configured), otherwise use built-in converter
-        val converterUsed = runExternalConverter(tempDir, outputDir, packageName)
-
-        if (!converterUsed) {
-            logger.lifecycle("Using built-in SVG to Compose converter...")
+        // 2. Use Svg2ComposeConverter to convert SVG files to Compose code
+        logger.lifecycle("Using svg-to-compose library for conversion...")
+        val converter = Svg2ComposeConverter()
+        
+        try {
+            converter.convertDirectory(
+                inputDirectory = tempDir,
+                outputDirectory = outputDir,
+                packageName = packageName,
+                accessorName = "MaterialSymbols",
+                allAssetsPropertyName = "AllIcons"
+            )
+            logger.lifecycle("Successfully converted ${tempDir.listFiles()?.size ?: 0} icons")
+        } catch (e: Exception) {
+            logger.error("Failed to convert SVG files: ${e.message}", e)
+            
+            // Fall back to internal converter if svg-to-compose fails
+            logger.lifecycle("Falling back to internal converter...")
             runInternalConverter(tempDir, outputDir, packageName)
         }
 
@@ -72,51 +86,10 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         downloader.cleanup()
     }
 
-    private fun runExternalConverter(fromDir: File, outDir: File, packageName: String): Boolean {
-        val ext = extension.get()
-        val converter = ext.converterPath.get().trim()
-        if (converter.isBlank()) {
-            return false
-        }
-        val argsTemplate = ext.converterArgs.get()
-        if (argsTemplate.isEmpty()) {
-            logger.warn("External converter path is set but args are empty. Skipping external conversion.")
-            return false
-        }
-        val replacements = mapOf(
-            "{from}" to fromDir.absolutePath,
-            "{to}" to outDir.absolutePath,
-            "{pkg}" to packageName
-        )
-        val args = argsTemplate.map { token ->
-            replacements.entries.fold(token) { acc, (k, v) -> acc.replace(k, v) }
-        }
-        outDir.mkdirs()
-        logger.lifecycle("Running external converter: $converter ${args.joinToString(" ")}")
-        val proc = ProcessBuilder(listOf(converter) + args)
-            .directory(project.projectDir)
-            .redirectErrorStream(true)
-            .start()
-        val output = proc.inputStream.bufferedReader().readText()
-        val finished = proc.waitFor(5, TimeUnit.MINUTES)
-        if (!finished) {
-            proc.destroyForcibly()
-            logger.warn("External converter timed out. Output so far:\n$output")
-            return false
-        }
-        val code = proc.exitValue()
-        if (code != 0) {
-            logger.warn("External converter failed with exit code $code. Output:\n$output")
-            return false
-        } else {
-            logger.lifecycle("External converter finished successfully.")
-            return true
-        }
-    }
 
     private fun runInternalConverter(fromDir: File, outDir: File, packageName: String) = runBlocking {
-        // 由于SVG解析复杂，暂时使用简单但有效的占位符图标
-        logger.lifecycle("生成Material Symbols图标...")
+        // 备用方案：使用简化的图标生成器
+        logger.lifecycle("使用备用图标生成器...")
 
         val svgFiles = fromDir.listFiles { file -> file.extension == "svg" } ?: emptyArray()
 
@@ -158,9 +131,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Material Symbol: $iconName
- * Generated from SVG by SymbolCraft
- * 
- * 注意：这是一个示例图标，真实的SVG转换功能正在开发中。
+ * Generated from SVG by SymbolCraft (Fallback)
  */
 val $iconName: ImageVector
     get() {

@@ -33,6 +33,14 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     
+    // SVG to Compose library and dependencies
+    implementation("com.github.DevSrSouza:svg-to-compose:0.11.0")
+    implementation("com.google.guava:guava:31.1-jre")
+    implementation("com.android.tools:sdk-common:31.1.1")
+    implementation("com.android.tools:common:31.1.1")
+    implementation("com.squareup:kotlinpoet:1.14.2")
+    implementation("org.ogce:xpp3:1.1.6")
+    
     // Optional local jars (place svg-to-compose-jvm and its runtime deps in libs/)
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 
