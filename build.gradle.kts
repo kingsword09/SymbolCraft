@@ -8,7 +8,7 @@ plugins {
     `maven-publish`
 }
 
-group = "io.github.kingsword09.symbolcraft"
+group = "io.github.kingsword09"
 version = "1.0.0"
 
 kotlin {
