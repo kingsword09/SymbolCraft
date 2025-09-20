@@ -35,18 +35,10 @@ class PreviewDependencyDetector(
                         when {
                             // androidx.compose.ui:ui-tooling-preview
                             notation.contains("androidx.compose.ui") &&
-                            (moduleId.name.contains("ui-tooling-preview") || moduleId.name.contains("ui-tooling")) -> {
-                                hasAndroidx = true
+                            moduleId.name.contains("ui-tooling-preview") -> {
+//                                hasAndroidx = true
                                 detectedDeps.add("$notation:${moduleId.version}")
                                 logger.info("🔍 Detected androidx.compose.ui:ui-tooling-preview")
-                            }
-
-                            // androidx.compose.desktop:desktop-ui-tooling-preview
-                            notation.contains("androidx.compose.desktop") &&
-                            moduleId.name.contains("ui-tooling-preview") -> {
-                                hasJetpack = true
-                                detectedDeps.add("$notation:${moduleId.version}")
-                                logger.info("🔍 Detected androidx.compose.desktop:ui-tooling-preview")
                             }
 
                             // org.jetbrains.compose.ui:ui-tooling-preview
@@ -91,8 +83,7 @@ class PreviewDependencyDetector(
 
                 when {
                     // Check for androidx compose ui tooling
-                    dependency.group == "androidx.compose.ui" &&
-                    (dependency.name.contains("ui-tooling") || dependency.name == "ui-tooling-preview") -> {
+                    dependency.group == "androidx.compose.ui" && dependency.name == "ui-tooling-preview" -> {
                         hasAndroidx = true
                         detectedDeps.add("$notation:${dependency.version}")
                         logger.info("🔍 Found declared androidx.compose.ui:ui-tooling dependency")
@@ -106,23 +97,15 @@ class PreviewDependencyDetector(
                         logger.info("🔍 Found declared desktop compose ui-tooling dependency")
                     }
 
-                    // Check for general compose dependencies that might include tooling
+                    // Log other compose dependencies but don't assume preview capability
                     dependency.group == "androidx.compose" ||
                     dependency.group?.startsWith("androidx.compose.") == true -> {
-                        logger.debug("🔍 Found androidx.compose dependency: $notation")
-                        if (!hasAndroidx) {
-                            hasAndroidx = true // Assume androidx preview is available
-                            logger.info("🔍 Inferred androidx.compose preview capability from compose dependency")
-                        }
+                        logger.debug("🔍 Found androidx.compose dependency: $notation (no preview capability assumed)")
                     }
 
                     dependency.group == "org.jetbrains.compose" ||
                     dependency.group?.startsWith("org.jetbrains.compose.") == true -> {
-                        logger.debug("🔍 Found jetbrains.compose dependency: $notation")
-                        if (!hasJetpack) {
-                            hasJetpack = true // Assume jetpack preview is available
-                            logger.info("🔍 Inferred jetbrains.compose preview capability from compose dependency")
-                        }
+                        logger.debug("🔍 Found jetbrains.compose dependency: $notation (no preview capability assumed)")
                     }
                 }
             }

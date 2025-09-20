@@ -27,7 +27,7 @@ abstract class MaterialSymbolsExtension {
 
     init {
         cacheEnabled.convention(true)
-        cacheDirectory.convention("build/material-symbols-cache")
+        cacheDirectory.convention("material-symbols-cache")
         // Default to the main source set, inside the configured package
         // svg-to-compose will place files under this directory following the package path
         outputDirectory.convention("src/main/kotlin")

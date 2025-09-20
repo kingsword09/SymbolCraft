@@ -75,11 +75,20 @@ class PreviewGenerator(
                 appendLine("import androidx.compose.ui.tooling.preview.Preview")
             }
             if (hasJetpackPreview) {
-                appendLine("import androidx.compose.desktop.ui.tooling.preview.Preview")
+                appendLine("import org.jetbrains.compose.ui.tooling.preview.Preview")
             }
+
+            appendLine()
 
             // Import generated symbols
             appendLine("import ${symbolsPackage}.MaterialSymbols")
+
+            iconConfigs.forEach { (iconName, styles) ->
+                styles.forEach { style ->
+                    val iconProperty = "${iconName.replaceFirstChar { it.titlecase() }}${style.signature}"
+                    appendLine("import $symbolsPackage.materialsymbols.$iconProperty")
+                }
+            }
 
             appendLine()
 
@@ -104,16 +113,12 @@ class PreviewGenerator(
         hasJetpackPreview: Boolean
     ) {
         // Generate preview annotations
-        if (hasAndroidxPreview) {
-            appendLine("@androidx.compose.ui.tooling.preview.Preview(")
+        if (hasAndroidxPreview || hasJetpackPreview) {
+            appendLine("@Preview(")
             appendLine("    name = \"$iconName - ${style.signature}\",")
             appendLine("    showBackground = true,")
             appendLine("    backgroundColor = 0x${backgroundColor.removePrefix("#")}")
             appendLine(")")
-        }
-
-        if (hasJetpackPreview) {
-            appendLine("@androidx.compose.desktop.ui.tooling.preview.Preview")
         }
 
         appendLine("@Composable")
@@ -154,18 +159,14 @@ class PreviewGenerator(
         hasJetpackPreview: Boolean
     ) {
         // Generate overview preview with all icons
-        if (hasAndroidxPreview) {
-            appendLine("@androidx.compose.ui.tooling.preview.Preview(")
+        if (hasAndroidxPreview || hasJetpackPreview) {
+            appendLine("@Preview(")
             appendLine("    name = \"All Material Symbols Overview\",")
             appendLine("    showBackground = true,")
             appendLine("    backgroundColor = 0x${backgroundColor.removePrefix("#")},")
             appendLine("    widthDp = 400,")
             appendLine("    heightDp = 600")
             appendLine(")")
-        }
-
-        if (hasJetpackPreview) {
-            appendLine("@androidx.compose.desktop.ui.tooling.preview.Preview")
         }
 
         appendLine("@OptIn(ExperimentalLayoutApi::class)")

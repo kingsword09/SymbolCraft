@@ -89,7 +89,7 @@ materialSymbols {
     outputDirectory.set("src/commonMain/kotlin/generated/symbols")
     packageName.set("io.github.kingsword09.example")
 
-    // 启用预览生成
+    // 测试：启用预览生成但没有依赖
     generatePreview.set(true)
     previewIconSize.set(32)
     previewBackgroundColor.set("#F5F5F5")
@@ -116,7 +116,8 @@ materialSymbols {
 }
 
 dependencies {
-    debugImplementation(compose.uiTooling)
+    // 移除 ui tooling 依赖来测试
+    // debugImplementation(compose.uiTooling)
 }
 
 compose.desktop {

@@ -38,8 +38,14 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @get:Input
     abstract val gradleUserHomeDir: Property<String>
 
-    @get:Internal
-    abstract val projectProvider: Property<org.gradle.api.Project>
+    @get:Input
+    abstract val projectBuildDir: Property<String>
+
+    @get:Input
+    abstract val hasAndroidxPreview: Property<Boolean>
+
+    @get:Input
+    abstract val hasJetpackPreview: Property<Boolean>
 
     @TaskAction
     fun generate() = runBlocking {
@@ -47,7 +53,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val config = ext.getSymbolsConfig()
         val packageName = ext.packageName.get()
         val cacheDir = cacheDirectory.get().trim('/', '\\')
-        val tempDir = File(outputDir.get().asFile.parentFile, "$cacheDir/temp-svgs")
+        val tempDir = File(projectBuildDir.get(), "$cacheDir/temp-svgs")
 
         logger.lifecycle("🎨 Generating Material Symbols...")
         logger.lifecycle("📊 Symbols to generate: ${config.values.sumOf { it.size }} icons")
@@ -435,16 +441,18 @@ private var _$iconName: ImageVector? = null
         logger.lifecycle("🔍 Generating Compose Previews...")
 
         try {
-            // Detect available preview dependencies
-            val project = projectProvider.get()
-            val detector = PreviewDependencyDetector(project, logger)
-            val capabilities = detector.detectPreviewCapabilities()
-            detector.logPreviewCapabilities(capabilities)
+            // Use pre-detected preview capabilities
+            val androidxPreview = hasAndroidxPreview.get()
+            val jetpackPreview = hasJetpackPreview.get()
 
-            if (!capabilities.hasAndroidxPreview && !capabilities.hasJetpackDesktopPreview) {
+            if (!androidxPreview && !jetpackPreview) {
                 logger.warn("⚠️ No preview dependencies detected. Skipping preview generation.")
                 return
             }
+
+            logger.lifecycle("🔍 Preview Capabilities:")
+            logger.lifecycle("   📱 androidx.compose.ui Preview: ${if (androidxPreview) "✅" else "❌"}")
+            logger.lifecycle("   🖥️ jetbrains.compose.desktop Preview: ${if (jetpackPreview) "✅" else "❌"}")
 
             val ext = extension.get()
             val previewGenerator = PreviewGenerator(
@@ -456,13 +464,13 @@ private var _$iconName: ImageVector? = null
             previewGenerator.generatePreviewFile(
                 outputDir = outputDir.get().asFile,
                 iconConfigs = config,
-                hasAndroidxPreview = capabilities.hasAndroidxPreview,
-                hasJetpackPreview = capabilities.hasJetpackDesktopPreview
+                hasAndroidxPreview = androidxPreview,
+                hasJetpackPreview = jetpackPreview
             )
 
             logger.lifecycle("✅ Successfully generated preview files")
-            logger.lifecycle("   📱 androidx preview: ${if (capabilities.hasAndroidxPreview) "✅" else "❌"}")
-            logger.lifecycle("   🖥️ desktop preview: ${if (capabilities.hasJetpackDesktopPreview) "✅" else "❌"}")
+            logger.lifecycle("   📱 androidx preview: ${if (androidxPreview) "✅" else "❌"}")
+            logger.lifecycle("   🖥️ desktop preview: ${if (jetpackPreview) "✅" else "❌"}")
 
         } catch (e: Exception) {
             logger.error("❌ Preview generation failed: ${e.message}")

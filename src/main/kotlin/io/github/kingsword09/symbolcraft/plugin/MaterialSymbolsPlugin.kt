@@ -18,7 +18,20 @@ class MaterialSymbolsPlugin : Plugin<Project> {
             task.assetsDir.set(project.layout.projectDirectory.dir(extension.assetsDirectory))
             task.cacheDirectory.set(extension.cacheDirectory)
             task.gradleUserHomeDir.set(project.gradle.gradleUserHomeDir.absolutePath)
-            task.projectProvider.set(project)
+            task.projectBuildDir.set(project.layout.buildDirectory.get().asFile.absolutePath)
+
+            // Only detect preview capabilities if preview generation is enabled
+            if (extension.generatePreview.getOrElse(false)) {
+                val detector = io.github.kingsword09.symbolcraft.util.PreviewDependencyDetector(project, project.logger)
+                val capabilities = detector.detectPreviewCapabilities()
+                task.hasAndroidxPreview.set(capabilities.hasAndroidxPreview)
+                task.hasJetpackPreview.set(capabilities.hasJetpackDesktopPreview)
+            } else {
+                // Preview disabled, set both to false
+                task.hasAndroidxPreview.set(false)
+                task.hasJetpackPreview.set(false)
+            }
+
             task.inputs.property("symbolsConfig", extension.getConfigHash())
             task.inputs.property("generatePreview", extension.generatePreview)
         }
