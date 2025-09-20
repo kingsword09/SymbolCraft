@@ -4,6 +4,7 @@ import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
 import kotlinx.coroutines.*
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -24,26 +25,30 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         get() = extension.get().getConfigHash()
 
     @get:OutputDirectory
-    val outputDir: File
-        get() = project.file(extension.get().outputDirectory.get())
+    abstract val outputDir: DirectoryProperty
 
     @get:OutputDirectory
-    val assetsDir: File
-        get() = project.file(extension.get().assetsDirectory.get())
+    abstract val assetsDir: DirectoryProperty
+
+    @get:Input
+    abstract val cacheDirectory: Property<String>
+
+    @get:Input
+    abstract val gradleUserHomeDir: Property<String>
 
     @TaskAction
     fun generate() = runBlocking {
         val ext = extension.get()
         val config = ext.getSymbolsConfig()
         val packageName = ext.packageName.get()
-        val cacheDir = ext.cacheDirectory.get().trim('/', '\\')
-        val tempDir = project.file("$cacheDir/temp-svgs")
+        val cacheDir = cacheDirectory.get().trim('/', '\\')
+        val tempDir = File(outputDir.get().asFile.parentFile, "$cacheDir/temp-svgs")
 
         logger.lifecycle("🎨 Generating Material Symbols...")
         logger.lifecycle("📊 Symbols to generate: ${config.values.sumOf { it.size }} icons")
 
         val downloader = SvgDownloader(
-            cacheDirectory = File(project.gradle.gradleUserHomeDir, "caches/symbolcraft/svg-cache").absolutePath,
+            cacheDirectory = File(gradleUserHomeDir.get(), "caches/symbolcraft/svg-cache").absolutePath,
             cacheEnabled = ext.cacheEnabled.get()
         )
 
@@ -57,7 +62,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             logDownloadStats(downloadStats)
 
             // Convert SVGs to Compose code
-            convertSvgsToCompose(tempDir, outputDir, packageName, downloadStats.successCount)
+            convertSvgsToCompose(tempDir, outputDir.get().asFile, packageName, downloadStats.successCount)
 
             // Log cache statistics
             val cacheStats = downloader.getCacheStats()

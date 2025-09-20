@@ -4,11 +4,10 @@ import io.github.kingsword09.symbolcraft.model.SymbolFill
 import io.github.kingsword09.symbolcraft.model.SymbolVariant
 import io.github.kingsword09.symbolcraft.model.SymbolStyle
 import io.github.kingsword09.symbolcraft.model.SymbolStyles
-import org.gradle.api.Project
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.ListProperty
 
-abstract class MaterialSymbolsExtension(private val project: Project) {
+abstract class MaterialSymbolsExtension {
     abstract val cacheEnabled: Property<Boolean>
     abstract val cacheDirectory: Property<String>
     abstract val outputDirectory: Property<String>
