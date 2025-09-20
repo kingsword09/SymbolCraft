@@ -14,6 +14,7 @@
 - 🔄 **增量构建** - Gradle 任务缓存支持，只重新生成变更的图标
 - 🏗️ **配置缓存兼容** - 完全支持 Gradle 配置缓存，提升构建性能
 - 🔗 **多平台支持** - 支持 Android、Kotlin Multiplatform、JVM 等项目
+- 👀 **Compose 预览** - 自动生成 Compose Preview 函数，支持 androidx 和 jetpack compose
 
 ## 📦 安装
 
@@ -35,6 +36,11 @@ materialSymbols {
     packageName.set("com.yourcompany.app.symbols")
     outputDirectory.set("src/commonMain/kotlin")  // 支持多平台项目
     cacheEnabled.set(true)
+
+    // 预览生成配置（可选）
+    generatePreview.set(true)          // 启用预览生成
+    previewIconSize.set(32)            // 预览中图标大小（dp）
+    previewBackgroundColor.set("#F5F5F5") // 预览背景色
 
     // 单个图标配置
     symbol("search") {
@@ -122,6 +128,86 @@ fun MyScreen() {
 }
 ```
 
+## 👀 Compose 预览功能
+
+### 启用预览生成
+
+```kotlin
+materialSymbols {
+    // 启用预览功能
+    generatePreview.set(true)
+
+    // 可选：自定义预览设置
+    previewIconSize.set(32)                    // 图标大小（dp，默认24）
+    previewBackgroundColor.set("#F5F5F5")      // 背景颜色（默认#FFFFFF）
+
+    // 配置图标...
+    symbol("home") {
+        standardWeights()
+    }
+}
+```
+
+### 预览依赖自动检测
+
+插件会自动检测项目中的 Compose Preview 依赖：
+
+- **androidx.compose**: `androidx.compose.ui:ui-tooling-preview`
+- **jetbrains.compose**: `org.jetbrains.compose.ui:ui-tooling-preview`
+
+### 生成的预览文件
+
+启用预览后，插件会在 `{packageName}.preview` 包下生成：
+
+```kotlin
+// 单个图标预览
+@Preview(name = "home - W400Outlined", showBackground = true)
+@Composable
+fun PreviewHomeW400Outlined() {
+    MaterialTheme {
+        Surface {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = MaterialSymbols.HomeW400Outlined,
+                    contentDescription = "home",
+                    modifier = Modifier.size(32.dp)
+                )
+                Text("home", fontSize = 12.sp)
+                Text("W400Outlined", fontSize = 10.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+// 所有图标概览
+@Preview(name = "All Material Symbols Overview", widthDp = 400, heightDp = 600)
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun PreviewAllMaterialSymbols() {
+    MaterialTheme {
+        Surface {
+            FlowRow {
+                // 显示所有生成的图标...
+            }
+        }
+    }
+}
+```
+
+### 在 IDE 中查看预览
+
+生成后，你可以在 Android Studio 或 IntelliJ IDEA 的 Preview 面板中查看：
+
+1. 打开生成的预览文件：`{packageName}/preview/MaterialSymbolsPreviews.kt`
+2. 点击 IDE 右侧的 "Preview" 面板
+3. 查看单个图标预览或所有图标概览
+
+### 多平台预览支持
+
+- **Android 项目**: 使用 `androidx.compose.ui.tooling.preview.Preview`
+- **Desktop 项目**: 使用 `androidx.compose.desktop.ui.tooling.preview.Preview`
+- **多平台项目**: 自动同时支持两种预览注解
+
 ## 📋 配置选项
 
 ### 基础配置
@@ -137,6 +223,11 @@ materialSymbols {
     // 缓存配置
     cacheEnabled.set(true)
     cacheDirectory.set("build/material-symbols-cache")
+
+    // 预览配置
+    generatePreview.set(false)          // 是否生成 Compose 预览
+    previewIconSize.set(24)             // 预览中图标大小（dp）
+    previewBackgroundColor.set("#FFFFFF") // 预览背景颜色
 
     // 其他选项
     forceRegenerate.set(false)  // 强制重新生成所有图标
@@ -235,10 +326,12 @@ your-project/
 │           └── generated/                  # 生成的代码目录
 │               └── symbols/                # 图标包
 │                   ├── MaterialSymbols.kt  # 图标访问对象
-│                   └── com/yourcompany/app/symbols/materialsymbols/
-│                       ├── SearchW400Outlined.kt
-│                       ├── HomeW500RoundedFill.kt
-│                       └── PersonW700Sharp.kt
+│                   ├── com/yourcompany/app/symbols/materialsymbols/
+│                   │   ├── SearchW400Outlined.kt
+│                   │   ├── HomeW500RoundedFill.kt
+│                   │   └── PersonW700Sharp.kt
+│                   └── preview/            # 预览文件（可选）
+│                       └── MaterialSymbolsPreviews.kt
 └── build/
     └── material-symbols-cache/             # 临时缓存目录
         └── temp-svgs/                      # SVG 临时文件
@@ -405,6 +498,21 @@ materialSymbols {
    **/generated/symbols/
    src/**/generated/
    ```
+
+6. **预览生成失败**
+   检查是否添加了 Compose Preview 依赖：
+   ```kotlin
+   // Android 项目
+   debugImplementation("androidx.compose.ui:ui-tooling-preview:$compose_version")
+
+   // Desktop 项目
+   implementation(compose.desktop.ui.tooling.preview)
+   ```
+
+7. **预览在 IDE 中不显示**
+   - 确保 IDE 支持 Compose Preview
+   - 检查生成的预览文件路径是否正确
+   - 重启 IDE 或刷新项目
 
 ### 调试选项
 

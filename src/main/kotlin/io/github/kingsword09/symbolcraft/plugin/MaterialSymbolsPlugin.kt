@@ -18,7 +18,9 @@ class MaterialSymbolsPlugin : Plugin<Project> {
             task.assetsDir.set(project.layout.projectDirectory.dir(extension.assetsDirectory))
             task.cacheDirectory.set(extension.cacheDirectory)
             task.gradleUserHomeDir.set(project.gradle.gradleUserHomeDir.absolutePath)
+            task.projectProvider.set(project)
             task.inputs.property("symbolsConfig", extension.getConfigHash())
+            task.inputs.property("generatePreview", extension.generatePreview)
         }
 
         project.tasks.register("cleanSymbolsCache", CleanSymbolsCacheTask::class.java) { task ->

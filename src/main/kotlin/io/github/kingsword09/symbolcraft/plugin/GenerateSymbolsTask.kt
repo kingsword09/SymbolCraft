@@ -2,6 +2,8 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
+import io.github.kingsword09.symbolcraft.generator.PreviewGenerator
+import io.github.kingsword09.symbolcraft.util.PreviewDependencyDetector
 import kotlinx.coroutines.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -36,6 +38,9 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @get:Input
     abstract val gradleUserHomeDir: Property<String>
 
+    @get:Internal
+    abstract val projectProvider: Property<org.gradle.api.Project>
+
     @TaskAction
     fun generate() = runBlocking {
         val ext = extension.get()
@@ -63,6 +68,11 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
             // Convert SVGs to Compose code
             convertSvgsToCompose(tempDir, outputDir.get().asFile, packageName, downloadStats.successCount)
+
+            // Generate previews if enabled
+            if (ext.generatePreview.get()) {
+                generatePreviews(config, packageName)
+            }
 
             // Log cache statistics
             val cacheStats = downloader.getCacheStats()
@@ -417,6 +427,48 @@ private var _$iconName: ImageVector? = null
                 lineTo(5.82f, 21f)
                 close()
     """.trimIndent()
+
+    private suspend fun generatePreviews(
+        config: Map<String, List<io.github.kingsword09.symbolcraft.model.SymbolStyle>>,
+        packageName: String
+    ) {
+        logger.lifecycle("🔍 Generating Compose Previews...")
+
+        try {
+            // Detect available preview dependencies
+            val project = projectProvider.get()
+            val detector = PreviewDependencyDetector(project, logger)
+            val capabilities = detector.detectPreviewCapabilities()
+            detector.logPreviewCapabilities(capabilities)
+
+            if (!capabilities.hasAndroidxPreview && !capabilities.hasJetpackDesktopPreview) {
+                logger.warn("⚠️ No preview dependencies detected. Skipping preview generation.")
+                return
+            }
+
+            val ext = extension.get()
+            val previewGenerator = PreviewGenerator(
+                packageName = packageName,
+                iconSize = ext.previewIconSize.get(),
+                backgroundColor = ext.previewBackgroundColor.get()
+            )
+
+            previewGenerator.generatePreviewFile(
+                outputDir = outputDir.get().asFile,
+                iconConfigs = config,
+                hasAndroidxPreview = capabilities.hasAndroidxPreview,
+                hasJetpackPreview = capabilities.hasJetpackDesktopPreview
+            )
+
+            logger.lifecycle("✅ Successfully generated preview files")
+            logger.lifecycle("   📱 androidx preview: ${if (capabilities.hasAndroidxPreview) "✅" else "❌"}")
+            logger.lifecycle("   🖥️ desktop preview: ${if (capabilities.hasJetpackDesktopPreview) "✅" else "❌"}")
+
+        } catch (e: Exception) {
+            logger.error("❌ Preview generation failed: ${e.message}")
+            logger.warn("⚠️ Continuing without previews...")
+        }
+    }
 }
 
 // Data classes for download tracking

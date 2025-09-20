@@ -89,6 +89,11 @@ materialSymbols {
     outputDirectory.set("src/commonMain/kotlin/generated/symbols")
     packageName.set("io.github.kingsword09.example")
 
+    // 启用预览生成
+    generatePreview.set(true)
+    previewIconSize.set(32)
+    previewBackgroundColor.set("#F5F5F5")
+
     // 使用新的便捷方法
     symbol("search") {
         standardWeights() // 添加 400, 500, 700 权重的 outlined 样式
