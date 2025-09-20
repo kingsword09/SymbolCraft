@@ -108,16 +108,44 @@ class SvgDownloader(
     }
     
     /**
+     * Check if an SVG is cached and valid
+     */
+    fun isCached(cacheKey: String): Boolean {
+        if (!cacheEnabled) return false
+
+        val cacheFile = cachePath / "$cacheKey.svg"
+        val metaFile = cachePath / "$cacheKey.meta"
+
+        if (cacheFile.exists() && metaFile.exists()) {
+            try {
+                val meta = metaFile.readLines()
+                if (meta.size >= 2) {
+                    val timestamp = meta[0].toLong()
+
+                    // Check if cache is still valid (7 days)
+                    val maxAge = 7 * 24 * 60 * 60 * 1000L // 7 days
+                    return System.currentTimeMillis() - timestamp < maxAge
+                }
+            } catch (e: Exception) {
+                // Cache corrupted
+                return false
+            }
+        }
+
+        return false
+    }
+
+    /**
      * Get cache statistics
      */
     fun getCacheStats(): CacheStats {
         if (!cacheEnabled || !cachePath.exists()) {
             return CacheStats(0, 0)
         }
-        
+
         val svgFiles = cachePath.listDirectoryEntries("*.svg")
         val totalSize = svgFiles.sumOf { it.fileSize() }
-        
+
         return CacheStats(svgFiles.size, totalSize)
     }
     

@@ -2,7 +2,7 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
@@ -11,7 +11,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @CacheableTask
 abstract class GenerateSymbolsTask : DefaultTask() {
@@ -23,7 +23,6 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     val symbolsConfigHash: String
         get() = extension.get().getConfigHash()
 
-    // Output directory is managed by svg-to-compose; we expose it only for task wiring
     @get:OutputDirectory
     val outputDir: File
         get() = project.file(extension.get().outputDirectory.get())
@@ -37,34 +36,155 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val ext = extension.get()
         val config = ext.getSymbolsConfig()
         val packageName = ext.packageName.get()
-        val tempDir = project.file("${ext.cacheDirectory.get().trim('/', '\\')}/temp-svgs")
+        val cacheDir = ext.cacheDirectory.get().trim('/', '\\')
+        val tempDir = project.file("$cacheDir/temp-svgs")
 
-        logger.lifecycle("Generating Material Symbols...")
+        logger.lifecycle("🎨 Generating Material Symbols...")
+        logger.lifecycle("📊 Symbols to generate: ${config.values.sumOf { it.size }} icons")
 
         val downloader = SvgDownloader(
             cacheDirectory = File(project.gradle.gradleUserHomeDir, "caches/symbolcraft/svg-cache").absolutePath,
             cacheEnabled = ext.cacheEnabled.get()
         )
 
-        if (tempDir.exists()) tempDir.deleteRecursively()
-        tempDir.mkdirs()
+        try {
+            // Clean and prepare temp directory
+            if (tempDir.exists()) tempDir.deleteRecursively()
+            tempDir.mkdirs()
 
-        // 1. Download all SVGs to a temporary directory
-        config.forEach { (iconName, styles) ->
-            styles.forEach { style ->
-                val svgContent = downloader.downloadSvg(iconName, style)
-                if (svgContent != null) {
-                    val pascalIcon = iconName.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-                    val tempFile = File(tempDir, "${pascalIcon}${style.signature}.svg")
-                    tempFile.writeText(svgContent)
+            // Download SVGs with progress tracking
+            val downloadStats = downloadSvgsParallel(downloader, config, tempDir)
+            logDownloadStats(downloadStats)
+
+            // Convert SVGs to Compose code
+            convertSvgsToCompose(tempDir, outputDir, packageName, downloadStats.successCount)
+
+            // Log cache statistics
+            val cacheStats = downloader.getCacheStats()
+            logger.lifecycle("📦 SVG Cache: ${cacheStats.fileCount} files, ${String.format("%.2f", cacheStats.totalSizeMB)} MB")
+
+        } catch (e: Exception) {
+            logger.error("❌ Generation failed: ${e.message}")
+            logger.error("   Stack trace: ${e.stackTraceToString()}")
+
+            // Provide helpful error guidance
+            when {
+                e.message?.contains("network", ignoreCase = true) == true -> {
+                    logger.error("   💡 Network issue detected. Check internet connection and try again.")
+                }
+                e.message?.contains("cache", ignoreCase = true) == true -> {
+                    logger.error("   💡 Cache issue detected. Try running with --rerun-tasks or clearing cache.")
+                }
+                e.message?.contains("SVG", ignoreCase = true) == true -> {
+                    logger.error("   💡 SVG processing issue. Check if the requested icons exist in Material Symbols.")
+                }
+                else -> {
+                    logger.error("   💡 Unexpected error. Please check configuration and try again.")
+                }
+            }
+
+            throw e
+        } finally {
+            try {
+                downloader.cleanup()
+            } catch (cleanupException: Exception) {
+                logger.warn("⚠️ Warning: Failed to cleanup downloader: ${cleanupException.message}")
+            }
+        }
+    }
+
+    private suspend fun downloadSvgsParallel(
+        downloader: SvgDownloader,
+        config: Map<String, List<io.github.kingsword09.symbolcraft.model.SymbolStyle>>,
+        tempDir: File
+    ): DownloadStats = coroutineScope {
+        val totalIcons = config.values.sumOf { it.size }
+        val completed = AtomicInteger(0)
+        val failed = AtomicInteger(0)
+        val cached = AtomicInteger(0)
+
+        logger.lifecycle("⬇️ Downloading SVG files...")
+
+        // Create download jobs for parallel execution
+        val downloadJobs = config.flatMap { (iconName, styles) ->
+            styles.map { style ->
+                async(Dispatchers.IO) {
+                    try {
+                        val cacheKey = style.getCacheKey(iconName)
+                        val wasCached = downloader.isCached(cacheKey)
+
+                        val svgContent = downloader.downloadSvg(iconName, style)
+
+                        if (svgContent != null && svgContent.isNotBlank()) {
+                            val fileName = "${iconName.replaceFirstChar { it.titlecase() }}${style.signature}.svg"
+                            val tempFile = File(tempDir, fileName)
+                            tempFile.writeText(svgContent)
+
+                            completed.incrementAndGet()
+                            if (wasCached) cached.incrementAndGet()
+
+                            // Progress logging
+                            val progress = completed.get() + failed.get()
+                            if (progress % 5 == 0 || progress == totalIcons) {
+                                logger.lifecycle("   Progress: $progress/$totalIcons")
+                            }
+
+                            DownloadResult.Success(iconName, style, fileName)
+                        } else {
+                            failed.incrementAndGet()
+                            val errorMsg = if (svgContent == null) "Download returned null" else "Empty SVG content"
+                            logger.warn("   ⚠️ Failed to download: $iconName-${style.signature} ($errorMsg)")
+                            DownloadResult.Failed(iconName, style, errorMsg)
+                        }
+                    } catch (e: Exception) {
+                        failed.incrementAndGet()
+                        val detailedError = when {
+                            e.message?.contains("timeout", ignoreCase = true) == true -> "Timeout - network too slow"
+                            e.message?.contains("404", ignoreCase = true) == true -> "Icon not found in Material Symbols"
+                            e.message?.contains("connection", ignoreCase = true) == true -> "Network connection failed"
+                            else -> e.message ?: "Unknown error"
+                        }
+                        logger.warn("   ❌ Error downloading $iconName-${style.signature}: $detailedError")
+                        DownloadResult.Failed(iconName, style, detailedError)
+                    }
                 }
             }
         }
 
-        // 2. Use Svg2ComposeConverter to convert SVG files to Compose code
-        logger.lifecycle("Using svg-to-compose library for conversion...")
+        // Wait for all downloads to complete
+        val results = downloadJobs.awaitAll()
+
+        DownloadStats(
+            totalCount = totalIcons,
+            successCount = completed.get(),
+            failedCount = failed.get(),
+            cachedCount = cached.get(),
+            results = results.filterIsInstance<DownloadResult>()
+        )
+    }
+
+    private fun logDownloadStats(stats: DownloadStats) {
+        logger.lifecycle("✅ Download completed:")
+        logger.lifecycle("   📁 Total: ${stats.totalCount}")
+        logger.lifecycle("   ✅ Success: ${stats.successCount}")
+        logger.lifecycle("   ❌ Failed: ${stats.failedCount}")
+        logger.lifecycle("   💾 From cache: ${stats.cachedCount}")
+
+        if (stats.failedCount > 0) {
+            logger.warn("⚠️ Some icons failed to download. Generated code may use fallback implementations.")
+        }
+    }
+
+    private suspend fun convertSvgsToCompose(
+        tempDir: File,
+        outputDir: File,
+        packageName: String,
+        iconCount: Int
+    ) {
+        logger.lifecycle("🔄 Converting SVGs to Compose ImageVectors...")
+
         val converter = Svg2ComposeConverter()
-        
+
         try {
             converter.convertDirectory(
                 inputDirectory = tempDir,
@@ -73,51 +193,105 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 accessorName = "MaterialSymbols",
                 allAssetsPropertyName = "AllIcons"
             )
-            logger.lifecycle("Successfully converted ${tempDir.listFiles()?.size ?: 0} icons")
+            logger.lifecycle("✅ Successfully converted $iconCount icons")
         } catch (e: Exception) {
-            logger.error("Failed to convert SVG files: ${e.message}", e)
-            
-            // Fall back to internal converter if svg-to-compose fails
-            logger.lifecycle("Falling back to internal converter...")
-            runInternalConverter(tempDir, outputDir, packageName)
-        }
+            logger.error("❌ SVG conversion failed with DevSrSouza library: ${e.message}")
+            logger.error("   Stack trace: ${e.stackTraceToString()}")
 
-        logger.lifecycle("Generation complete.")
-        downloader.cleanup()
+            // Provide specific guidance based on error type
+            when {
+                e.message?.contains("directory", ignoreCase = true) == true -> {
+                    logger.error("   💡 Directory issue: Check input/output directories exist and are writable")
+                }
+                e.message?.contains("package", ignoreCase = true) == true -> {
+                    logger.error("   💡 Package issue: Check packageName is valid Kotlin package identifier")
+                }
+                e.message?.contains("SVG", ignoreCase = true) == true -> {
+                    logger.error("   💡 SVG parsing issue: Some downloaded SVG files may be malformed")
+                }
+                else -> {
+                    logger.error("   💡 Unexpected conversion error: ${e.javaClass.simpleName}")
+                }
+            }
+
+            // Fall back to internal converter
+            logger.lifecycle("🔄 Falling back to internal converter...")
+            try {
+                runInternalConverter(tempDir, outputDir, packageName)
+                logger.lifecycle("✅ Fallback conversion completed successfully")
+            } catch (fallbackException: Exception) {
+                logger.error("❌ Fallback converter also failed: ${fallbackException.message}")
+                throw Exception("Both primary and fallback converters failed", fallbackException)
+            }
+        }
     }
 
 
     private fun runInternalConverter(fromDir: File, outDir: File, packageName: String) = runBlocking {
-        // 备用方案：使用简化的图标生成器
-        logger.lifecycle("使用备用图标生成器...")
+        logger.lifecycle("🔄 Using fallback icon generator...")
 
         val svgFiles = fromDir.listFiles { file -> file.extension == "svg" } ?: emptyArray()
 
         if (svgFiles.isEmpty()) {
-            logger.warn("未找到SVG文件在目录: ${fromDir.absolutePath}")
-            return@runBlocking
+            val errorMsg = "No SVG files found in directory: ${fromDir.absolutePath}"
+            logger.error("❌ $errorMsg")
+            throw IllegalStateException(errorMsg)
         }
+
+        logger.lifecycle("📁 Found ${svgFiles.size} SVG files to convert")
 
         val packagePath = packageName.replace('.', '/')
         val outputDirPath = File(outDir, packagePath)
-        outputDirPath.mkdirs()
+
+        if (!outputDirPath.mkdirs() && !outputDirPath.exists()) {
+            val errorMsg = "Failed to create output directory: ${outputDirPath.absolutePath}"
+            logger.error("❌ $errorMsg")
+            throw IllegalStateException(errorMsg)
+        }
+
+        var successCount = 0
+        var failureCount = 0
 
         svgFiles.forEach { svgFile ->
-            val iconName = svgFile.nameWithoutExtension
-                .split("_", "-")
-                .joinToString("") { it.replaceFirstChar { char -> char.titlecase() } }
+            try {
+                val iconName = svgFile.nameWithoutExtension
+                    .split("_", "-")
+                    .joinToString("") { it.replaceFirstChar { char -> char.titlecase() } }
 
-            val outputFile = File(outputDirPath, "$iconName.kt")
+                val outputFile = File(outputDirPath, "$iconName.kt")
 
-            // 根据图标名称生成不同的示例路径
-            val iconPath = when {
-                iconName.contains("Home", true) -> generateHomePath()
-                iconName.contains("Person", true) -> generatePersonPath()
-                iconName.contains("Search", true) -> generateSearchPath()
-                else -> generateDefaultPath()
+                // 根据图标名称生成不同的示例路径
+                val iconPath = when {
+                    iconName.contains("Home", true) -> generateHomePath()
+                    iconName.contains("Person", true) -> generatePersonPath()
+                    iconName.contains("Search", true) -> generateSearchPath()
+                    else -> generateDefaultPath()
+                }
+
+                val composeCode = generateFallbackIconCode(packageName, iconName, iconPath)
+                outputFile.writeText(composeCode)
+
+                successCount++
+                logger.debug("  ✅ Generated fallback icon: $iconName.kt")
+            } catch (e: Exception) {
+                failureCount++
+                logger.warn("  ❌ Failed to generate fallback for ${svgFile.name}: ${e.message}")
             }
+        }
 
-            val composeCode = """
+        if (failureCount > 0) {
+            logger.warn("⚠️ Fallback conversion completed with $failureCount failures out of ${svgFiles.size} files")
+        } else {
+            logger.lifecycle("✅ Fallback conversion completed successfully for all ${svgFiles.size} files")
+        }
+
+        if (successCount == 0) {
+            throw IllegalStateException("Fallback converter failed to generate any icons")
+        }
+    }
+
+    private fun generateFallbackIconCode(packageName: String, iconName: String, iconPath: String): String {
+        return """
 package $packageName
 
 import androidx.compose.ui.graphics.Color
@@ -164,12 +338,6 @@ val $iconName: ImageVector
 
 private var _$iconName: ImageVector? = null
             """.trimIndent()
-
-            outputFile.writeText(composeCode)
-            logger.lifecycle("  ✅ 生成图标: $iconName.kt")
-        }
-
-        logger.lifecycle("成功生成 ${svgFiles.size} 个图标文件")
     }
 
     private fun generateHomePath(): String = """
@@ -244,4 +412,27 @@ private var _$iconName: ImageVector? = null
                 lineTo(5.82f, 21f)
                 close()
     """.trimIndent()
+}
+
+// Data classes for download tracking
+data class DownloadStats(
+    val totalCount: Int,
+    val successCount: Int,
+    val failedCount: Int,
+    val cachedCount: Int,
+    val results: List<DownloadResult>
+)
+
+sealed class DownloadResult {
+    data class Success(
+        val iconName: String,
+        val style: io.github.kingsword09.symbolcraft.model.SymbolStyle,
+        val fileName: String
+    ) : DownloadResult()
+
+    data class Failed(
+        val iconName: String,
+        val style: io.github.kingsword09.symbolcraft.model.SymbolStyle,
+        val error: String
+    ) : DownloadResult()
 }

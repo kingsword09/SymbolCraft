@@ -1,10 +1,17 @@
 package io.github.kingsword09.symbolcraft.symbols
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.HomeW400Outlined
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.HomeW400OutlinedFill
 import io.github.kingsword09.symbolcraft.symbols.materialsymbols.HomeW400Rounded
-import io.github.kingsword09.symbolcraft.symbols.materialsymbols.PersonW400Outlined
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.HomeW500Rounded
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.PersonW500Rounded
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.PersonW500Sharp
 import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SearchW400Outlined
-import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SearchW500OutlinedFill
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SearchW500Outlined
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SearchW700Outlined
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SettingsW400Outlined
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SettingsW500RoundedFill
 import kotlin.collections.List as ____KtList
 
 public object MaterialSymbols
@@ -16,7 +23,8 @@ public val MaterialSymbols.AllIcons: ____KtList<ImageVector>
     if (__AllIcons != null) {
       return __AllIcons!!
     }
-    __AllIcons= listOf(HomeW400Rounded, PersonW400Outlined, SearchW400Outlined,
-        SearchW500OutlinedFill)
+    __AllIcons= listOf(HomeW400Outlined, HomeW400OutlinedFill, HomeW400Rounded, HomeW500Rounded,
+        PersonW500Rounded, PersonW500Sharp, SearchW400Outlined, SearchW500Outlined,
+        SearchW700Outlined, SettingsW400Outlined, SettingsW500RoundedFill)
     return __AllIcons!!
   }

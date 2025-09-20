@@ -2,7 +2,6 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import java.io.File
 
 class MaterialSymbolsPlugin : Plugin<Project> {
     override fun apply(project: Project) {

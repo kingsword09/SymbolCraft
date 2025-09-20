@@ -110,7 +110,7 @@ class Svg2ComposeConverter {
      * - "search_500_outlined_filled" -> "SearchW500OutlinedFill"
      * - "person_400_outlined_unfilled" -> "PersonW400Outlined"
      */
-    private fun transformIconName(fileName: String): String {
+    fun transformIconName(fileName: String): String {
         // Remove .svg extension if present
         val nameWithoutExt = fileName.removeSuffix(".svg")
         

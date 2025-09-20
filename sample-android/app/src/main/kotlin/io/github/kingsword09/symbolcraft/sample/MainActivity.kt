@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 // 导入生成的图标
 import io.github.kingsword09.symbolcraft.symbols.MaterialSymbols
 import io.github.kingsword09.symbolcraft.symbols.materialsymbols.HomeW400Rounded
-import io.github.kingsword09.symbolcraft.symbols.materialsymbols.PersonW400Outlined
+import io.github.kingsword09.symbolcraft.symbols.materialsymbols.CastW400Outlined
 import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SearchW400Outlined
 import io.github.kingsword09.symbolcraft.symbols.materialsymbols.SearchW500OutlinedFill
 
@@ -74,12 +74,12 @@ fun SampleScreen() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = MaterialSymbols.PersonW400Outlined,
-                        contentDescription = "Person",
+                        imageVector = MaterialSymbols.CastW400Outlined,
+                        contentDescription = "Cast",
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.secondary
                     )
-                    Text("Person (Weight 400, Outlined)")
+                    Text("Cast (Weight 400, Outlined)")
                 }
                 
                 // Search 图标 - Weight 400

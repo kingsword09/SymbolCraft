@@ -1,3 +1,6 @@
+import io.github.kingsword09.symbolcraft.model.SymbolVariant
+import io.github.kingsword09.symbolcraft.model.SymbolFill
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -60,16 +63,24 @@ materialSymbols {
     outputDirectory.set("src/main/kotlin/generated/symbols")
     packageName.set("io.github.kingsword09.symbolcraft.symbols")
 
-    // configure a few icons to preview with new API
+    // 使用新的便捷方法
     symbol("search") {
-        style(weight = 400, variant = io.github.kingsword09.symbolcraft.model.SymbolVariant.OUTLINED, fill = io.github.kingsword09.symbolcraft.model.SymbolFill.UNFILLED)
-        style(weight = 500, variant = io.github.kingsword09.symbolcraft.model.SymbolVariant.OUTLINED, fill = io.github.kingsword09.symbolcraft.model.SymbolFill.FILLED)
+        standardWeights() // 添加 400, 500, 700 权重的 outlined 样式
     }
-    symbol("person") {
-        style(weight = 400, variant = io.github.kingsword09.symbolcraft.model.SymbolVariant.OUTLINED, fill = io.github.kingsword09.symbolcraft.model.SymbolFill.UNFILLED)
-    }
+
     symbol("home") {
-        style(weight = 400, variant = io.github.kingsword09.symbolcraft.model.SymbolVariant.ROUNDED, fill = io.github.kingsword09.symbolcraft.model.SymbolFill.UNFILLED)
+        weights(400, 500, variant = SymbolVariant.ROUNDED) // 指定变体
+        bothFills(weight = 400) // 同时添加填充和未填充
+    }
+
+    symbol("person") {
+        allVariants(weight = 500) // 所有变体（outlined, rounded, sharp）
+    }
+
+    // 传统方式仍然支持
+    symbol("settings") {
+        style(weight = 400, variant = SymbolVariant.OUTLINED)
+        style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
     }
 }
 

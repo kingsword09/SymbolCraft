@@ -64,15 +64,28 @@ class SymbolConfigBuilder {
         styles.add(SymbolStyle(weight, variant, fill, grade, opticalSize))
     }
 
-    fun styles(vararg pairs: Pair<Int, SymbolFill>) {
-        pairs.forEach { (weight, fill) -> style(weight = weight, fill = fill) }
+    // Convenient methods for adding multiple weight variants
+    fun weights(vararg weights: Int, variant: SymbolVariant = SymbolVariant.OUTLINED, fill: SymbolFill = SymbolFill.UNFILLED) {
+        weights.forEach { weight ->
+            style(weight = weight, variant = variant, fill = fill)
+        }
     }
 
-    fun commonStyles() {
-        styles.addAll(listOf(SymbolStyles.Regular, SymbolStyles.Medium, SymbolStyles.Bold))
+    // Common Material Design weight combinations
+    fun standardWeights(variant: SymbolVariant = SymbolVariant.OUTLINED, fill: SymbolFill = SymbolFill.UNFILLED) {
+        weights(400, 500, 700, variant = variant, fill = fill)
     }
 
-    fun lightStyles() {
-        styles.addAll(listOf(SymbolStyles.Light, SymbolStyles.Regular))
+    // All variants for a specific weight
+    fun allVariants(weight: Int = 400, fill: SymbolFill = SymbolFill.UNFILLED) {
+        SymbolVariant.values().forEach { variant ->
+            style(weight = weight, variant = variant, fill = fill)
+        }
+    }
+
+    // Both filled and unfilled for a specific style
+    fun bothFills(weight: Int = 400, variant: SymbolVariant = SymbolVariant.OUTLINED) {
+        style(weight = weight, variant = variant, fill = SymbolFill.UNFILLED)
+        style(weight = weight, variant = variant, fill = SymbolFill.FILLED)
     }
 }

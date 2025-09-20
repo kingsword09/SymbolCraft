@@ -49,24 +49,15 @@ enum class SymbolFill(val shortName: String) {
 }
 
 object SymbolStyles {
-    // Outlined styles
-    val Light = SymbolStyle(weight = 300, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
+    // Most commonly used styles
     val Regular = SymbolStyle(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
     val Medium = SymbolStyle(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
     val Bold = SymbolStyle(weight = 700, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
-    
-    // Filled styles
-    val LightFilled = SymbolStyle(weight = 300, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
+
     val RegularFilled = SymbolStyle(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
     val MediumFilled = SymbolStyle(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
-    val BoldFilled = SymbolStyle(weight = 700, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
-    
-    // Rounded styles
-    val RoundedRegular = SymbolStyle(weight = 400, variant = SymbolVariant.ROUNDED, fill = SymbolFill.UNFILLED)
-    val RoundedFilled = SymbolStyle(weight = 400, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
-    
-    // Sharp styles
-    val SharpRegular = SymbolStyle(weight = 400, variant = SymbolVariant.SHARP, fill = SymbolFill.UNFILLED)
-    val SharpFilled = SymbolStyle(weight = 400, variant = SymbolVariant.SHARP, fill = SymbolFill.FILLED)
+
+    val Rounded = SymbolStyle(weight = 400, variant = SymbolVariant.ROUNDED, fill = SymbolFill.UNFILLED)
+    val Sharp = SymbolStyle(weight = 400, variant = SymbolVariant.SHARP, fill = SymbolFill.UNFILLED)
 }
 
