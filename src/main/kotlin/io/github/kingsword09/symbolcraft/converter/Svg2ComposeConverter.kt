@@ -48,7 +48,7 @@ class Svg2ComposeConverter {
                 // e.g., "home_400_rounded_unfilled.svg" -> "HomeW400Rounded"
                 transformIconName(name)
             },
-            generatePreview = true
+            generatePreview = false
         )
 
         // Post-process generated files to ensure deterministic output
