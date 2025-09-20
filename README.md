@@ -12,6 +12,8 @@
 - 🔧 **智能DSL** - 提供便捷的批量配置方法和预设样式
 - 📱 **高质量输出** - 使用 DevSrSouza/svg-to-compose 库生成真实的 SVG 路径数据
 - 🔄 **增量构建** - Gradle 任务缓存支持，只重新生成变更的图标
+- 🏗️ **配置缓存兼容** - 完全支持 Gradle 配置缓存，提升构建性能
+- 🔗 **多平台支持** - 支持 Android、Kotlin Multiplatform、JVM 等项目
 
 ## 📦 安装
 
@@ -31,7 +33,7 @@ plugins {
 materialSymbols {
     // 基础配置
     packageName.set("com.yourcompany.app.symbols")
-    outputDirectory.set("src/main/kotlin")  // svg-to-compose 会自动创建包路径
+    outputDirectory.set("src/commonMain/kotlin")  // 支持多平台项目
     cacheEnabled.set(true)
 
     // 单个图标配置
@@ -129,8 +131,8 @@ materialSymbols {
     // 生成的 Kotlin 包名
     packageName.set("com.yourcompany.app.symbols")
 
-    // 输出目录（svg-to-compose 会自动创建包结构）
-    outputDirectory.set("src/main/kotlin")
+    // 输出目录（支持多平台项目）
+    outputDirectory.set("src/commonMain/kotlin")
 
     // 缓存配置
     cacheEnabled.set(true)
@@ -222,23 +224,56 @@ materialSymbols {
 使用插件后，你的项目结构可能如下：
 
 ```
-your-android-project/
+your-project/
 ├── build.gradle.kts
+├── .gitignore                              # 建议添加生成文件到忽略列表
 ├── src/
-│   └── main/
+│   └── commonMain/                         # 多平台项目支持
 │       └── kotlin/
 │           ├── com/yourcompany/app/
 │           │   └── MainActivity.kt
-│           └── symbols/                    # 生成的图标包
-│               ├── MaterialSymbols.kt      # 图标访问对象
-│               └── materialsymbols/        # 具体图标文件
-│                   ├── SearchW400Outlined.kt
-│                   ├── HomeW500RoundedFill.kt
-│                   └── PersonW700Sharp.kt
+│           └── generated/                  # 生成的代码目录
+│               └── symbols/                # 图标包
+│                   ├── MaterialSymbols.kt  # 图标访问对象
+│                   └── com/yourcompany/app/symbols/materialsymbols/
+│                       ├── SearchW400Outlined.kt
+│                       ├── HomeW500RoundedFill.kt
+│                       └── PersonW700Sharp.kt
 └── build/
     └── material-symbols-cache/             # 临时缓存目录
         └── temp-svgs/                      # SVG 临时文件
 ```
+
+## 📁 Git 配置建议
+
+### .gitignore 配置
+
+为了避免生成的文件在 Git 中显示为新文件，建议将生成目录添加到 `.gitignore`：
+
+```gitignore
+# SymbolCraft 生成的文件
+**/generated/symbols/
+src/**/generated/
+build/material-symbols-cache/
+
+# 或者更具体的忽略
+src/commonMain/kotlin/generated/
+src/main/kotlin/generated/
+```
+
+### 生成文件管理策略
+
+有两种处理生成文件的策略：
+
+1. **忽略生成文件（推荐）**
+   - 将生成目录添加到 `.gitignore`
+   - 在 CI/CD 中运行 `generateMaterialSymbols` 任务
+   - 优点：保持仓库干净，避免合并冲突
+
+2. **提交生成文件**
+   - 生成文件提交到仓库
+   - 适合需要离线构建的场景
+   - 缺点：增加仓库大小，可能产生合并冲突
 
 ## 🔄 缓存机制
 
@@ -276,6 +311,13 @@ your-android-project/
 - 标准化浮点数精度
 - 统一导入语句排序
 - 确保相同输入产生相同输出
+
+### 配置缓存支持
+
+- 完全兼容 Gradle 配置缓存（Configuration Cache）
+- 避免任务执行时访问 Project 对象
+- 使用 Provider API 提升构建性能
+- 支持 `--configuration-cache` 参数
 
 ### 错误处理
 
@@ -350,6 +392,19 @@ materialSymbols {
    ⚠️ Failed to download: icon-name-W400Outlined (Icon not found in Material Symbols)
    ```
    检查图标名称是否在 [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) 中存在
+
+4. **配置缓存问题**
+   如果遇到配置缓存相关错误，可以暂时禁用：
+   ```bash
+   ./gradlew generateMaterialSymbols --no-configuration-cache
+   ```
+
+5. **生成文件在 Git 中显示为新文件**
+   将生成目录添加到 `.gitignore`：
+   ```gitignore
+   **/generated/symbols/
+   src/**/generated/
+   ```
 
 ### 调试选项
 

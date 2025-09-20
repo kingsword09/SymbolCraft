@@ -37,8 +37,7 @@ fun App() {
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxSize()
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
