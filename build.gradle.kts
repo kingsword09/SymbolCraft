@@ -27,29 +27,26 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    implementation(libs.kotlin.stdlib)
+    // Coroutines
     implementation(libs.kotlinx.coroutines.core)
+
+    // Serialization
     implementation(libs.kotlinx.serialization.json)
+
+    // HTTP Client
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
-    
-    // SVG to Compose library and dependencies
-    implementation("com.github.DevSrSouza:svg-to-compose:0.11.0")
-    implementation("com.google.guava:guava:31.1-jre")
-    implementation("com.android.tools:sdk-common:31.1.1")
-    implementation("com.android.tools:common:31.1.1")
-    implementation("com.squareup:kotlinpoet:1.14.2")
-    implementation("org.ogce:xpp3:1.1.6")
-    
-    // Optional local jars (place svg-to-compose-jvm and its runtime deps in libs/)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
+
+    // SVG to Compose (with automatic transitive dependency resolution)
+    implementation(libs.svg.to.compose)
 
     // Gradle API
     compileOnly(libs.gradle.api)
     compileOnly(libs.kotlin.gradle.plugin)
 
-    testImplementation(kotlin("test"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    // Testing
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.junit.jupiter)
 }
 
 gradlePlugin {

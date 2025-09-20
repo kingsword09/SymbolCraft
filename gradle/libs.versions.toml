@@ -1,22 +1,20 @@
 [versions]
 kotlin = "2.0.0"
 gradle = "8.9"
-compose = "1.6.11"
-compose-compiler = "1.5.14"
 coroutines = "1.8.1"
 serialization = "1.7.1"
 ktor = "2.3.12"
 gradle-plugin-publish = "1.2.1"
-svg-to-compose = "2.1.2"
+
+# SVG to Compose
+svg-to-compose = "0.11.0"
+
+# Testing
+junit = "5.10.0"
 
 [libraries]
 # Kotlin
-kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
-
-# Compose
-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "compose" }
-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit", version.ref = "compose" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
@@ -27,17 +25,18 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 # HTTP Client
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
-ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 # Gradle Plugin Development
 gradle-api = { group = "dev.gradleplugins", name = "gradle-api", version.ref = "gradle" }
 
-# SVG to Compose
-svg-to-compose = { group = "dev.tonholo.s2c", name = "svg-to-compose-jvm", version.ref = "svg-to-compose" }
+# SVG to Compose (transitive dependencies will be resolved automatically)
+svg-to-compose = { group = "com.github.DevSrSouza", name = "svg-to-compose", version.ref = "svg-to-compose" }
+
+# Testing
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
-svg-to-compose = { id = "dev.tonholo.s2c", version.ref = "svg-to-compose" }

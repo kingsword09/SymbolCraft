@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.symbolcraft.symbols.MaterialSymbols
+import kotlin.Unit
 
 public val MaterialSymbols.SettingsW400Outlined: ImageVector
     get() {
@@ -121,7 +122,7 @@ private var _settingsW400Outlined: ImageVector? = null
 
 @Preview
 @Composable
-private fun Preview() {
+private fun Preview(): Unit {
     Box(modifier = Modifier.padding(12.dp)) {
         Image(imageVector = MaterialSymbols.SettingsW400Outlined, contentDescription = "")
     }
