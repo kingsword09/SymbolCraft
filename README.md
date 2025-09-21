@@ -2,7 +2,7 @@
 
 > **Language**: [English](README.md) | [中文](README_ZH.md)
 
-A powerful Gradle plugin for generating Material Symbols icons on-demand in Android Compose projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
+A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
 
 ## ✨ Features
 

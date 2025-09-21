@@ -2,7 +2,7 @@
 
 > **语言版本**: [English](README.md) | [中文](README_ZH.md)
 
-一个强大的 Gradle 插件，用于在 Android Compose 项目中按需生成 Material Symbols 图标，支持智能缓存、确定性构建和高性能并行生成。
+一个强大的 Gradle 插件，用于在 Kotlin Multiplatform 项目中按需生成 Material Symbols 图标，支持智能缓存、确定性构建和高性能并行生成。
 
 ## ✨ 特性
 
