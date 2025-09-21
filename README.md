@@ -1,26 +1,28 @@
 # SymbolCraft 🎨
 
-一个强大的 Gradle 插件，用于在 Android Compose 项目中按需生成 Material Symbols 图标，支持智能缓存、确定性构建和高性能并行生成。
+> **Language**: [English](README.md) | [中文](README_ZH.md)
 
-## ✨ 特性
+A powerful Gradle plugin for generating Material Symbols icons on-demand in Android Compose projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
 
-- 🚀 **按需生成** - 仅生成你实际使用的图标，相比 Material Icons Extended (11.3MB) 减少 99%+ 体积
-- 💾 **智能缓存** - 7天有效期的 SVG 文件缓存，避免重复网络请求
-- ⚡ **并行下载** - 使用 Kotlin 协程并行下载 SVG 文件，大幅提升生成速度
-- 🎯 **确定性构建** - 保证每次生成的代码完全一致，Git 友好，缓存友好
-- 🎨 **全样式支持** - 支持 Material Symbols 所有样式（权重、变体、填充状态）
-- 🔧 **智能DSL** - 提供便捷的批量配置方法和预设样式
-- 📱 **高质量输出** - 使用 DevSrSouza/svg-to-compose 库生成真实的 SVG 路径数据
-- 🔄 **增量构建** - Gradle 任务缓存支持，只重新生成变更的图标
-- 🏗️ **配置缓存兼容** - 完全支持 Gradle 配置缓存，提升构建性能
-- 🔗 **多平台支持** - 支持 Android、Kotlin Multiplatform、JVM 等项目
-- 👀 **Compose 预览** - 自动生成 Compose Preview 函数，支持 androidx 和 jetpack compose
+## ✨ Features
 
-## 📦 安装
+- 🚀 **On-demand generation** - Generate only the icons you actually use, reducing 99%+ bundle size compared to Material Icons Extended (11.3MB)
+- 💾 **Smart caching** - 7-day SVG file cache with intelligent invalidation to avoid redundant network requests
+- ⚡ **Parallel downloads** - Use Kotlin coroutines for parallel SVG downloads, dramatically improving generation speed
+- 🎯 **Deterministic builds** - Ensure completely consistent code generation every time, Git-friendly and cache-friendly
+- 🎨 **Full style support** - Support all Material Symbols styles (weight, variant, fill state)
+- 🔧 **Smart DSL** - Convenient batch configuration methods and preset styles
+- 📱 **High-quality output** - Use DevSrSouza/svg-to-compose library to generate authentic SVG path data
+- 🔄 **Incremental builds** - Gradle task caching support, only regenerate changed icons
+- 🏗️ **Configuration cache compatible** - Fully supports Gradle configuration cache for improved build performance
+- 🔗 **Multi-platform support** - Support Android, Kotlin Multiplatform, JVM projects
+- 👀 **Compose Preview** - Auto-generate Compose Preview functions, support both androidx and jetpack compose
 
-### 1. 添加插件到项目
+## 📦 Installation
 
-在你的 `build.gradle.kts` 文件中：
+### 1. Add plugin to your project
+
+In your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
@@ -28,57 +30,57 @@ plugins {
 }
 ```
 
-### 2. 配置插件
+### 2. Configure the plugin
 
 ```kotlin
 materialSymbols {
-    // 基础配置
+    // Basic configuration
     packageName.set("com.yourcompany.app.symbols")
-    outputDirectory.set("src/commonMain/kotlin")  // 支持多平台项目
+    outputDirectory.set("src/commonMain/kotlin")  // Support multiplatform projects
     cacheEnabled.set(true)
 
-    // 预览生成配置（可选）
-    generatePreview.set(true)          // 启用预览生成
-    previewIconSize.set(32)            // 预览中图标大小（dp）
-    previewBackgroundColor.set("#F5F5F5") // 预览背景色
+    // Preview generation configuration (optional)
+    generatePreview.set(true)          // Enable preview generation
+    previewIconSize.set(32)            // Icon size in preview (dp)
+    previewBackgroundColor.set("#F5F5F5") // Preview background color
 
-    // 单个图标配置
+    // Individual icon configuration
     symbol("search") {
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
         style(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
     }
 
-    // 便捷的批量配置方法
+    // Convenient batch configuration methods
     symbol("home") {
-        standardWeights() // 自动添加 400, 500, 700 权重
+        standardWeights() // Auto-add 400, 500, 700 weights
     }
 
     symbol("person") {
-        allVariants(weight = 400) // 添加所有变体 (outlined, rounded, sharp)
+        allVariants(weight = 400) // Add all variants (outlined, rounded, sharp)
     }
 
     symbol("settings") {
-        bothFills(weight = 500, variant = SymbolVariant.ROUNDED) // 同时添加填充和未填充
+        bothFills(weight = 500, variant = SymbolVariant.ROUNDED) // Add both filled and unfilled
     }
 
-    // 批量配置多个图标
+    // Batch configure multiple icons
     symbols("favorite", "star", "bookmark") {
         weights(400, 500, variant = SymbolVariant.OUTLINED)
     }
 }
 ```
 
-## 🎯 使用方法
+## 🎯 Usage
 
-### 1. 生成图标
+### 1. Generate icons
 
-运行以下命令生成配置的图标：
+Run the following command to generate configured icons:
 
 ```bash
 ./gradlew generateMaterialSymbols
 ```
 
-生成过程会显示详细进度：
+The generation process will show detailed progress:
 ```
 🎨 Generating Material Symbols...
 📊 Symbols to generate: 12 icons
@@ -96,9 +98,9 @@ materialSymbols {
 📦 SVG Cache: 45 files, 2.31 MB
 ```
 
-### 2. 在 Compose 中使用
+### 2. Use in Compose
 
-生成的图标可以直接在 Compose 代码中使用：
+Generated icons can be used directly in your Compose code:
 
 ```kotlin
 import com.yourcompany.app.symbols.MaterialSymbols
@@ -109,13 +111,13 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun MyScreen() {
-    // 方式1：直接导入使用
+    // Method 1: Direct import usage
     Icon(
         imageVector = SearchW400Outlined,
         contentDescription = "Search"
     )
 
-    // 方式2：通过 MaterialSymbols 对象使用
+    // Method 2: Use through MaterialSymbols object
     Icon(
         imageVector = MaterialSymbols.SearchW400Outlined,
         contentDescription = "Search"
@@ -128,39 +130,39 @@ fun MyScreen() {
 }
 ```
 
-## 👀 Compose 预览功能
+## 👀 Compose Preview Features
 
-### 启用预览生成
+### Enable preview generation
 
 ```kotlin
 materialSymbols {
-    // 启用预览功能
+    // Enable preview functionality
     generatePreview.set(true)
 
-    // 可选：自定义预览设置
-    previewIconSize.set(32)                    // 图标大小（dp，默认24）
-    previewBackgroundColor.set("#F5F5F5")      // 背景颜色（默认#FFFFFF）
+    // Optional: Custom preview settings
+    previewIconSize.set(32)                    // Icon size (dp, default 24)
+    previewBackgroundColor.set("#F5F5F5")      // Background color (default #FFFFFF)
 
-    // 配置图标...
+    // Configure icons...
     symbol("home") {
         standardWeights()
     }
 }
 ```
 
-### 预览依赖自动检测
+### Automatic preview dependency detection
 
-插件会自动检测项目中的 Compose Preview 依赖：
+The plugin automatically detects Compose Preview dependencies in your project:
 
 - **androidx.compose**: `androidx.compose.ui:ui-tooling-preview`
 - **jetbrains.compose**: `org.jetbrains.compose.ui:ui-tooling-preview`
 
-### 生成的预览文件
+### Generated preview files
 
-启用预览后，插件会在 `{packageName}.preview` 包下生成：
+When preview is enabled, the plugin generates preview files in the `{packageName}.preview` package:
 
 ```kotlin
-// 单个图标预览
+// Individual icon preview
 @Preview(name = "home - W400Outlined", showBackground = true)
 @Composable
 fun PreviewHomeW400Outlined() {
@@ -179,7 +181,7 @@ fun PreviewHomeW400Outlined() {
     }
 }
 
-// 所有图标概览
+// All icons overview
 @Preview(name = "All Material Symbols Overview", widthDp = 400, heightDp = 600)
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -187,252 +189,251 @@ fun PreviewAllMaterialSymbols() {
     MaterialTheme {
         Surface {
             FlowRow {
-                // 显示所有生成的图标...
+                // Display all generated icons...
             }
         }
     }
 }
 ```
 
-### 在 IDE 中查看预览
+### View previews in IDE
 
-生成后，你可以在 Android Studio 或 IntelliJ IDEA 的 Preview 面板中查看：
+After generation, you can view previews in Android Studio or IntelliJ IDEA's Preview panel:
 
-1. 打开生成的预览文件：`{packageName}/preview/MaterialSymbolsPreviews.kt`
-2. 点击 IDE 右侧的 "Preview" 面板
-3. 查看单个图标预览或所有图标概览
+1. Open the generated preview file: `{packageName}/preview/MaterialSymbolsPreviews.kt`
+2. Click the "Preview" panel on the right side of the IDE
+3. View individual icon previews or all icons overview
 
-### 多平台预览支持
+### Multi-platform preview support
 
-- **Android 项目**: 使用 `androidx.compose.ui.tooling.preview.Preview`
-- **Desktop 项目**: 使用 `androidx.compose.desktop.ui.tooling.preview.Preview`
-- **多平台项目**: 自动同时支持两种预览注解
+- **Android projects**: Use `androidx.compose.ui.tooling.preview.Preview`
+- **Desktop projects**: Use `androidx.compose.desktop.ui.tooling.preview.Preview`
+- **Multiplatform projects**: Automatically support both preview annotations
 
-## 📋 配置选项
+## 📋 Configuration Options
 
-### 基础配置
+### Basic configuration
 
 ```kotlin
 materialSymbols {
-    // 生成的 Kotlin 包名
+    // Generated Kotlin package name
     packageName.set("com.yourcompany.app.symbols")
 
-    // 输出目录（支持多平台项目）
+    // Output directory (supports multiplatform projects)
     outputDirectory.set("src/commonMain/kotlin")
 
-    // 缓存配置
+    // Cache configuration
     cacheEnabled.set(true)
-    cacheDirectory.set("build/material-symbols-cache")
+    cacheDirectory.set("material-symbols-cache")
 
-    // 预览配置
-    generatePreview.set(false)          // 是否生成 Compose 预览
-    previewIconSize.set(24)             // 预览中图标大小（dp）
-    previewBackgroundColor.set("#FFFFFF") // 预览背景颜色
+    // Preview configuration
+    generatePreview.set(false)          // Whether to generate Compose previews
+    previewIconSize.set(24)             // Icon size in preview (dp)
+    previewBackgroundColor.set("#FFFFFF") // Preview background color
 
-    // 其他选项
-    forceRegenerate.set(false)  // 强制重新生成所有图标
-    minifyOutput.set(true)      // 压缩输出代码
+    // Other options
+    forceRegenerate.set(false)  // Force regenerate all icons
+    minifyOutput.set(true)      // Minify output code
 }
 ```
 
-### 图标样式参数
+### Icon style parameters
 
-- **weight**: 图标线条粗细（300-700）
+- **weight**: Icon line thickness (300-700)
   - 300: Light
-  - 400: Regular（默认）
+  - 400: Regular (default)
   - 500: Medium
   - 700: Bold
 
-- **variant**: 图标风格
-  - `SymbolVariant.OUTLINED`: 线条风格（默认）
-  - `SymbolVariant.ROUNDED`: 圆角风格
-  - `SymbolVariant.SHARP`: 尖角风格
+- **variant**: Icon style
+  - `SymbolVariant.OUTLINED`: Line style (default)
+  - `SymbolVariant.ROUNDED`: Rounded style
+  - `SymbolVariant.SHARP`: Sharp style
 
-- **fill**: 填充状态
-  - `SymbolFill.UNFILLED`: 空心（默认）
-  - `SymbolFill.FILLED`: 实心
+- **fill**: Fill state
+  - `SymbolFill.UNFILLED`: Outline (default)
+  - `SymbolFill.FILLED`: Solid
 
-### 便捷配置方法
+### Convenient configuration methods
 
 ```kotlin
 materialSymbols {
     symbol("example") {
-        // 基础方法
+        // Basic method
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
 
-        // 批量权重配置
+        // Batch weight configuration
         weights(400, 500, 700, variant = SymbolVariant.ROUNDED)
 
-        // Material Design 标准权重
-        standardWeights(variant = SymbolVariant.OUTLINED)  // 添加 400, 500, 700
+        // Material Design standard weights
+        standardWeights(variant = SymbolVariant.OUTLINED)  // Add 400, 500, 700
 
-        // 所有变体（outlined, rounded, sharp）
+        // All variants (outlined, rounded, sharp)
         allVariants(weight = 400, fill = SymbolFill.UNFILLED)
 
-        // 同时添加填充和未填充版本
+        // Add both filled and unfilled versions
         bothFills(weight = 500, variant = SymbolVariant.OUTLINED)
     }
 }
 ```
 
-### 生成的文件命名规则
+### Generated file naming convention
 
-图标文件名格式：`{IconName}W{Weight}{Variant}{Fill}.kt`
+Icon file name format: `{IconName}W{Weight}{Variant}{Fill}.kt`
 
-例如：
-- `SearchW400Outlined.kt` - Search 图标，400 权重，线条风格，未填充
-- `HomeW500RoundedFill.kt` - Home 图标，500 权重，圆角风格，已填充
-- `PersonW700Sharp.kt` - Person 图标，700 权重，尖角风格，未填充
+Examples:
+- `SearchW400Outlined.kt` - Search icon, 400 weight, outlined style, unfilled
+- `HomeW500RoundedFill.kt` - Home icon, 500 weight, rounded style, filled
+- `PersonW700Sharp.kt` - Person icon, 700 weight, sharp style, unfilled
 
-## 🛠 Gradle 任务
+## 🛠 Gradle Tasks
 
-插件提供以下 Gradle 任务：
+The plugin provides the following Gradle tasks:
 
-| 任务 | 描述 |
-|------|------|
-| `generateMaterialSymbols` | 生成配置的 Material Symbols 图标 |
-| `cleanSymbolsCache` | 清理缓存的 SVG 文件 |
-| `validateSymbolsConfig` | 验证图标配置的有效性 |
+| Task | Description |
+|------|-------------|
+| `generateMaterialSymbols` | Generate configured Material Symbols icons |
+| `cleanSymbolsCache` | Clean cached SVG files |
+| `validateSymbolsConfig` | Validate icon configuration validity |
 
-### 任务示例
+### Task examples
 
 ```bash
-# 生成图标（增量构建）
+# Generate icons (incremental build)
 ./gradlew generateMaterialSymbols
 
-# 强制重新生成所有图标
+# Force regenerate all icons
 ./gradlew generateMaterialSymbols --rerun-tasks
 
-# 清理缓存
+# Clean cache
 ./gradlew cleanSymbolsCache
 
-# 验证配置
+# Validate configuration
 ./gradlew validateSymbolsConfig
 ```
 
-## 🗂 项目结构
+## 🗂 Project Structure
 
-使用插件后，你的项目结构可能如下：
+After using the plugin, your project structure might look like this:
 
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                              # 建议添加生成文件到忽略列表
+├── .gitignore                              # Recommend adding generated files to ignore list
 ├── src/
-│   └── commonMain/                         # 多平台项目支持
+│   └── commonMain/                         # Multiplatform project support
 │       └── kotlin/
 │           ├── com/yourcompany/app/
 │           │   └── MainActivity.kt
-│           └── generated/                  # 生成的代码目录
-│               └── symbols/                # 图标包
-│                   ├── MaterialSymbols.kt  # 图标访问对象
+│           └── generated/                  # Generated code directory
+│               └── symbols/                # Icons package
+│                   ├── MaterialSymbols.kt  # Icon access object
 │                   ├── com/yourcompany/app/symbols/materialsymbols/
 │                   │   ├── SearchW400Outlined.kt
 │                   │   ├── HomeW500RoundedFill.kt
 │                   │   └── PersonW700Sharp.kt
-│                   └── preview/            # 预览文件（可选）
+│                   └── preview/            # Preview files (optional)
 │                       └── MaterialSymbolsPreviews.kt
-└── build/
-    └── material-symbols-cache/             # 临时缓存目录
-        └── temp-svgs/                      # SVG 临时文件
+└── material-symbols-cache/                 # Temporary cache directory
+    └── temp-svgs/                          # SVG temporary files
 ```
 
-## 📁 Git 配置建议
+## 📁 Git Configuration Recommendations
 
-### .gitignore 配置
+### .gitignore Configuration
 
-为了避免生成的文件在 Git 中显示为新文件，建议将生成目录添加到 `.gitignore`：
+To avoid generated files showing as new files in Git, recommend adding the generation directory to `.gitignore`:
 
 ```gitignore
-# SymbolCraft 生成的文件
+# SymbolCraft generated files
 **/generated/symbols/
 src/**/generated/
-build/material-symbols-cache/
+material-symbols-cache/
 
-# 或者更具体的忽略
+# Or more specific ignoring
 src/commonMain/kotlin/generated/
 src/main/kotlin/generated/
 ```
 
-### 生成文件管理策略
+### Generated File Management Strategy
 
-有两种处理生成文件的策略：
+There are two strategies for handling generated files:
 
-1. **忽略生成文件（推荐）**
-   - 将生成目录添加到 `.gitignore`
-   - 在 CI/CD 中运行 `generateMaterialSymbols` 任务
-   - 优点：保持仓库干净，避免合并冲突
+1. **Ignore generated files (recommended)**
+   - Add generation directory to `.gitignore`
+   - Run `generateMaterialSymbols` task in CI/CD
+   - Advantages: Keep repository clean, avoid merge conflicts
 
-2. **提交生成文件**
-   - 生成文件提交到仓库
-   - 适合需要离线构建的场景
-   - 缺点：增加仓库大小，可能产生合并冲突
+2. **Commit generated files**
+   - Commit generated files to repository
+   - Suitable for scenarios requiring offline builds
+   - Disadvantages: Increase repository size, may cause merge conflicts
 
-## 🔄 缓存机制
+## 🔄 Caching Mechanism
 
-### 多层缓存架构
+### Multi-layer cache architecture
 
-1. **SVG 下载缓存**
-   - 位置：`~/.gradle/caches/symbolcraft/svg-cache/`
-   - 有效期：7天
-   - 包含：SVG 文件 + 元数据（时间戳、URL、哈希值）
+1. **SVG download cache**
+   - Location: `~/.gradle/caches/symbolcraft/svg-cache/`
+   - Validity: 7 days
+   - Contains: SVG files + metadata (timestamp, URL, hash)
 
-2. **Gradle 任务缓存**
-   - 增量构建支持
-   - 基于配置哈希值的变更检测
-   - 支持 `@CacheableTask` 注解
+2. **Gradle task cache**
+   - Incremental build support
+   - Change detection based on configuration hash
+   - Support `@CacheableTask` annotation
 
-### 缓存统计
+### Cache statistics
 
-生成完成后会显示缓存使用情况：
+After generation completes, cache usage will be displayed:
 ```
 📦 SVG Cache: 45 files, 2.31 MB
 💾 From cache: 8/12 icons
 ```
 
-## 🚀 性能优化
+## 🚀 Performance Optimization
 
-### 并行下载
+### Parallel downloads
 
-- 使用 Kotlin 协程并行下载 SVG 文件
-- 支持进度跟踪和错误重试
-- 智能缓存命中检测
+- Use Kotlin coroutines for parallel SVG downloads
+- Support progress tracking and error retry
+- Smart cache hit detection
 
-### 确定性构建
+### Deterministic builds
 
-- 移除时间戳和其他非确定性内容
-- 标准化浮点数精度
-- 统一导入语句排序
-- 确保相同输入产生相同输出
+- Remove timestamps and other non-deterministic content
+- Standardize floating-point precision
+- Unified import statement ordering
+- Ensure same input produces same output
 
-### 配置缓存支持
+### Configuration cache support
 
-- 完全兼容 Gradle 配置缓存（Configuration Cache）
-- 避免任务执行时访问 Project 对象
-- 使用 Provider API 提升构建性能
-- 支持 `--configuration-cache` 参数
+- Fully compatible with Gradle Configuration Cache
+- Avoid accessing Project objects during task execution
+- Use Provider API to improve build performance
+- Support `--configuration-cache` parameter
 
-### 错误处理
+### Error handling
 
-- 网络错误自动重试
-- 详细的错误分类和建议
-- 优雅降级到备用生成器
+- Automatic retry for network errors
+- Detailed error classification and suggestions
+- Graceful degradation to backup generators
 
-## 📝 高级配置
+## 📝 Advanced Configuration
 
-### 图标查找和选择
+### Icon search and selection
 
-使用 [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) 来：
-- 🔍 搜索和浏览所有可用图标
-- 👀 预览不同样式（Outlined, Rounded, Sharp）
-- 📋 复制图标名称用于配置
-- 🎨 查看不同权重和填充状态的效果
+Use [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) to:
+- 🔍 Search and browse all available icons
+- 👀 Preview different styles (Outlined, Rounded, Sharp)
+- 📋 Copy icon names for configuration
+- 🎨 View effects of different weights and fill states
 
-### 批量配置图标
+### Batch configure icons
 
 ```kotlin
 materialSymbols {
-    // 基础图标集
+    // Basic icon set
     val basicIcons = listOf("home", "search", "person", "settings")
     basicIcons.forEach { icon ->
         symbol(icon) {
@@ -440,7 +441,7 @@ materialSymbols {
         }
     }
 
-    // 导航图标集
+    // Navigation icon set
     val navIcons = listOf("arrow_back", "arrow_forward", "menu", "close")
     symbols(*navIcons.toTypedArray()) {
         weights(400, 500)
@@ -449,144 +450,144 @@ materialSymbols {
 }
 ```
 
-### 自定义缓存配置
+### Custom cache configuration
 
 ```kotlin
 materialSymbols {
-    // 禁用缓存（不推荐）
+    // Disable cache (not recommended)
     cacheEnabled.set(false)
 
-    // 自定义缓存目录
+    // Custom cache directory
     cacheDirectory.set("custom-cache")
 
-    // 强制重新生成
+    // Force regenerate
     forceRegenerate.set(true)
 }
 ```
 
-## 🔍 故障排除
+## 🔍 Troubleshooting
 
-### 常见问题
+### Common issues
 
-1. **网络问题**
+1. **Network issues**
    ```
    ❌ Generation failed: Network issue
    💡 Network issue detected. Check internet connection and try again.
    ```
 
-2. **缓存问题**
+2. **Cache issues**
    ```bash
    ./gradlew cleanSymbolsCache
    ./gradlew generateMaterialSymbols --rerun-tasks
    ```
 
-3. **图标未找到**
+3. **Icon not found**
    ```
    ⚠️ Failed to download: icon-name-W400Outlined (Icon not found in Material Symbols)
    ```
-   检查图标名称是否在 [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) 中存在
+   Check if the icon name exists in [Material Symbols Demo](https://marella.github.io/material-symbols/demo/)
 
-4. **配置缓存问题**
-   如果遇到配置缓存相关错误，可以暂时禁用：
+4. **Configuration cache issues**
+   If you encounter configuration cache related errors, you can temporarily disable it:
    ```bash
    ./gradlew generateMaterialSymbols --no-configuration-cache
    ```
 
-5. **生成文件在 Git 中显示为新文件**
-   将生成目录添加到 `.gitignore`：
+5. **Generated files showing as new files in Git**
+   Add generation directory to `.gitignore`:
    ```gitignore
    **/generated/symbols/
    src/**/generated/
    ```
 
-6. **预览生成失败**
-   检查是否添加了 Compose Preview 依赖：
+6. **Preview generation failed**
+   Check if Compose Preview dependencies are added:
    ```kotlin
-   // Android 项目
+   // Android projects
    debugImplementation("androidx.compose.ui:ui-tooling-preview:$compose_version")
 
-   // Desktop 项目
+   // Desktop projects
    implementation(compose.desktop.ui.tooling.preview)
    ```
 
-7. **预览在 IDE 中不显示**
-   - 确保 IDE 支持 Compose Preview
-   - 检查生成的预览文件路径是否正确
-   - 重启 IDE 或刷新项目
+7. **Previews not showing in IDE**
+   - Ensure IDE supports Compose Preview
+   - Check generated preview file path is correct
+   - Restart IDE or refresh project
 
-### 调试选项
+### Debug options
 
 ```bash
-# 详细日志
+# Verbose logging
 ./gradlew generateMaterialSymbols --info
 
-# 堆栈跟踪
+# Stack trace
 ./gradlew generateMaterialSymbols --stacktrace
 ```
 
-## 🏗 架构设计
+## 🏗 Architecture Design
 
-### 核心组件
+### Core components
 
-- **MaterialSymbolsPlugin** - 主插件类
-- **MaterialSymbolsExtension** - DSL 配置接口
-- **GenerateSymbolsTask** - 核心生成任务
-- **SvgDownloader** - 智能 SVG 下载器
-- **Svg2ComposeConverter** - SVG 转 Compose 转换器
+- **MaterialSymbolsPlugin** - Main plugin class
+- **MaterialSymbolsExtension** - DSL configuration interface
+- **GenerateSymbolsTask** - Core generation task
+- **SvgDownloader** - Smart SVG downloader
+- **Svg2ComposeConverter** - SVG to Compose converter
 
-### 数据流
+### Data flow
 
 ```
-配置 → 样式解析 → 并行下载 → SVG 转换 → 确定性处理 → 生成代码
+Configuration → Style parsing → Parallel download → SVG conversion → Deterministic processing → Generate code
 ```
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交 Issue 和 Pull Request！
+Issues and Pull Requests are welcome!
 
-### 开发环境设置
+### Development environment setup
 
-1. 克隆仓库：
+1. Clone the repository:
 ```bash
 git clone https://github.com/kingsword09/SymbolCraft.git
 cd SymbolCraft
 ```
 
-2. 构建插件：
+2. Build the plugin:
 ```bash
 ./gradlew build
 ```
 
-3. 发布到本地 Maven 仓库测试：
+3. Publish to local Maven repository for testing:
 ```bash
 ./gradlew publishToMavenLocal
 ```
 
-4. 运行示例应用：
+4. Run example application:
 ```bash
 cd sample-android
 ../gradlew generateMaterialSymbols
 ../gradlew assembleDebug
 ```
 
-## 📄 许可证
+## 📄 License
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+MIT License - See [LICENSE](LICENSE) file for details
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-- [Material Symbols](https://fonts.google.com/icons) - Google 提供的图标资源
-- [marella/material-symbols](https://github.com/marella/material-symbols) - 提供便捷的图标浏览和搜索功能
-- [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) - 图标查找和预览工具
-- [DevSrSouza/svg-to-compose](https://github.com/DevSrSouza/svg-to-compose) - 优秀的 SVG 转 Compose 库
-- [esm.sh](https://esm.sh) - 提供 CDN 服务的 Material Symbols SVG 文件
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android 现代 UI 工具包
+- [Material Symbols](https://fonts.google.com/icons) - Icon resources provided by Google
+- [marella/material-symbols](https://github.com/marella/material-symbols) - Convenient icon browsing and search functionality
+- [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) - Icon search and preview tool
+- [DevSrSouza/svg-to-compose](https://github.com/DevSrSouza/svg-to-compose) - Excellent SVG to Compose library
+- [esm.sh](https://esm.sh) - CDN service for Material Symbols SVG files
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android modern UI toolkit
 
-## 📮 联系方式
+## 📮 Contact
 
 - GitHub: [@kingsword09](https://github.com/kingsword09)
 - Issues: [GitHub Issues](https://github.com/kingsword09/SymbolCraft/issues)
 
 ---
 
-**注意**：该项目已经过充分测试和优化，可以在生产环境中使用。具备确定性构建、智能缓存和高性能并行处理能力。
+**Note**: This project has been thoroughly tested and optimized for production use. It features deterministic builds, smart caching, and high-performance parallel processing capabilities.
