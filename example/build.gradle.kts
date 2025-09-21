@@ -7,7 +7,4 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-//    id("io.github.kingsword09.symbolcraft") version("1.0.0")
-//    alias(libs.plugins.symbolCraft) apply false
-//    alias(libs.plugins.symbolCraft) version("1.0.0")
 }

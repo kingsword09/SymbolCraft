@@ -19,15 +19,13 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'corretto'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      with:
-        gradle-home-cache-cleanup: true
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Make gradlew executable
       run: chmod +x ./gradlew
@@ -61,21 +59,24 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'corretto'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      with:
-        gradle-home-cache-cleanup: true
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Make gradlew executable
       run: chmod +x ./gradlew
 
     - name: Publish plugin to local repository
       run: ./gradlew publishToMavenLocal --stacktrace
+      env:
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
 
     - name: Test example project
       working-directory: example
@@ -96,15 +97,13 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'corretto'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      with:
-        gradle-home-cache-cleanup: true
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Make gradlew executable
       run: chmod +x ./gradlew
@@ -113,6 +112,11 @@ jobs:
       run: |
         ./gradlew tasks --all | grep -i material || echo "No material tasks found yet"
         ./gradlew publishToMavenLocal --stacktrace
+      env:
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
 
     - name: Verify plugin publication
       run: |
@@ -127,6 +131,9 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     needs: [build, example-test, validate-plugin]
     if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'chore(release):')
 
@@ -138,15 +145,13 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'corretto'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      with:
-        gradle-home-cache-cleanup: true
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Make gradlew executable
       run: chmod +x ./gradlew
@@ -172,27 +177,28 @@ jobs:
 
     - name: Build release artifacts
       run: ./gradlew build publishToMavenLocal --stacktrace
+      env:
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+
+    - name: List build artifacts
+      run: |
+        echo "Listing build directory contents:"
+        find build -name "*.jar" -o -name "*.zip" | head -10
+        echo "Current version in build.gradle.kts:"
+        grep "version = " build.gradle.kts
 
     - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.extract_version.outputs.version }}
-        release_name: Release v${{ steps.extract_version.outputs.version }}
+        name: Release v${{ steps.extract_version.outputs.version }}
         body: |
           ## SymbolCraft v${{ steps.extract_version.outputs.version }}
 
           A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects.
-
-          ### 🚀 Features
-          - On-demand generation of Material Symbols icons
-          - Smart caching with 7-day validity
-          - Parallel downloads using Kotlin coroutines
-          - Deterministic builds for Git-friendly output
-          - Full Material Symbols style support
-          - Compose Preview generation
 
           ### 📦 Installation
           ```kotlin
@@ -201,34 +207,16 @@ jobs:
           }
           ```
 
-          ### 📋 Changes
-          - Automated release from commit: ${{ github.event.head_commit.message }}
-
-          ### 📎 Assets
-          - Plugin JAR: `symbolcraft-${{ steps.extract_version.outputs.version }}.jar`
-          - Plugin distribution: `symbolcraft-${{ steps.extract_version.outputs.version }}.zip`
+          ### 🔗 Links
+          - [Gradle Plugin Portal](https://plugins.gradle.org/plugin/io.github.kingsword09.symbolcraft)
+          - [Documentation](https://github.com/kingsword09/SymbolCraft#readme)
+        files: |
+          build/libs/*.jar
+          build/distributions/*.zip
         draft: false
         prerelease: false
-
-    - name: Upload JAR Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/libs/symbolcraft-${{ steps.extract_version.outputs.version }}.jar
-        asset_name: symbolcraft-${{ steps.extract_version.outputs.version }}.jar
-        asset_content_type: application/java-archive
-
-    - name: Upload Distribution Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/distributions/symbolcraft-${{ steps.extract_version.outputs.version }}.zip
-        asset_name: symbolcraft-${{ steps.extract_version.outputs.version }}.zip
-        asset_content_type: application/zip
+        generate_release_notes: true
+        token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-gradle-plugin:
     name: Publish to Gradle Plugin Portal
@@ -241,15 +229,13 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'corretto'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      with:
-        gradle-home-cache-cleanup: true
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Make gradlew executable
       run: chmod +x ./gradlew
@@ -283,15 +269,13 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
-        distribution: 'temurin'
+        distribution: 'corretto'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-      with:
-        gradle-home-cache-cleanup: true
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Make gradlew executable
       run: chmod +x ./gradlew
@@ -310,12 +294,11 @@ jobs:
 
     - name: Publish to Maven Central
       env:
-        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-        SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-        SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-        CI_RELEASE: "true"
-      run: ./gradlew publishAllPublicationsToSonatypeRepository closeAndReleaseSonatypeStagingRepository --stacktrace
+        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}
+        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.OSSRH_PASSWORD }}
+        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+      run: ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
 
   notify:
     name: Notify
