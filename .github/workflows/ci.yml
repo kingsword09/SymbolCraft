@@ -80,11 +80,11 @@ jobs:
     - name: Test example project
       working-directory: example
       run: |
-        chmod +x ../gradlew
+        chmod +x ./gradlew
         # Test material symbols generation
-        ../gradlew :composeApp:generateMaterialSymbols --stacktrace
+        ./gradlew :composeApp:generateMaterialSymbols --stacktrace
         # Build the example project
-        ../gradlew build --stacktrace
+        ./gradlew build --stacktrace
 
   validate-plugin:
     name: Validate Plugin
