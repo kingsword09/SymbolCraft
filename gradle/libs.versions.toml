@@ -5,6 +5,7 @@ coroutines = "1.8.1"
 serialization = "1.7.1"
 ktor = "2.3.12"
 maven-publish = "0.34.0"
+gradle-plugin-publish = "2.0.0"
 
 # SVG to Compose
 svg-to-compose = "0.11.0"
@@ -36,3 +37,4 @@ kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.re
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
+gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }

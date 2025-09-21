@@ -4,6 +4,7 @@ import java.util.Base64
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.gradle.plugin.publish)
     alias(libs.plugins.maven.publish)
     `java-gradle-plugin`
     signing
