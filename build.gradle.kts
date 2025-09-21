@@ -128,8 +128,16 @@ signing {
     val signingKey = project.findProperty("signingKey") as String? ?: System.getenv("SIGNING_KEY")
     val signingPassword = project.findProperty("signingPassword") as String? ?: System.getenv("SIGNING_PASSWORD")
 
-    if (signingKey != null && signingPassword != null) {
+    // Only enable signing when we have keys AND we're doing a release build
+    val isReleaseBuild = project.hasProperty("release") ||
+                        System.getenv("CI_RELEASE") == "true" ||
+                        gradle.startParameter.taskNames.any { it.contains("publish") && it.contains("Sonatype") }
+
+    isRequired = false // Never require signing by default
+
+    if (signingKey != null && signingPassword != null && isReleaseBuild) {
         useInMemoryPgpKeys(signingKey, signingPassword)
+        // Only sign the maven publication for Maven Central
         sign(publishing.publications["maven"])
     }
 }

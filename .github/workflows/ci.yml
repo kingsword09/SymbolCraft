@@ -33,6 +33,10 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: Build plugin
+      env:
+        # Set empty signing vars to skip signing in regular CI builds
+        SIGNING_KEY: ""
+        SIGNING_PASSWORD: ""
       run: ./gradlew build --stacktrace
 
     - name: Run tests (if any)
@@ -310,7 +314,8 @@ jobs:
         OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
         SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --stacktrace
+        CI_RELEASE: "true"
+      run: ./gradlew publishAllPublicationsToSonatypeRepository closeAndReleaseSonatypeStagingRepository --stacktrace
 
   notify:
     name: Notify
