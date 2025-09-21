@@ -46,7 +46,6 @@ dependencies {
 
     // Testing
     testImplementation(libs.kotlin.test)
-    testImplementation(libs.junit.jupiter)
 }
 
 gradlePlugin {
