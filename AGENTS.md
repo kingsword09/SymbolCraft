@@ -60,7 +60,7 @@ SymbolCraft/
 
 ```kotlin
 plugins {
-    id("io.github.kingsword09.symbolcraft") version "1.0.0"
+    id("io.github.kingsword09.symbolcraft") version "0.1.0"
 }
 ```
 
@@ -607,7 +607,7 @@ SymbolCraft 完全支持 Gradle 配置缓存，通过以下方式实现：
 
 ## 更新日志
 
-### v1.0.0
+### v0.1.0
 - ✅ 基础图标生成功能
 - ✅ 智能缓存机制
 - ✅ 并行下载支持

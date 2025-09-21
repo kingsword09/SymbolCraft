@@ -5,6 +5,7 @@ coroutines = "1.8.1"
 serialization = "1.7.1"
 ktor = "2.3.12"
 gradle-plugin-publish = "1.2.1"
+maven-publish = "0.34.0"
 
 # SVG to Compose
 svg-to-compose = "0.11.0"
@@ -56,6 +57,7 @@ coil-svg = { group = "io.coil-kt", name = "coil-svg", version.ref = "coil" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
+maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 
 # Android plugins (for sample app)
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }

@@ -1,17 +1,17 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Base64
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.gradle.plugin.publish)
+    alias(libs.plugins.maven.publish)
     `java-gradle-plugin`
-    `maven-publish`
     signing
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
 group = "io.github.kingsword09"
-version = "1.0.0"
+version = "0.1.0"
 
 kotlin {
     jvmToolchain(17)
@@ -61,84 +61,63 @@ gradlePlugin {
             id = "io.github.kingsword09.symbolcraft"
             implementationClass = "io.github.kingsword09.symbolcraft.plugin.MaterialSymbolsPlugin"
             displayName = "SymbolCraft - Material Symbols Generator"
-            description = "Generate Material Symbols icons on-demand with caching support for Compose"
-            tags = listOf("android", "compose", "material", "icons", "symbols")
+            description = "Generate Material Symbols icons on-demand with caching support for Compose Multiplatform."
+            tags = listOf("KMP", "Compose-Multiplatform", "material", "icons", "symbols")
         }
     }
 }
 
-// Configure Maven publication
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
+// Configure Vanniktech Maven Publish
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+    coordinates(group.toString(), "symbolcraft", version.toString())
 
-            pom {
-                name.set("SymbolCraft")
-                description.set("A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects")
-                url.set("https://github.com/kingsword09/SymbolCraft")
+    pom {
+        name.set("SymbolCraft")
+        description.set("A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects")
+        inceptionYear.set("2025")
+        url.set("https://github.com/kingsword09/SymbolCraft")
 
-                licenses {
-                    license {
-                        name.set("Apache License 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-
-                developers {
-                    developer {
-                        id.set("kingsword09")
-                        name.set("kingsword09")
-                        email.set("kingsword09@gmail.com")
-                        url.set("https://github.com/kingsword09")
-                    }
-                }
-
-                scm {
-                    connection.set("scm:git:git://github.com/kingsword09/SymbolCraft.git")
-                    developerConnection.set("scm:git:ssh://github.com/kingsword09/SymbolCraft.git")
-                    url.set("https://github.com/kingsword09/SymbolCraft")
-                }
-
-                issueManagement {
-                    system.set("GitHub")
-                    url.set("https://github.com/kingsword09/SymbolCraft/issues")
-                }
+        licenses {
+            license {
+                name.set("Apache License 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
             }
         }
-    }
 
-    repositories {
-        maven {
-            name = "sonatype"
-            val releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            val snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
-
-            credentials {
-                username = project.findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME")
-                password = project.findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD")
+        developers {
+            developer {
+                id.set("kingsword09")
+                name.set("kingsword09")
+                url.set("https://github.com/kingsword09")
+                email.set("kingsword09@gmail.com")
             }
+        }
+
+        scm {
+            url.set("https://github.com/kingsword09/SymbolCraft")
+            connection.set("scm:git:git://github.com/kingsword09/SymbolCraft.git")
+            developerConnection.set("scm:git:ssh://git@github.com/kingsword09/SymbolCraft.git")
         }
     }
 }
 
-// Configure artifact signing
 signing {
     val signingKey = project.findProperty("signingKey") as String? ?: System.getenv("SIGNING_KEY")
     val signingPassword = project.findProperty("signingPassword") as String? ?: System.getenv("SIGNING_PASSWORD")
 
-    // Only enable signing when we have keys AND we're doing a release build
-    val isReleaseBuild = project.hasProperty("release") ||
-                        System.getenv("CI_RELEASE") == "true" ||
-                        gradle.startParameter.taskNames.any { it.contains("publish") && it.contains("Sonatype") }
+    // Always set isRequired to false
+    isRequired = false
 
-    isRequired = false // Never require signing by default
-
-    if (signingKey != null && signingPassword != null && isReleaseBuild) {
+    if (signingKey != null && signingPassword != null && signingKey.isNotBlank() && signingPassword.isNotBlank()) {
         useInMemoryPgpKeys(signingKey, signingPassword)
-        // Only sign the maven publication for Maven Central
-        sign(publishing.publications["maven"])
+
+        // Configure signing after all publications are created
+        afterEvaluate {
+            sign(publishing.publications)
+        }
     }
 }
 
@@ -151,18 +130,6 @@ tasks.test {
 java {
     withSourcesJar()
     withJavadocJar()
-}
-
-// Configure Nexus publishing
-nexusPublishing {
-    repositories {
-        sonatype {
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
-            username.set(project.findProperty("ossrhUsername") as String? ?: System.getenv("OSSRH_USERNAME"))
-            password.set(project.findProperty("ossrhPassword") as String? ?: System.getenv("OSSRH_PASSWORD"))
-        }
-    }
 }
 
 // Configure JAR manifest
