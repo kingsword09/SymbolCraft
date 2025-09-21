@@ -194,7 +194,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.extract_version.outputs.version }}
-        name: Release v${{ steps.extract_version.outputs.version }}
+        name: v${{ steps.extract_version.outputs.version }}
         body: |
           ## SymbolCraft v${{ steps.extract_version.outputs.version }}
 
