@@ -281,7 +281,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
                 val outputFile = File(outputDirPath, "$iconName.kt")
 
-                // 根据图标名称生成不同的示例路径
+                // Generate different example paths based on icon name
                 val iconPath = when {
                     iconName.contains("Home", true) -> generateHomePath()
                     iconName.contains("Person", true) -> generatePersonPath()
