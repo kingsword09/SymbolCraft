@@ -1,5 +1,10 @@
 package io.github.kingsword09.example.materialsymbols
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType.Companion.NonZero
 import androidx.compose.ui.graphics.SolidColor
@@ -10,17 +15,15 @@ import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.MaterialSymbols
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 public val MaterialSymbols.HomeW400Outlined: ImageVector
     get() {
         if (_homeW400Outlined != null) {
             return _homeW400Outlined!!
         }
-        _homeW400Outlined = Builder(name = "HomeW400Outlined", defaultWidth = 48.0.dp, defaultHeight
-                = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
-            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f,
-                    strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f,
-                    pathFillType = NonZero) {
+        _homeW400Outlined = Builder(name = "HomeW400Outlined", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(220.0f, 780.0f)
                 horizontalLineToRelative(150.0f)
                 verticalLineToRelative(-250.0f)
@@ -52,3 +55,11 @@ public val MaterialSymbols.HomeW400Outlined: ImageVector
     }
 
 private var _homeW400Outlined: ImageVector? = null
+
+@Preview
+@Composable
+private fun Preview() {
+    Box(modifier = Modifier.padding(12.dp)) {
+        Image(imageVector = MaterialSymbols.HomeW400Outlined, contentDescription = "")
+    }
+}
