@@ -8,7 +8,7 @@ maven-publish = "0.34.0"
 gradle-plugin-publish = "2.0.0"
 
 # SVG to Compose
-svg-to-compose = "0.11.0"
+svg-to-compose = "0.1.0"
 
 [libraries]
 # Kotlin
@@ -28,7 +28,7 @@ ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "
 gradle-api = { group = "dev.gradleplugins", name = "gradle-api", version.ref = "gradle" }
 
 # SVG to Compose (transitive dependencies will be resolved automatically)
-svg-to-compose = { group = "com.github.DevSrSouza", name = "svg-to-compose", version.ref = "svg-to-compose" }
+svg-to-compose = { group = "io.github.kingsword09", name = "svg-to-compose", version.ref = "svg-to-compose" }
 
 # Testing
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }

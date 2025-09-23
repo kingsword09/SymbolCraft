@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.Base64
 
 plugins {
     alias(libs.plugins.kotlin.jvm)

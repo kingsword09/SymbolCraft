@@ -1,5 +1,10 @@
 package io.github.kingsword09.example.materialsymbols
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType.Companion.NonZero
 import androidx.compose.ui.graphics.SolidColor
@@ -10,17 +15,15 @@ import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.MaterialSymbols
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 public val MaterialSymbols.SettingsW500RoundedFill: ImageVector
     get() {
         if (_settingsW500RoundedFill != null) {
             return _settingsW500RoundedFill!!
         }
-        _settingsW500RoundedFill = Builder(name = "SettingsW500RoundedFill", defaultWidth = 48.0.dp,
-                defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
-            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f,
-                    strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f,
-                    pathFillType = NonZero) {
+        _settingsW500RoundedFill = Builder(name = "SettingsW500RoundedFill", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(417.65f, 885.98f)
                 quadToRelative(-14.92f, 0.0f, -26.55f, -9.39f)
                 quadToRelative(-11.64f, -9.39f, -13.6f, -24.29f)
@@ -98,3 +101,11 @@ public val MaterialSymbols.SettingsW500RoundedFill: ImageVector
     }
 
 private var _settingsW500RoundedFill: ImageVector? = null
+
+@Preview
+@Composable
+private fun Preview() {
+    Box(modifier = Modifier.padding(12.dp)) {
+        Image(imageVector = MaterialSymbols.SettingsW500RoundedFill, contentDescription = "")
+    }
+}

@@ -1,5 +1,10 @@
 package io.github.kingsword09.example.materialsymbols
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType.Companion.NonZero
 import androidx.compose.ui.graphics.SolidColor
@@ -10,17 +15,15 @@ import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.MaterialSymbols
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 public val MaterialSymbols.SearchW700Outlined: ImageVector
     get() {
         if (_searchW700Outlined != null) {
             return _searchW700Outlined!!
         }
-        _searchW700Outlined = Builder(name = "SearchW700Outlined", defaultWidth = 48.0.dp,
-                defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
-            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f,
-                    strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f,
-                    pathFillType = NonZero) {
+        _searchW700Outlined = Builder(name = "SearchW700Outlined", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(795.0f, 867.0f)
                 lineTo(526.0f, 599.0f)
                 quadToRelative(-29.0f, 22.92f, -68.46f, 35.96f)
@@ -53,3 +56,11 @@ public val MaterialSymbols.SearchW700Outlined: ImageVector
     }
 
 private var _searchW700Outlined: ImageVector? = null
+
+@Preview
+@Composable
+private fun Preview() {
+    Box(modifier = Modifier.padding(12.dp)) {
+        Image(imageVector = MaterialSymbols.SearchW700Outlined, contentDescription = "")
+    }
+}

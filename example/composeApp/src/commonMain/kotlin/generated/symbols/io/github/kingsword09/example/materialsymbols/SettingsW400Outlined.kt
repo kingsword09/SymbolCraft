@@ -1,5 +1,10 @@
 package io.github.kingsword09.example.materialsymbols
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathFillType.Companion.NonZero
 import androidx.compose.ui.graphics.SolidColor
@@ -10,17 +15,15 @@ import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.MaterialSymbols
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 public val MaterialSymbols.SettingsW400Outlined: ImageVector
     get() {
         if (_settingsW400Outlined != null) {
             return _settingsW400Outlined!!
         }
-        _settingsW400Outlined = Builder(name = "SettingsW400Outlined", defaultWidth = 48.0.dp,
-                defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
-            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f,
-                    strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f,
-                    pathFillType = NonZero) {
+        _settingsW400Outlined = Builder(name = "SettingsW400Outlined", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+            path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveToRelative(388.0f, 880.0f)
                 lineToRelative(-20.0f, -126.0f)
                 quadToRelative(-19.0f, -7.0f, -40.0f, -19.0f)
@@ -112,3 +115,11 @@ public val MaterialSymbols.SettingsW400Outlined: ImageVector
     }
 
 private var _settingsW400Outlined: ImageVector? = null
+
+@Preview
+@Composable
+private fun Preview() {
+    Box(modifier = Modifier.padding(12.dp)) {
+        Image(imageVector = MaterialSymbols.SettingsW400Outlined, contentDescription = "")
+    }
+}

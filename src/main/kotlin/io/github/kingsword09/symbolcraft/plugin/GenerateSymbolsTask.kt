@@ -73,12 +73,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             logDownloadStats(downloadStats)
 
             // Convert SVGs to Compose code
-            convertSvgsToCompose(tempDir, outputDir.get().asFile, packageName, downloadStats.successCount)
-
-            // Generate previews if enabled
-            if (ext.generatePreview.get()) {
-                generatePreviews(config, packageName)
-            }
+            convertSvgsToCompose(tempDir, outputDir.get().asFile, packageName, downloadStats.successCount, ext.generatePreview.get())
 
             // Log cache statistics
             val cacheStats = downloader.getCacheStats()
@@ -196,11 +191,12 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
-    private suspend fun convertSvgsToCompose(
+    private fun convertSvgsToCompose(
         tempDir: File,
         outputDir: File,
         packageName: String,
-        iconCount: Int
+        iconCount: Int,
+        generatePreview: Boolean = true,
     ) {
         logger.lifecycle("🔄 Converting SVGs to Compose ImageVectors...")
 
@@ -211,6 +207,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 inputDirectory = tempDir,
                 outputDirectory = outputDir,
                 packageName = packageName,
+                generatePreview = generatePreview,
                 accessorName = "MaterialSymbols",
                 allAssetsPropertyName = "AllIcons"
             )

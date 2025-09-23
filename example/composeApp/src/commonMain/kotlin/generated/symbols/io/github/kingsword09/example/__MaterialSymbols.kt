@@ -24,8 +24,6 @@ public val MaterialSymbols.AllIcons: ____KtList<ImageVector>
     if (__AllIcons != null) {
       return __AllIcons!!
     }
-    __AllIcons= listOf(HomeW400Outlined, HomeW400OutlinedFill, HomeW400Rounded, HomeW500Rounded,
-        PersonW500Outlined, PersonW500Rounded, PersonW500Sharp, SearchW400Outlined,
-        SearchW500Outlined, SearchW700Outlined, SettingsW400Outlined, SettingsW500RoundedFill)
+    __AllIcons= listOf(HomeW400Outlined, HomeW400OutlinedFill, HomeW400Rounded, HomeW500Rounded, PersonW500Outlined, PersonW500Rounded, PersonW500Sharp, SearchW400Outlined, SearchW500Outlined, SearchW700Outlined, SettingsW400Outlined, SettingsW500RoundedFill)
     return __AllIcons!!
   }

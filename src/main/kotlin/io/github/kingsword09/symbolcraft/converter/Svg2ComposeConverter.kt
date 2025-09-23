@@ -1,7 +1,7 @@
 package io.github.kingsword09.symbolcraft.converter
 
-import br.com.devsrsouza.svg2compose.Svg2Compose
-import br.com.devsrsouza.svg2compose.VectorType
+import io.github.kingsword09.svg2compose.Svg2Compose
+import io.github.kingsword09.svg2compose.VectorType
 import java.io.File
 
 /**
@@ -25,6 +25,7 @@ class Svg2ComposeConverter {
         inputDirectory: File,
         outputDirectory: File,
         packageName: String,
+        generatePreview: Boolean = true,
         accessorName: String = "GeneratedIcons",
         allAssetsPropertyName: String = "AllIcons"
     ) {
@@ -48,7 +49,7 @@ class Svg2ComposeConverter {
                 // e.g., "home_400_rounded_unfilled.svg" -> "HomeW400Rounded"
                 transformIconName(name)
             },
-            generatePreview = false
+            generatePreview = generatePreview
         )
 
         // Post-process generated files to ensure deterministic output
