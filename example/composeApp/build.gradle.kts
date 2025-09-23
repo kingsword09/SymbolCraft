@@ -91,8 +91,6 @@ materialSymbols {
 
     // 测试：启用预览生成但没有依赖
     generatePreview.set(true)
-    previewIconSize.set(32)
-    previewBackgroundColor.set("#F5F5F5")
 
     // 使用新的便捷方法
     symbol("search") {

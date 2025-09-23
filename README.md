@@ -22,11 +22,18 @@ A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotl
 
 ### 1. Add plugin to your project
 
+In your `libs.versions.toml` file:
+
+```toml
+[plugins]
+symbolCraft = { id = "io.github.kingsword09.symbolcraft", version = "x.x.x" }
+```
+
 In your `build.gradle.kts` file:
 
 ```kotlin
 plugins {
-    id("io.github.kingsword09.symbolcraft") version "x.x.x"
+    alias(libs.plugins.symbolCraft)
 }
 ```
 
@@ -35,14 +42,12 @@ plugins {
 ```kotlin
 materialSymbols {
     // Basic configuration
-    packageName.set("com.yourcompany.app.symbols")
+    packageName.set("com.app.symbols")
     outputDirectory.set("src/commonMain/kotlin")  // Support multiplatform projects
     cacheEnabled.set(true)
 
     // Preview generation configuration (optional)
     generatePreview.set(true)          // Enable preview generation
-    previewIconSize.set(32)            // Icon size in preview (dp)
-    previewBackgroundColor.set("#F5F5F5") // Preview background color
 
     // Individual icon configuration
     symbol("search") {
@@ -150,48 +155,14 @@ materialSymbols {
 }
 ```
 
-### Automatic preview dependency detection
-
-The plugin automatically detects Compose Preview dependencies in your project:
-
-- **androidx.compose**: `androidx.compose.ui:ui-tooling-preview`
-- **jetbrains.compose**: `org.jetbrains.compose.ui:ui-tooling-preview`
-
 ### Generated preview files
 
-When preview is enabled, the plugin generates preview files in the `{packageName}.preview` package:
-
 ```kotlin
-// Individual icon preview
-@Preview(name = "home - W400Outlined", showBackground = true)
+@Preview
 @Composable
-fun PreviewHomeW400Outlined() {
-    MaterialTheme {
-        Surface {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = MaterialSymbols.HomeW400Outlined,
-                    contentDescription = "home",
-                    modifier = Modifier.size(32.dp)
-                )
-                Text("home", fontSize = 12.sp)
-                Text("W400Outlined", fontSize = 10.sp, color = Color.Gray)
-            }
-        }
-    }
-}
-
-// All icons overview
-@Preview(name = "All Material Symbols Overview", widthDp = 400, heightDp = 600)
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun PreviewAllMaterialSymbols() {
-    MaterialTheme {
-        Surface {
-            FlowRow {
-                // Display all generated icons...
-            }
-        }
+private fun Preview() {
+    Box(modifier = Modifier.padding(12.dp)) {
+        Image(imageVector = MaterialSymbols.HomeW400Outlined, contentDescription = "")
     }
 }
 ```
@@ -323,17 +294,15 @@ your-project/
 ├── src/
 │   └── commonMain/                         # Multiplatform project support
 │       └── kotlin/
-│           ├── com/yourcompany/app/
+│           ├── com/app/
 │           │   └── MainActivity.kt
 │           └── generated/                  # Generated code directory
 │               └── symbols/                # Icons package
 │                   ├── MaterialSymbols.kt  # Icon access object
-│                   ├── com/yourcompany/app/symbols/materialsymbols/
+│                   ├── com/app/symbols/materialsymbols/
 │                   │   ├── SearchW400Outlined.kt
 │                   │   ├── HomeW500RoundedFill.kt
 │                   │   └── PersonW700Sharp.kt
-│                   └── preview/            # Preview files (optional)
-│                       └── MaterialSymbolsPreviews.kt
 └── material-symbols-cache/                 # Temporary cache directory
     └── temp-svgs/                          # SVG temporary files
 ```
@@ -500,21 +469,6 @@ materialSymbols {
    src/**/generated/
    ```
 
-6. **Preview generation failed**
-   Check if Compose Preview dependencies are added:
-   ```kotlin
-   // Android projects
-   debugImplementation("androidx.compose.ui:ui-tooling-preview:$compose_version")
-
-   // Desktop projects
-   implementation(compose.desktop.ui.tooling.preview)
-   ```
-
-7. **Previews not showing in IDE**
-   - Ensure IDE supports Compose Preview
-   - Check generated preview file path is correct
-   - Restart IDE or refresh project
-
 ### Debug options
 
 ```bash
@@ -534,11 +488,72 @@ materialSymbols {
 - **GenerateSymbolsTask** - Core generation task
 - **SvgDownloader** - Smart SVG downloader
 - **Svg2ComposeConverter** - SVG to Compose converter
+- **PreviewGenerator** - Compose preview generator
 
 ### Data flow
 
 ```
-Configuration → Style parsing → Parallel download → SVG conversion → Deterministic processing → Generate code
+Configuration → Style parsing → Parallel download → SVG conversion → Deterministic processing → Generate code → Preview generation
+```
+
+## 🎮 Example Application
+
+The project includes a complete Kotlin Multiplatform example application that demonstrates SymbolCraft usage:
+
+### Example app features
+
+- **Multi-platform**: Supports Android, iOS, and Desktop (JVM)
+- **Generated icons**: Uses SymbolCraft to generate Material Symbols icons
+- **Preview support**: Includes generated Compose previews for all icons
+- **Real-world usage**: Shows practical implementation patterns
+
+### Running the example
+
+```bash
+# Navigate to example directory
+cd example
+
+# Generate Material Symbols icons
+./gradlew generateMaterialSymbols
+
+# Run Android app
+./gradlew :composeApp:assembleDebug
+
+# Run Desktop app
+./gradlew :composeApp:run
+
+# For iOS, open iosApp/iosApp.xcodeproj in Xcode
+```
+
+### Example configuration
+
+The example app demonstrates various configuration options:
+
+```kotlin
+materialSymbols {
+    packageName.set("io.github.kingsword09.example")
+    outputDirectory.set("src/commonMain/kotlin")
+    generatePreview.set(true)
+
+    symbol("home") {
+        standardWeights()
+        style(400, SymbolVariant.ROUNDED)
+        style(400, SymbolVariant.OUTLINED, SymbolFill.FILLED)
+    }
+
+    symbol("search") {
+        standardWeights(SymbolVariant.OUTLINED)
+    }
+
+    symbol("person") {
+        allVariants(500)
+    }
+
+    symbol("settings") {
+        style(400, SymbolVariant.OUTLINED)
+        bothFills(500, SymbolVariant.ROUNDED)
+    }
+}
 ```
 
 ## 🤝 Contributing
@@ -565,14 +580,18 @@ cd SymbolCraft
 
 4. Run example application:
 ```bash
-cd sample-android
-../gradlew generateMaterialSymbols
-../gradlew assembleDebug
+cd example
+./gradlew generateMaterialSymbols
+./gradlew :composeApp:assembleDebug
 ```
 
-## 📄 License
+### Development workflow
 
-Apache 2.0 License - See [LICENSE](LICENSE) file for details
+1. Make changes to plugin source code in `src/main/kotlin/`
+2. Build and publish locally: `./gradlew publishToMavenLocal`
+3. Test changes using the example app: `cd example && ./gradlew generateMaterialSymbols`
+4. Run tests: `./gradlew test`
+5. Submit pull request
 
 ## 🙏 Acknowledgments
 
@@ -583,11 +602,6 @@ Apache 2.0 License - See [LICENSE](LICENSE) file for details
 - [esm.sh](https://esm.sh) - CDN service for Material Symbols SVG files
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android modern UI toolkit
 
-## 📮 Contact
+## 📄 License
 
-- GitHub: [@kingsword09](https://github.com/kingsword09)
-- Issues: [GitHub Issues](https://github.com/kingsword09/SymbolCraft/issues)
-
----
-
-**Note**: This project has been thoroughly tested and optimized for production use. It features deterministic builds, smart caching, and high-performance parallel processing capabilities.
+Apache 2.0 License - See [LICENSE](LICENSE) file for details
