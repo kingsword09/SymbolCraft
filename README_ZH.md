@@ -22,11 +22,18 @@
 
 ### 1. 添加插件到项目
 
+在你的 `libs.versions.toml` 文件中：
+
+```toml
+[plugins]
+symbolCraft = { id = "io.github.kingsword09.symbolcraft", version = "x.x.x" }
+```
+
 在你的 `build.gradle.kts` 文件中：
 
 ```kotlin
 plugins {
-    id("io.github.kingsword09.symbolcraft") version "x.x.x"
+    alias(libs.plugins.symbolCraft)
 }
 ```
 
@@ -35,14 +42,12 @@ plugins {
 ```kotlin
 materialSymbols {
     // 基础配置
-    packageName.set("com.yourcompany.app.symbols")
+    packageName.set("com.app.symbols")
     outputDirectory.set("src/commonMain/kotlin")  // 支持多平台项目
     cacheEnabled.set(true)
 
     // 预览生成配置（可选）
     generatePreview.set(true)          // 启用预览生成
-    previewIconSize.set(32)            // 预览中图标大小（dp）
-    previewBackgroundColor.set("#F5F5F5") // 预览背景色
 
     // 单个图标配置
     symbol("search") {
@@ -150,48 +155,14 @@ materialSymbols {
 }
 ```
 
-### 预览依赖自动检测
-
-插件会自动检测项目中的 Compose Preview 依赖：
-
-- **androidx.compose**: `androidx.compose.ui:ui-tooling-preview`
-- **jetbrains.compose**: `org.jetbrains.compose.ui:ui-tooling-preview`
-
 ### 生成的预览文件
 
-启用预览后，插件会在 `{packageName}.preview` 包下生成：
-
 ```kotlin
-// 单个图标预览
-@Preview(name = "home - W400Outlined", showBackground = true)
+@Preview
 @Composable
-fun PreviewHomeW400Outlined() {
-    MaterialTheme {
-        Surface {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = MaterialSymbols.HomeW400Outlined,
-                    contentDescription = "home",
-                    modifier = Modifier.size(32.dp)
-                )
-                Text("home", fontSize = 12.sp)
-                Text("W400Outlined", fontSize = 10.sp, color = Color.Gray)
-            }
-        }
-    }
-}
-
-// 所有图标概览
-@Preview(name = "All Material Symbols Overview", widthDp = 400, heightDp = 600)
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun PreviewAllMaterialSymbols() {
-    MaterialTheme {
-        Surface {
-            FlowRow {
-                // 显示所有生成的图标...
-            }
-        }
+private fun Preview() {
+    Box(modifier = Modifier.padding(12.dp)) {
+        Image(imageVector = MaterialSymbols.HomeW400Outlined, contentDescription = "")
     }
 }
 ```
@@ -224,7 +195,7 @@ materialSymbols {
 
     // 缓存配置
     cacheEnabled.set(true)
-    cacheDirectory.set("build/material-symbols-cache")
+    cacheDirectory.set("material-symbols-cache")
 
     // 预览配置
     generatePreview.set(false)          // 是否生成 Compose 预览
@@ -323,20 +294,17 @@ your-project/
 ├── src/
 │   └── commonMain/                         # 多平台项目支持
 │       └── kotlin/
-│           ├── com/yourcompany/app/
+│           ├── com/app/
 │           │   └── MainActivity.kt
 │           └── generated/                  # 生成的代码目录
 │               └── symbols/                # 图标包
 │                   ├── MaterialSymbols.kt  # 图标访问对象
-│                   ├── com/yourcompany/app/symbols/materialsymbols/
+│                   ├── com/app/symbols/materialsymbols/
 │                   │   ├── SearchW400Outlined.kt
 │                   │   ├── HomeW500RoundedFill.kt
 │                   │   └── PersonW700Sharp.kt
-│                   └── preview/            # 预览文件（可选）
-│                       └── MaterialSymbolsPreviews.kt
-└── build/
-    └── material-symbols-cache/             # 临时缓存目录
-        └── temp-svgs/                      # SVG 临时文件
+└── material-symbols-cache/                 # 临时缓存目录
+    └── temp-svgs/                          # SVG 临时文件
 ```
 
 ## 📁 Git 配置建议
@@ -349,7 +317,7 @@ your-project/
 # SymbolCraft 生成的文件
 **/generated/symbols/
 src/**/generated/
-build/material-symbols-cache/
+material-symbols-cache/
 
 # 或者更具体的忽略
 src/commonMain/kotlin/generated/
@@ -501,21 +469,6 @@ materialSymbols {
    src/**/generated/
    ```
 
-6. **预览生成失败**
-   检查是否添加了 Compose Preview 依赖：
-   ```kotlin
-   // Android 项目
-   debugImplementation("androidx.compose.ui:ui-tooling-preview:$compose_version")
-
-   // Desktop 项目
-   implementation(compose.desktop.ui.tooling.preview)
-   ```
-
-7. **预览在 IDE 中不显示**
-   - 确保 IDE 支持 Compose Preview
-   - 检查生成的预览文件路径是否正确
-   - 重启 IDE 或刷新项目
-
 ### 调试选项
 
 ```bash
@@ -535,11 +488,72 @@ materialSymbols {
 - **GenerateSymbolsTask** - 核心生成任务
 - **SvgDownloader** - 智能 SVG 下载器
 - **Svg2ComposeConverter** - SVG 转 Compose 转换器
+- **PreviewGenerator** - Compose 预览生成器
 
 ### 数据流
 
 ```
-配置 → 样式解析 → 并行下载 → SVG 转换 → 确定性处理 → 生成代码
+配置 → 样式解析 → 并行下载 → SVG 转换 → 确定性处理 → 生成代码 → 预览生成
+```
+
+## 🎮 示例应用
+
+项目包含一个完整的 Kotlin Multiplatform 示例应用，演示 SymbolCraft 的使用：
+
+### 示例应用特性
+
+- **多平台**: 支持 Android、iOS 和 Desktop (JVM)
+- **生成图标**: 使用 SymbolCraft 生成 Material Symbols 图标
+- **预览支持**: 包含所有图标的生成 Compose 预览
+- **真实使用**: 展示实际实现模式
+
+### 运行示例
+
+```bash
+# 进入示例目录
+cd example
+
+# 生成 Material Symbols 图标
+./gradlew generateMaterialSymbols
+
+# 运行 Android 应用
+./gradlew :composeApp:assembleDebug
+
+# 运行 Desktop 应用
+./gradlew :composeApp:run
+
+# iOS 应用需要在 Xcode 中打开 iosApp/iosApp.xcodeproj
+```
+
+### 示例配置
+
+示例应用演示了各种配置选项：
+
+```kotlin
+materialSymbols {
+    packageName.set("io.github.kingsword09.example")
+    outputDirectory.set("src/commonMain/kotlin")
+    generatePreview.set(true)
+
+    symbol("home") {
+        standardWeights()
+        style(400, SymbolVariant.ROUNDED)
+        style(400, SymbolVariant.OUTLINED, SymbolFill.FILLED)
+    }
+
+    symbol("search") {
+        standardWeights(SymbolVariant.OUTLINED)
+    }
+
+    symbol("person") {
+        allVariants(500)
+    }
+
+    symbol("settings") {
+        style(400, SymbolVariant.OUTLINED)
+        bothFills(500, SymbolVariant.ROUNDED)
+    }
+}
 ```
 
 ## 🤝 贡献
@@ -566,14 +580,18 @@ cd SymbolCraft
 
 4. 运行示例应用：
 ```bash
-cd sample-android
-../gradlew generateMaterialSymbols
-../gradlew assembleDebug
+cd example
+./gradlew generateMaterialSymbols
+./gradlew :composeApp:assembleDebug
 ```
 
-## 📄 许可证
+### 开发工作流
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+1. 在 `src/main/kotlin/` 中修改插件源代码
+2. 构建并本地发布：`./gradlew publishToMavenLocal`
+3. 使用示例应用测试变更：`cd example && ./gradlew generateMaterialSymbols`
+4. 运行测试：`./gradlew test`
+5. 提交 pull request
 
 ## 🙏 致谢
 
@@ -584,11 +602,6 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 - [esm.sh](https://esm.sh) - 提供 CDN 服务的 Material Symbols SVG 文件
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android 现代 UI 工具包
 
-## 📮 联系方式
+## 📄 许可证
 
-- GitHub: [@kingsword09](https://github.com/kingsword09)
-- Issues: [GitHub Issues](https://github.com/kingsword09/SymbolCraft/issues)
-
----
-
-**注意**：该项目已经过充分测试和优化，可以在生产环境中使用。具备确定性构建、智能缓存和高性能并行处理能力。
+Apache 2.0 License - 详见 [LICENSE](LICENSE) 文件

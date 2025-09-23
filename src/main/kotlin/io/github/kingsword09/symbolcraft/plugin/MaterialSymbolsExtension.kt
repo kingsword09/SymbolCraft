@@ -3,7 +3,6 @@ package io.github.kingsword09.symbolcraft.plugin
 import io.github.kingsword09.symbolcraft.model.SymbolFill
 import io.github.kingsword09.symbolcraft.model.SymbolVariant
 import io.github.kingsword09.symbolcraft.model.SymbolStyle
-import io.github.kingsword09.symbolcraft.model.SymbolStyles
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.ListProperty
 
@@ -17,8 +16,6 @@ abstract class MaterialSymbolsExtension {
     abstract val assetsDirectory: Property<String>
     // Preview generation configuration
     abstract val generatePreview: Property<Boolean>
-    abstract val previewIconSize: Property<Int>
-    abstract val previewBackgroundColor: Property<String>
     // Optional: external SVG->Compose converter (CLI) support
     abstract val converterPath: Property<String>
     abstract val converterArgs: ListProperty<String>
@@ -36,8 +33,6 @@ abstract class MaterialSymbolsExtension {
         packageName.convention("io.github.kingsword09.symbolcraft.symbols")
         assetsDirectory.convention("src/main/assets/material-symbols")
         generatePreview.convention(false)
-        previewIconSize.convention(24)
-        previewBackgroundColor.convention("#FFFFFF")
         converterPath.convention("")
         converterArgs.convention(emptyList())
     }
