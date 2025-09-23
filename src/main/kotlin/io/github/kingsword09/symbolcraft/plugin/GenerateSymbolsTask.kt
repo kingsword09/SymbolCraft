@@ -39,12 +39,6 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @get:Input
     abstract val projectBuildDir: Property<String>
 
-    @get:Input
-    abstract val hasAndroidxPreview: Property<Boolean>
-
-    @get:Input
-    abstract val hasJetpackPreview: Property<Boolean>
-
     @TaskAction
     fun generate() = runBlocking {
         val ext = extension.get()
