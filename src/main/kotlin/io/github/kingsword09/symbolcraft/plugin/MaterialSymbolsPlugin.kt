@@ -2,6 +2,7 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import java.io.File
 
 class MaterialSymbolsPlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -27,6 +28,38 @@ class MaterialSymbolsPlugin : Plugin<Project> {
             task.group = "material symbols"
             task.description = "Clean Material Symbols cache"
             task.extension.set(extension)
+        }
+
+        project.tasks.register("cleanGeneratedSymbols") { task ->
+            task.group = "material symbols"
+            task.description = "Clean generated Material Symbols files"
+            task.doLast {
+                val packageName = extension.packageName.get()
+                val outputDir = project.layout.projectDirectory.dir(extension.outputDirectory).get().asFile
+                val packagePath = packageName.replace('.', '/')
+                val symbolsDir = File(outputDir, "$packagePath/materialsymbols")
+                val mainSymbolsFile = File(outputDir, "$packagePath/__MaterialSymbols.kt")
+
+                var deletedCount = 0
+                if (symbolsDir.exists()) {
+                    symbolsDir.listFiles()?.forEach { file ->
+                        if (file.isFile && file.extension == "kt") {
+                            file.delete()
+                            deletedCount++
+                        }
+                    }
+                    if (symbolsDir.listFiles()?.isEmpty() == true) {
+                        symbolsDir.delete()
+                    }
+                }
+
+                if (mainSymbolsFile.exists()) {
+                    mainSymbolsFile.delete()
+                    deletedCount++
+                }
+
+                project.logger.lifecycle("🧹 Cleaned $deletedCount generated symbol files")
+            }
         }
 
         project.tasks.register("validateSymbolsConfig", ValidateSymbolsConfigTask::class.java) { task ->
