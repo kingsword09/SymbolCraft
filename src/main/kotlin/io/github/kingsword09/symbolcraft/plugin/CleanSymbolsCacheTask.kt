@@ -15,9 +15,9 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
         val dir = File(extension.get().cacheDirectory.get())
         if (dir.exists()) {
             dir.deleteRecursively()
-            logger.lifecycle("Cleaned symbols cache: ${dir}")
+            logger.lifecycle("Cleaned symbols cache: $dir")
         } else {
-            logger.lifecycle("No cache to clean: ${dir}")
+            logger.lifecycle("No cache to clean: $dir")
         }
     }
 }

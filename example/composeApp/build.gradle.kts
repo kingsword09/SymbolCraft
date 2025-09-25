@@ -1,5 +1,6 @@
 import io.github.kingsword09.symbolcraft.model.SymbolFill
 import io.github.kingsword09.symbolcraft.model.SymbolVariant
+import io.github.kingsword09.symbolcraft.model.SymbolWeight
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -104,7 +105,7 @@ materialSymbols {
     }
 
     symbol("person") {
-        allVariants(weight = 500) // 所有变体（outlined, rounded, sharp）
+        allVariants(weight = SymbolWeight.W500) // 所有变体（outlined, rounded, sharp）
     }
 
     // 传统方式仍然支持

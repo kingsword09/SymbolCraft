@@ -46,9 +46,13 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val packageName = ext.packageName.get()
         val cacheDir = cacheDirectory.get().trim('/', '\\')
         val tempDir = File(projectBuildDir.get(), "$cacheDir/temp-svgs")
+        val outputDirFile = outputDir.get().asFile
 
         logger.lifecycle("🎨 Generating Material Symbols...")
         logger.lifecycle("📊 Symbols to generate: ${config.values.sumOf { it.size }} icons")
+
+        // Clean old generated files to ensure fresh generation
+        cleanOldGeneratedFiles(outputDirFile, packageName)
 
         val downloader = SvgDownloader(
             cacheDirectory = File(gradleUserHomeDir.get(), "caches/symbolcraft/svg-cache").absolutePath,
@@ -65,7 +69,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             logDownloadStats(downloadStats)
 
             // Convert SVGs to Compose code
-            convertSvgsToCompose(tempDir, outputDir.get().asFile, packageName, downloadStats.successCount, ext.generatePreview.get())
+            convertSvgsToCompose(tempDir, outputDirFile, packageName, downloadStats.successCount, ext.generatePreview.get())
 
             // Log cache statistics
             val cacheStats = downloader.getCacheStats()
@@ -98,6 +102,31 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             } catch (cleanupException: Exception) {
                 logger.warn("⚠️ Warning: Failed to cleanup downloader: ${cleanupException.message}")
             }
+        }
+    }
+
+    /**
+     * Clean old generated files to ensure fresh generation
+     */
+    private fun cleanOldGeneratedFiles(outputDir: File, packageName: String) {
+        val packagePath = packageName.replace('.', '/')
+        val symbolsDir = File(outputDir, "$packagePath/materialsymbols")
+        val mainSymbolsFile = File(outputDir, "$packagePath/__MaterialSymbols.kt")
+
+        // Clean individual icon files
+        if (symbolsDir.exists()) {
+            symbolsDir.listFiles()?.forEach { file ->
+                if (file.isFile && file.extension == "kt") {
+                    logger.debug("🧹 Cleaning old generated file: ${file.name}")
+                    file.delete()
+                }
+            }
+        }
+
+        // Clean main symbols file to force regeneration
+        if (mainSymbolsFile.exists()) {
+            logger.debug("🧹 Cleaning main symbols file")
+            mainSymbolsFile.delete()
         }
     }
 
