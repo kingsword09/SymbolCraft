@@ -32,10 +32,13 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
 
             // Clean SVG cache
             if (svgCacheDir.exists()) {
-                val cacheFiles = svgCacheDir.listFiles()
-                deletedCount += cacheFiles?.size ?: 0
-                svgCacheDir.deleteRecursively()
-                logger.lifecycle("   🧹 Cleaned SVG cache: ${cacheFiles?.size ?: 0} files")
+                val fileCount = svgCacheDir.listFiles()?.size ?: 0
+                if (svgCacheDir.deleteRecursively()) {
+                    deletedCount += fileCount
+                    logger.lifecycle("   🧹 Cleaned SVG cache: $fileCount files")
+                } else {
+                    logger.warn("   ⚠️ Failed to clean SVG cache directory: ${svgCacheDir.absolutePath}")
+                }
             }
 
             // Clean temp SVGs
@@ -55,6 +58,7 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
             logger.lifecycle("✅ Total cache cleaned: $deletedCount files")
         } else {
             logger.lifecycle("ℹ️  No cache to clean (directory does not exist)")
+            logger.lifecycle("没有要清理的缓存（目录不存在）")
         }
     }
 }

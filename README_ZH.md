@@ -371,10 +371,10 @@ materialSymbols {
     cacheDirectory.set("/var/tmp/symbolcraft")
 
     // Windows
-    cacheDirectory.set("C:\\Temp\\SymbolCraft")
+    cacheDirectory.set("""C:\Temp\SymbolCraft""")
 
     // 网络共享（Windows UNC）
-    cacheDirectory.set("\\\\server\\share\\symbolcraft-cache")
+    cacheDirectory.set("""\\server\share\symbolcraft-cache""")
 
     // 自动清理: ❌ 禁用（避免多项目冲突）
 }

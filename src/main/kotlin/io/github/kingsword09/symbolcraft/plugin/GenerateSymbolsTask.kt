@@ -196,8 +196,11 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 val cacheKey = file.nameWithoutExtension
                 if (cacheKey !in requiredCacheKeys) {
                     logger.debug("🧹 Cleaning unused cache file: ${file.name}")
-                    file.delete()
-                    cleanedCount++
+                    if (file.delete()) {
+                        cleanedCount++
+                    } else {
+                        logger.warn("   ⚠️ Failed to delete unused cache file: ${file.absolutePath}")
+                    }
                 }
             }
         }
