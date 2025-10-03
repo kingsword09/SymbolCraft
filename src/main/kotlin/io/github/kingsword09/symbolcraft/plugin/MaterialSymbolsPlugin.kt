@@ -28,6 +28,7 @@ class MaterialSymbolsPlugin : Plugin<Project> {
             task.group = "material symbols"
             task.description = "Clean Material Symbols cache"
             task.extension.set(extension)
+            task.projectBuildDir.set(project.layout.buildDirectory.get().asFile.absolutePath)
         }
 
         project.tasks.register("cleanGeneratedSymbols") { task ->

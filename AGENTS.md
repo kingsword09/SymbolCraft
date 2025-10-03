@@ -341,9 +341,10 @@ project/
 ### 多层缓存架构
 
 1. **SVG 下载缓存**
-   - 位置：`~/.gradle/caches/symbolcraft/svg-cache/`
+   - 位置：`build/material-symbols-cache/svg-cache/`
    - 有效期：7天
    - 包含：SVG 文件 + 元数据（时间戳、URL、哈希值）
+   - 特点：项目隔离，`./gradlew clean` 自动清理
 
 2. **Gradle 任务缓存**
    - 增量构建支持
@@ -420,7 +421,13 @@ src/main/kotlin/generated/
 
 2. **缓存问题**
    ```bash
+   # 清理 SymbolCraft 缓存
    ./gradlew cleanSymbolsCache
+
+   # 或者清理整个 build 目录（包括缓存）
+   ./gradlew clean
+
+   # 强制重新生成
    ./gradlew generateMaterialSymbols --rerun-tasks
    ```
 
@@ -508,8 +515,8 @@ materialSymbols {
     // 禁用缓存（不推荐）
     cacheEnabled.set(false)
 
-    // 自定义缓存目录
-    cacheDirectory.set("custom-cache")
+    // 自定义缓存目录（相对于 build 目录）
+    cacheDirectory.set("custom-cache")  // 将缓存到 build/custom-cache/
 
     // 强制重新生成
     forceRegenerate.set(true)

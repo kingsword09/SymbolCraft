@@ -44,18 +44,30 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val ext = extension.get()
         val config = ext.getSymbolsConfig()
         val packageName = ext.packageName.get()
-        val cacheDir = cacheDirectory.get().trim('/', '\\')
-        val tempDir = File(projectBuildDir.get(), "$cacheDir/temp-svgs")
+        val cacheDirPath = cacheDirectory.get()
+        val projectBuildDirPath = projectBuildDir.get()
+
+        // Resolve cache directory: support both absolute and relative paths
+        val cacheBaseDir = resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
+        val tempDir = File(cacheBaseDir, "temp-svgs")
+        val svgCacheDir = File(cacheBaseDir, "svg-cache")
         val outputDirFile = outputDir.get().asFile
 
         logger.lifecycle("🎨 Generating Material Symbols...")
         logger.lifecycle("📊 Symbols to generate: ${config.values.sumOf { it.size }} icons")
+        logger.debug("📂 Cache directory: ${cacheBaseDir.absolutePath}")
 
         // Clean old generated files to ensure fresh generation
         cleanOldGeneratedFiles(outputDirFile, packageName)
 
+        // Clean unused cache files before generating
+        // Skip if using shared cache (absolute path or outside build directory) to avoid conflicts
+        if (ext.cacheEnabled.get() && shouldCleanCache(cacheBaseDir, projectBuildDirPath)) {
+            cleanUnusedCache(svgCacheDir, config)
+        }
+
         val downloader = SvgDownloader(
-            cacheDirectory = File(gradleUserHomeDir.get(), "caches/symbolcraft/svg-cache").absolutePath,
+            cacheDirectory = svgCacheDir.absolutePath,
             cacheEnabled = ext.cacheEnabled.get()
         )
 
@@ -106,12 +118,74 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     }
 
     /**
-     * Clean old generated files to ensure fresh generation
+     * Resolve cache directory path, supporting both absolute and relative paths
+     *
+     * @param cacheDirPath The cache directory path from configuration
+     * @param projectBuildDir The project build directory
+     * @return Resolved File pointing to the cache base directory
+     *
+     * Examples:
+     * - "material-symbols-cache" -> <projectBuildDir>/material-symbols-cache
+     * - "/var/tmp/symbols" -> /var/tmp/symbols (absolute path preserved)
+     * - "C:\cache\symbols" -> C:\cache\symbols (Windows absolute path preserved)
+     * - "\\server\share\cache" -> \\server\share\cache (UNC path preserved)
+     */
+    private fun resolveCacheDirectory(cacheDirPath: String, projectBuildDir: String): File {
+        val cacheFile = File(cacheDirPath)
+
+        return if (cacheFile.isAbsolute) {
+            // Absolute path: use as-is (supports /absolute, C:\absolute, \\UNC\paths)
+            cacheFile
+        } else {
+            // Relative path: resolve relative to project build directory
+            File(projectBuildDir, cacheDirPath)
+        }
+    }
+
+    /**
+     * Determine if cache cleanup should be performed
+     *
+     * Cache cleanup is SKIPPED if:
+     * - Cache is located outside the project build directory (shared cache)
+     * - This prevents conflicts when multiple projects/modules share the same cache
+     *
+     * Cache cleanup is PERFORMED if:
+     * - Cache is inside the project build directory (project-local cache)
+     *
+     * @param cacheBaseDir The resolved cache directory
+     * @param projectBuildDir The project build directory path
+     * @return true if cleanup should be performed, false if it should be skipped
+     */
+    private fun shouldCleanCache(cacheBaseDir: File, projectBuildDir: String): Boolean {
+        val buildDir = File(projectBuildDir).canonicalFile
+        val cacheDir = cacheBaseDir.canonicalFile
+
+        // Check if cache is inside build directory
+        val isInsideBuildDir = try {
+            cacheDir.startsWith(buildDir)
+        } catch (e: Exception) {
+            logger.warn("⚠️ Failed to determine cache location relationship: ${e.message}")
+            false // Be conservative, skip cleanup if unsure
+        }
+
+        if (!isInsideBuildDir) {
+            logger.lifecycle("ℹ️  Cache cleanup skipped: Using shared cache outside build directory")
+            logger.lifecycle("   Cache location: ${cacheDir.absolutePath}")
+            logger.lifecycle("   Shared caches are preserved to avoid conflicts across projects")
+        }
+
+        return isInsideBuildDir
+    }
+
+    /**
+     * Clean old generated files and unused cache to ensure fresh generation
      */
     private fun cleanOldGeneratedFiles(outputDir: File, packageName: String) {
         val packagePath = packageName.replace('.', '/')
         val symbolsDir = File(outputDir, "$packagePath/materialsymbols")
         val mainSymbolsFile = File(outputDir, "$packagePath/__MaterialSymbols.kt")
+
+        var cleanedCount = 0
 
         // Clean individual icon files
         if (symbolsDir.exists()) {
@@ -119,6 +193,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 if (file.isFile && file.extension == "kt") {
                     logger.debug("🧹 Cleaning old generated file: ${file.name}")
                     file.delete()
+                    cleanedCount++
                 }
             }
         }
@@ -127,6 +202,41 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         if (mainSymbolsFile.exists()) {
             logger.debug("🧹 Cleaning main symbols file")
             mainSymbolsFile.delete()
+            cleanedCount++
+        }
+
+        if (cleanedCount > 0) {
+            logger.lifecycle("🧹 Cleaned $cleanedCount old generated files")
+        }
+    }
+
+    /**
+     * Clean unused SVG cache files that are no longer in the configuration
+     */
+    private fun cleanUnusedCache(cacheDir: File, config: Map<String, List<io.github.kingsword09.symbolcraft.model.SymbolStyle>>) {
+        if (!cacheDir.exists()) return
+
+        // Build set of required cache keys
+        val requiredCacheKeys = config.flatMap { (iconName, styles) ->
+            styles.map { style -> style.getCacheKey(iconName) }
+        }.toSet()
+
+        var cleanedCount = 0
+
+        // Clean unused SVG and meta files
+        cacheDir.listFiles()?.forEach { file ->
+            if (file.isFile) {
+                val cacheKey = file.nameWithoutExtension
+                if (cacheKey !in requiredCacheKeys) {
+                    logger.debug("🧹 Cleaning unused cache file: ${file.name}")
+                    file.delete()
+                    cleanedCount++
+                }
+            }
+        }
+
+        if (cleanedCount > 0) {
+            logger.lifecycle("🧹 Cleaned $cleanedCount unused cache files")
         }
     }
 
