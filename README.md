@@ -343,14 +343,66 @@ There are two strategies for handling generated files:
 ### Multi-layer cache architecture
 
 1. **SVG download cache**
-   - Location: `~/.gradle/caches/symbolcraft/svg-cache/`
+   - Default location: `build/material-symbols-cache/svg-cache/`
    - Validity: 7 days
    - Contains: SVG files + metadata (timestamp, URL, hash)
+   - Auto-cleanup: Unused cache files are automatically removed when configuration changes
+   - Path support: Both relative (to build directory) and absolute paths
 
 2. **Gradle task cache**
    - Incremental build support
    - Change detection based on configuration hash
    - Support `@CacheableTask` annotation
+
+### Cache path configuration
+
+**Relative path (default):**
+```kotlin
+materialSymbols {
+    cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
+    // Auto-cleanup: ✅ Enabled (project-local cache)
+}
+```
+
+**Absolute path (for shared/global cache):**
+```kotlin
+materialSymbols {
+    // Unix/Linux/macOS
+    cacheDirectory.set("/var/tmp/symbolcraft")
+
+    // Windows
+    cacheDirectory.set("""C:\Temp\SymbolCraft""")
+
+    // Network share (Windows UNC)
+    cacheDirectory.set("""\\server\share\symbolcraft-cache""")
+
+    // Auto-cleanup: ❌ Disabled (to prevent conflicts across projects)
+}
+```
+
+### Shared cache considerations
+
+When using absolute paths for shared caching across multiple projects:
+- ✅ Cache is shared, reducing redundant downloads and saving space
+- ✅ Faster builds when switching between projects
+- ⚠️ **Automatic cleanup is disabled** to prevent cache conflicts
+- 💡 Manual cleanup may be needed for old files
+
+**Output when using shared cache:**
+```
+ℹ️  Cache cleanup skipped: Using shared cache outside build directory
+   Cache location: /var/tmp/symbolcraft
+   Shared caches are preserved to avoid conflicts across projects
+```
+
+**Manual cleanup (if needed):**
+```bash
+# Clean old files (older than 30 days)
+find /var/tmp/symbolcraft -type f -mtime +30 -delete
+
+# Or clean entire shared cache
+rm -rf /var/tmp/symbolcraft
+```
 
 ### Cache statistics
 
@@ -358,6 +410,7 @@ After generation completes, cache usage will be displayed:
 ```
 📦 SVG Cache: 45 files, 2.31 MB
 💾 From cache: 8/12 icons
+🧹 Cleaned 3 unused cache files
 ```
 
 ## 🚀 Performance Optimization
@@ -426,8 +479,11 @@ materialSymbols {
     // Disable cache (not recommended)
     cacheEnabled.set(false)
 
-    // Custom cache directory
-    cacheDirectory.set("custom-cache")
+    // Custom cache directory (relative to build directory)
+    cacheDirectory.set("custom-cache")  // → build/custom-cache/
+
+    // Or use absolute path for shared cache across projects
+    cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
 
     // Force regenerate
     forceRegenerate.set(true)
@@ -446,9 +502,17 @@ materialSymbols {
 
 2. **Cache issues**
    ```bash
+   # Clean SymbolCraft cache
    ./gradlew cleanSymbolsCache
+
+   # Or clean entire build directory (including cache)
+   ./gradlew clean
+
+   # Force regenerate all icons
    ./gradlew generateMaterialSymbols --rerun-tasks
    ```
+
+   Note: Starting from v0.1.2, cache files are stored in `build/material-symbols-cache/` by default and are automatically cleaned when running `./gradlew clean`.
 
 3. **Icon not found**
    ```

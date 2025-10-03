@@ -343,14 +343,66 @@ src/main/kotlin/generated/
 ### 多层缓存架构
 
 1. **SVG 下载缓存**
-   - 位置：`~/.gradle/caches/symbolcraft/svg-cache/`
+   - 默认位置：`build/material-symbols-cache/svg-cache/`
    - 有效期：7天
    - 包含：SVG 文件 + 元数据（时间戳、URL、哈希值）
+   - 自动清理：配置变更时自动删除不再需要的缓存文件
+   - 路径支持：同时支持相对路径（基于 build 目录）和绝对路径
 
 2. **Gradle 任务缓存**
    - 增量构建支持
    - 基于配置哈希值的变更检测
    - 支持 `@CacheableTask` 注解
+
+### 缓存路径配置
+
+**相对路径（默认）：**
+```kotlin
+materialSymbols {
+    cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
+    // 自动清理: ✅ 启用（项目私有缓存）
+}
+```
+
+**绝对路径（用于共享/全局缓存）：**
+```kotlin
+materialSymbols {
+    // Unix/Linux/macOS
+    cacheDirectory.set("/var/tmp/symbolcraft")
+
+    // Windows
+    cacheDirectory.set("""C:\Temp\SymbolCraft""")
+
+    // 网络共享（Windows UNC）
+    cacheDirectory.set("""\\server\share\symbolcraft-cache""")
+
+    // 自动清理: ❌ 禁用（避免多项目冲突）
+}
+```
+
+### 共享缓存注意事项
+
+当使用绝对路径配置多个项目共享缓存时：
+- ✅ 缓存共享，减少重复下载，节省空间
+- ✅ 切换项目时构建更快
+- ⚠️ **自动清理功能被禁用**，避免缓存冲突
+- 💡 可能需要手动清理旧文件
+
+**使用共享缓存时的输出：**
+```
+ℹ️  Cache cleanup skipped: Using shared cache outside build directory
+   Cache location: /var/tmp/symbolcraft
+   Shared caches are preserved to avoid conflicts across projects
+```
+
+**手动清理（如需要）：**
+```bash
+# 清理30天前的旧文件
+find /var/tmp/symbolcraft -type f -mtime +30 -delete
+
+# 或者清理整个共享缓存
+rm -rf /var/tmp/symbolcraft
+```
 
 ### 缓存统计
 
@@ -358,6 +410,7 @@ src/main/kotlin/generated/
 ```
 📦 SVG Cache: 45 files, 2.31 MB
 💾 From cache: 8/12 icons
+🧹 Cleaned 3 unused cache files
 ```
 
 ## 🚀 性能优化
@@ -426,8 +479,11 @@ materialSymbols {
     // 禁用缓存（不推荐）
     cacheEnabled.set(false)
 
-    // 自定义缓存目录
-    cacheDirectory.set("custom-cache")
+    // 自定义缓存目录（相对于 build 目录）
+    cacheDirectory.set("custom-cache")  // → build/custom-cache/
+
+    // 或使用绝对路径实现跨项目共享缓存
+    cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
 
     // 强制重新生成
     forceRegenerate.set(true)
@@ -446,9 +502,17 @@ materialSymbols {
 
 2. **缓存问题**
    ```bash
+   # 清理 SymbolCraft 缓存
    ./gradlew cleanSymbolsCache
+
+   # 或者清理整个 build 目录（包括缓存）
+   ./gradlew clean
+
+   # 强制重新生成所有图标
    ./gradlew generateMaterialSymbols --rerun-tasks
    ```
+
+   注意：从 v0.1.2 版本开始，缓存文件默认存储在 `build/material-symbols-cache/` 目录，运行 `./gradlew clean` 时会自动清理。
 
 3. **图标未找到**
    ```
