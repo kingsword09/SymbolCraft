@@ -19,7 +19,7 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
         val projectBuildDirPath = projectBuildDir.get()
 
         // Resolve cache directory: support both absolute and relative paths
-        val cacheBaseDir = resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
+        val cacheBaseDir = PathUtils.resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
 
         logger.lifecycle("🧹 Cleaning Material Symbols cache...")
         logger.lifecycle("📂 Cache location: ${cacheBaseDir.absolutePath}")
@@ -55,31 +55,6 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
             logger.lifecycle("✅ Total cache cleaned: $deletedCount files")
         } else {
             logger.lifecycle("ℹ️  No cache to clean (directory does not exist)")
-        }
-    }
-
-    /**
-     * Resolve cache directory path, supporting both absolute and relative paths
-     *
-     * @param cacheDirPath The cache directory path from configuration
-     * @param projectBuildDir The project build directory
-     * @return Resolved File pointing to the cache base directory
-     *
-     * Examples:
-     * - "material-symbols-cache" -> <projectBuildDir>/material-symbols-cache
-     * - "/var/tmp/symbols" -> /var/tmp/symbols (absolute path preserved)
-     * - "C:\cache\symbols" -> C:\cache\symbols (Windows absolute path preserved)
-     * - "\\server\share\cache" -> \\server\share\cache (UNC path preserved)
-     */
-    private fun resolveCacheDirectory(cacheDirPath: String, projectBuildDir: String): File {
-        val cacheFile = File(cacheDirPath)
-
-        return if (cacheFile.isAbsolute) {
-            // Absolute path: use as-is (supports /absolute, C:\absolute, \\UNC\paths)
-            cacheFile
-        } else {
-            // Relative path: resolve relative to project build directory
-            File(projectBuildDir, cacheDirPath)
         }
     }
 }

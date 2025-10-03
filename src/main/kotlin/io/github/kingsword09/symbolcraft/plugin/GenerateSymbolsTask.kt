@@ -48,7 +48,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val projectBuildDirPath = projectBuildDir.get()
 
         // Resolve cache directory: support both absolute and relative paths
-        val cacheBaseDir = resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
+        val cacheBaseDir = PathUtils.resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
         val tempDir = File(cacheBaseDir, "temp-svgs")
         val svgCacheDir = File(cacheBaseDir, "svg-cache")
         val outputDirFile = outputDir.get().asFile
@@ -118,31 +118,6 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     }
 
     /**
-     * Resolve cache directory path, supporting both absolute and relative paths
-     *
-     * @param cacheDirPath The cache directory path from configuration
-     * @param projectBuildDir The project build directory
-     * @return Resolved File pointing to the cache base directory
-     *
-     * Examples:
-     * - "material-symbols-cache" -> <projectBuildDir>/material-symbols-cache
-     * - "/var/tmp/symbols" -> /var/tmp/symbols (absolute path preserved)
-     * - "C:\cache\symbols" -> C:\cache\symbols (Windows absolute path preserved)
-     * - "\\server\share\cache" -> \\server\share\cache (UNC path preserved)
-     */
-    private fun resolveCacheDirectory(cacheDirPath: String, projectBuildDir: String): File {
-        val cacheFile = File(cacheDirPath)
-
-        return if (cacheFile.isAbsolute) {
-            // Absolute path: use as-is (supports /absolute, C:\absolute, \\UNC\paths)
-            cacheFile
-        } else {
-            // Relative path: resolve relative to project build directory
-            File(projectBuildDir, cacheDirPath)
-        }
-    }
-
-    /**
      * Determine if cache cleanup should be performed
      *
      * Cache cleanup is SKIPPED if:
@@ -157,20 +132,12 @@ abstract class GenerateSymbolsTask : DefaultTask() {
      * @return true if cleanup should be performed, false if it should be skipped
      */
     private fun shouldCleanCache(cacheBaseDir: File, projectBuildDir: String): Boolean {
-        val buildDir = File(projectBuildDir).canonicalFile
-        val cacheDir = cacheBaseDir.canonicalFile
-
-        // Check if cache is inside build directory
-        val isInsideBuildDir = try {
-            cacheDir.startsWith(buildDir)
-        } catch (e: Exception) {
-            logger.warn("⚠️ Failed to determine cache location relationship: ${e.message}")
-            false // Be conservative, skip cleanup if unsure
-        }
+        val buildDir = File(projectBuildDir)
+        val isInsideBuildDir = PathUtils.isCacheInsideBuildDir(cacheBaseDir, buildDir)
 
         if (!isInsideBuildDir) {
             logger.lifecycle("ℹ️  Cache cleanup skipped: Using shared cache outside build directory")
-            logger.lifecycle("   Cache location: ${cacheDir.absolutePath}")
+            logger.lifecycle("   Cache location: ${cacheBaseDir.canonicalFile.absolutePath}")
             logger.lifecycle("   Shared caches are preserved to avoid conflicts across projects")
         }
 
@@ -178,7 +145,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     }
 
     /**
-     * Clean old generated files and unused cache to ensure fresh generation
+     * Clean old generated files to ensure fresh generation
      */
     private fun cleanOldGeneratedFiles(outputDir: File, packageName: String) {
         val packagePath = packageName.replace('.', '/')
