@@ -298,22 +298,22 @@ After using the plugin, your project structure might look like this:
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                                    # Recommend adding generated files to ignore list
+├── .gitignore                          # Recommend adding generated files to ignore list
 ├── src/
-│   └── commonMain/                               # Multiplatform project support
+│   └── commonMain/                     # Multiplatform project support
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── com/app/symbols/                  # Generated icons package
+│           └── com/app/symbols/        # Generated icons package
 │               ├── __MaterialSymbols.kt          # Icon access object
 │               └── materialsymbols/              # Individual icon files
 │                   ├── SearchW400Outlined.kt
 │                   ├── HomeW500RoundedFill.kt
 │                   └── PersonW700Sharp.kt
 └── build/
-    └── material-symbols-cache/                   # Cache directory (in build folder by default)
-        ├── temp-svgs/                            # SVG temporary files
-        └── svg-cache/                            # Cached SVG files with metadata
+    └── material-symbols-cache/         # Cache directory (in build folder by default)
+        ├── temp-svgs/                  # SVG temporary files
+        └── svg-cache/                  # Cached SVG files with metadata
 ```
 
 ## 📁 Git Configuration Recommendations
@@ -606,7 +606,7 @@ The example app demonstrates various configuration options:
 ```kotlin
 materialSymbols {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/kotlin")
     generatePreview.set(true)
 
     // Using convenient methods

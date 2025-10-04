@@ -298,22 +298,22 @@ materialSymbols {
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                                    # 建议添加生成文件到忽略列表
+├── .gitignore                          # 建议添加生成文件到忽略列表
 ├── src/
-│   └── commonMain/                               # 多平台项目支持
+│   └── commonMain/                     # 多平台项目支持
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── com/app/symbols/                  # 生成的图标包
+│           └── com/app/symbols/        # 生成的图标包
 │               ├── __MaterialSymbols.kt          # 图标访问对象
 │               └── materialsymbols/              # 单个图标文件
 │                   ├── SearchW400Outlined.kt
 │                   ├── HomeW500RoundedFill.kt
 │                   └── PersonW700Sharp.kt
 └── build/
-    └── material-symbols-cache/                   # 缓存目录（默认在 build 文件夹）
-        ├── temp-svgs/                            # SVG 临时文件
-        └── svg-cache/                            # 缓存的 SVG 文件及元数据
+    └── material-symbols-cache/         # 缓存目录（默认在 build 文件夹）
+        ├── temp-svgs/                  # SVG 临时文件
+        └── svg-cache/                  # 缓存的 SVG 文件及元数据
 ```
 
 ## 📁 Git 配置建议
@@ -606,7 +606,7 @@ cd example
 ```kotlin
 materialSymbols {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/kotlin")
     generatePreview.set(true)
 
     // 使用便捷方法
