@@ -47,29 +47,35 @@ materialSymbols {
     cacheEnabled.set(true)
 
     // 预览生成配置（可选）
-    generatePreview.set(true)          // 启用预览生成
+    generatePreview.set(true)  // 启用预览生成
 
-    // 单个图标配置
+    // 单个图标配置（使用 Int 权重值）
     symbol("search") {
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
         style(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
     }
 
-    // 便捷的批量配置方法
+    // 或使用 SymbolWeight 枚举以获得类型安全
     symbol("home") {
+        style(weight = SymbolWeight.W400, variant = SymbolVariant.OUTLINED)
+        style(weight = SymbolWeight.W500, variant = SymbolVariant.ROUNDED)
+    }
+
+    // 便捷的批量配置方法
+    symbol("person") {
         standardWeights() // 自动添加 400, 500, 700 权重
     }
 
-    symbol("person") {
+    symbol("settings") {
         allVariants(weight = 400) // 添加所有变体 (outlined, rounded, sharp)
     }
 
-    symbol("settings") {
+    symbol("favorite") {
         bothFills(weight = 500, variant = SymbolVariant.ROUNDED) // 同时添加填充和未填充
     }
 
     // 批量配置多个图标
-    symbols("favorite", "star", "bookmark") {
+    symbols("star", "bookmark") {
         weights(400, 500, variant = SymbolVariant.OUTLINED)
     }
 }
@@ -142,11 +148,7 @@ fun MyScreen() {
 ```kotlin
 materialSymbols {
     // 启用预览功能
-    generatePreview.set(true)
-
-    // 可选：自定义预览设置
-    previewIconSize.set(32)                    // 图标大小（dp，默认24）
-    previewBackgroundColor.set("#F5F5F5")      // 背景颜色（默认#FFFFFF）
+    generatePreview.set(true)  // 生成 @Preview 函数
 
     // 配置图标...
     symbol("home") {
@@ -157,29 +159,22 @@ materialSymbols {
 
 ### 生成的预览文件
 
-```kotlin
-@Preview
-@Composable
-private fun Preview() {
-    Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = MaterialSymbols.HomeW400Outlined, contentDescription = "")
-    }
-}
-```
+插件使用 `svg-to-compose` 库的预览生成功能为你的图标生成预览函数。具体格式取决于你的项目设置和库版本。
 
 ### 在 IDE 中查看预览
 
 生成后，你可以在 Android Studio 或 IntelliJ IDEA 的 Preview 面板中查看：
 
-1. 打开生成的预览文件：`{packageName}/preview/MaterialSymbolsPreviews.kt`
-2. 点击 IDE 右侧的 "Preview" 面板
-3. 查看单个图标预览或所有图标概览
+1. 在输出目录的包路径下查找生成的预览文件
+2. 点击 IDE 右侧的 "Preview" 面板（Android Studio/IntelliJ IDEA）
+3. 在 IDE 中查看图标预览
 
 ### 多平台预览支持
 
+预览生成由底层的 `svg-to-compose` 库处理，支持：
 - **Android 项目**: 使用 `androidx.compose.ui.tooling.preview.Preview`
 - **Desktop 项目**: 使用 `androidx.compose.desktop.ui.tooling.preview.Preview`
-- **多平台项目**: 自动同时支持两种预览注解
+- **多平台项目**: 根据库配置决定
 
 ## 📋 配置选项
 
@@ -198,9 +193,7 @@ materialSymbols {
     cacheDirectory.set("material-symbols-cache")
 
     // 预览配置
-    generatePreview.set(false)          // 是否生成 Compose 预览
-    previewIconSize.set(24)             // 预览中图标大小（dp）
-    previewBackgroundColor.set("#FFFFFF") // 预览背景颜色
+    generatePreview.set(false)  // 是否生成 Compose @Preview 函数
 
     // 其他选项
     forceRegenerate.set(false)  // 强制重新生成所有图标
@@ -210,11 +203,14 @@ materialSymbols {
 
 ### 图标样式参数
 
-- **weight**: 图标线条粗细（300-700）
-  - 300: Light
-  - 400: Regular（默认）
-  - 500: Medium
-  - 700: Bold
+- **weight**: 图标笔画粗细（100-700）
+  - 100: 最细（SymbolWeight.W100 或 THIN）
+  - 200: 超细（SymbolWeight.W200 或 EXTRA_LIGHT）
+  - 300: 细（SymbolWeight.W300 或 LIGHT）
+  - 400: 常规/正常（SymbolWeight.W400 或 REGULAR - 默认）
+  - 500: 中等（SymbolWeight.W500 或 MEDIUM）
+  - 600: 半粗（SymbolWeight.W600 或 SEMI_BOLD）
+  - 700: 粗体（SymbolWeight.W700 或 BOLD）
 
 - **variant**: 图标风格
   - `SymbolVariant.OUTLINED`: 线条风格（默认）
@@ -230,20 +226,28 @@ materialSymbols {
 ```kotlin
 materialSymbols {
     symbol("example") {
-        // 基础方法
+        // 基础方法（使用 Int）
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
 
-        // 批量权重配置
+        // 使用 SymbolWeight 枚举以获得类型安全
+        style(weight = SymbolWeight.W400, variant = SymbolVariant.OUTLINED)
+
+        // 批量权重配置（Int 值）
         weights(400, 500, 700, variant = SymbolVariant.ROUNDED)
 
-        // Material Design 标准权重
-        standardWeights(variant = SymbolVariant.OUTLINED)  // 添加 400, 500, 700
+        // 批量权重配置（SymbolWeight 枚举）
+        weights(SymbolWeight.W400, SymbolWeight.W500, SymbolWeight.W700, variant = SymbolVariant.ROUNDED)
+
+        // Material Design 标准权重（添加 400, 500, 700）
+        standardWeights(variant = SymbolVariant.OUTLINED)
 
         // 所有变体（outlined, rounded, sharp）
         allVariants(weight = 400, fill = SymbolFill.UNFILLED)
+        // 或使用枚举：allVariants(weight = SymbolWeight.W400, fill = SymbolFill.UNFILLED)
 
         // 同时添加填充和未填充版本
         bothFills(weight = 500, variant = SymbolVariant.OUTLINED)
+        // 或使用枚举：bothFills(weight = SymbolWeight.W500, variant = SymbolVariant.OUTLINED)
     }
 }
 ```
@@ -265,6 +269,7 @@ materialSymbols {
 |------|------|
 | `generateMaterialSymbols` | 生成配置的 Material Symbols 图标 |
 | `cleanSymbolsCache` | 清理缓存的 SVG 文件 |
+| `cleanGeneratedSymbols` | 清理生成的 Material Symbols 文件 |
 | `validateSymbolsConfig` | 验证图标配置的有效性 |
 
 ### 任务示例
@@ -279,6 +284,9 @@ materialSymbols {
 # 清理缓存
 ./gradlew cleanSymbolsCache
 
+# 清理生成的文件
+./gradlew cleanGeneratedSymbols
+
 # 验证配置
 ./gradlew validateSymbolsConfig
 ```
@@ -290,21 +298,22 @@ materialSymbols {
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                              # 建议添加生成文件到忽略列表
+├── .gitignore                                    # 建议添加生成文件到忽略列表
 ├── src/
-│   └── commonMain/                         # 多平台项目支持
+│   └── commonMain/                               # 多平台项目支持
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── generated/                  # 生成的代码目录
-│               └── symbols/                # 图标包
-│                   ├── MaterialSymbols.kt  # 图标访问对象
-│                   ├── com/app/symbols/materialsymbols/
-│                   │   ├── SearchW400Outlined.kt
-│                   │   ├── HomeW500RoundedFill.kt
-│                   │   └── PersonW700Sharp.kt
-└── material-symbols-cache/                 # 临时缓存目录
-    └── temp-svgs/                          # SVG 临时文件
+│           └── com/app/symbols/                  # 生成的图标包
+│               ├── __MaterialSymbols.kt          # 图标访问对象
+│               └── materialsymbols/              # 单个图标文件
+│                   ├── SearchW400Outlined.kt
+│                   ├── HomeW500RoundedFill.kt
+│                   └── PersonW700Sharp.kt
+└── build/
+    └── material-symbols-cache/                   # 缓存目录（默认在 build 文件夹）
+        ├── temp-svgs/                            # SVG 临时文件
+        └── svg-cache/                            # 缓存的 SVG 文件及元数据
 ```
 
 ## 📁 Git 配置建议
@@ -314,14 +323,15 @@ your-project/
 为了避免生成的文件在 Git 中显示为新文件，建议将生成目录添加到 `.gitignore`：
 
 ```gitignore
-# SymbolCraft 生成的文件
-**/generated/symbols/
-src/**/generated/
-material-symbols-cache/
+# SymbolCraft 生成的文件（根据你的配置调整包名）
+**/materialsymbols/
+**/__MaterialSymbols.kt
 
-# 或者更具体的忽略
-src/commonMain/kotlin/generated/
-src/main/kotlin/generated/
+# 或者忽略整个包
+**/com/app/symbols/
+
+# 缓存目录默认在 build/ 文件夹，执行 `./gradlew clean` 会自动清理
+# 除非使用自定义缓存位置，否则无需添加到 .gitignore
 ```
 
 ### 生成文件管理策略
@@ -527,10 +537,10 @@ materialSymbols {
    ```
 
 5. **生成文件在 Git 中显示为新文件**
-   将生成目录添加到 `.gitignore`：
+   将生成目录添加到 `.gitignore`（根据你的配置调整包名）：
    ```gitignore
-   **/generated/symbols/
-   src/**/generated/
+   **/materialsymbols/
+   **/__MaterialSymbols.kt
    ```
 
 ### 调试选项
@@ -548,11 +558,11 @@ materialSymbols {
 ### 核心组件
 
 - **MaterialSymbolsPlugin** - 主插件类
-- **MaterialSymbolsExtension** - DSL 配置接口
-- **GenerateSymbolsTask** - 核心生成任务
-- **SvgDownloader** - 智能 SVG 下载器
-- **Svg2ComposeConverter** - SVG 转 Compose 转换器
-- **PreviewGenerator** - Compose 预览生成器
+- **MaterialSymbolsExtension** - DSL 配置接口及 SymbolConfigBuilder
+- **GenerateSymbolsTask** - 核心生成任务，支持并行下载
+- **SvgDownloader** - 智能 SVG 下载器及缓存机制
+- **Svg2ComposeConverter** - SVG 转 Compose 转换器，使用 DevSrSouza/svg-to-compose 库
+- **SymbolStyle** - 图标样式模型，包含 SymbolWeight、SymbolVariant 和 SymbolFill 枚举
 
 ### 数据流
 
@@ -596,26 +606,27 @@ cd example
 ```kotlin
 materialSymbols {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin")
+    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
     generatePreview.set(true)
 
-    symbol("home") {
-        standardWeights()
-        style(400, SymbolVariant.ROUNDED)
-        style(400, SymbolVariant.OUTLINED, SymbolFill.FILLED)
+    // 使用便捷方法
+    symbol("search") {
+        standardWeights() // 添加 400, 500, 700 权重
     }
 
-    symbol("search") {
-        standardWeights(SymbolVariant.OUTLINED)
+    symbol("home") {
+        weights(400, 500, variant = SymbolVariant.ROUNDED)
+        bothFills(weight = 400) // 添加填充和未填充两种
     }
 
     symbol("person") {
-        allVariants(500)
+        allVariants(weight = SymbolWeight.W500) // 所有变体（outlined, rounded, sharp）
     }
 
+    // 传统样式配置
     symbol("settings") {
-        style(400, SymbolVariant.OUTLINED)
-        bothFills(500, SymbolVariant.ROUNDED)
+        style(weight = 400, variant = SymbolVariant.OUTLINED)
+        style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
     }
 }
 ```
