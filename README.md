@@ -47,29 +47,35 @@ materialSymbols {
     cacheEnabled.set(true)
 
     // Preview generation configuration (optional)
-    generatePreview.set(true)          // Enable preview generation
+    generatePreview.set(true)  // Enable preview generation
 
-    // Individual icon configuration
+    // Individual icon configuration (using Int weight values)
     symbol("search") {
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
         style(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
     }
 
-    // Convenient batch configuration methods
+    // Or using SymbolWeight enum for type safety
     symbol("home") {
+        style(weight = SymbolWeight.W400, variant = SymbolVariant.OUTLINED)
+        style(weight = SymbolWeight.W500, variant = SymbolVariant.ROUNDED)
+    }
+
+    // Convenient batch configuration methods
+    symbol("person") {
         standardWeights() // Auto-add 400, 500, 700 weights
     }
 
-    symbol("person") {
+    symbol("settings") {
         allVariants(weight = 400) // Add all variants (outlined, rounded, sharp)
     }
 
-    symbol("settings") {
+    symbol("favorite") {
         bothFills(weight = 500, variant = SymbolVariant.ROUNDED) // Add both filled and unfilled
     }
 
     // Batch configure multiple icons
-    symbols("favorite", "star", "bookmark") {
+    symbols("star", "bookmark") {
         weights(400, 500, variant = SymbolVariant.OUTLINED)
     }
 }
@@ -142,11 +148,7 @@ fun MyScreen() {
 ```kotlin
 materialSymbols {
     // Enable preview functionality
-    generatePreview.set(true)
-
-    // Optional: Custom preview settings
-    previewIconSize.set(32)                    // Icon size (dp, default 24)
-    previewBackgroundColor.set("#F5F5F5")      // Background color (default #FFFFFF)
+    generatePreview.set(true)  // Generate @Preview functions for icons
 
     // Configure icons...
     symbol("home") {
@@ -157,29 +159,22 @@ materialSymbols {
 
 ### Generated preview files
 
-```kotlin
-@Preview
-@Composable
-private fun Preview() {
-    Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = MaterialSymbols.HomeW400Outlined, contentDescription = "")
-    }
-}
-```
+The plugin generates preview functions for your icons using the `svg-to-compose` library's preview generation feature. The exact format depends on your project setup and the library version.
 
 ### View previews in IDE
 
 After generation, you can view previews in Android Studio or IntelliJ IDEA's Preview panel:
 
-1. Open the generated preview file: `{packageName}/preview/MaterialSymbolsPreviews.kt`
-2. Click the "Preview" panel on the right side of the IDE
-3. View individual icon previews or all icons overview
+1. Look for generated preview files in your output directory under the package path
+2. Click the "Preview" panel on the right side of the IDE (Android Studio/IntelliJ IDEA)
+3. View icon previews in the IDE
 
 ### Multi-platform preview support
 
-- **Android projects**: Use `androidx.compose.ui.tooling.preview.Preview`
-- **Desktop projects**: Use `androidx.compose.desktop.ui.tooling.preview.Preview`
-- **Multiplatform projects**: Automatically support both preview annotations
+The preview generation is handled by the underlying `svg-to-compose` library and supports:
+- **Android projects**: Using `androidx.compose.ui.tooling.preview.Preview`
+- **Desktop projects**: Using `androidx.compose.desktop.ui.tooling.preview.Preview`
+- **Multiplatform projects**: Depending on the library configuration
 
 ## 📋 Configuration Options
 
@@ -198,9 +193,7 @@ materialSymbols {
     cacheDirectory.set("material-symbols-cache")
 
     // Preview configuration
-    generatePreview.set(false)          // Whether to generate Compose previews
-    previewIconSize.set(24)             // Icon size in preview (dp)
-    previewBackgroundColor.set("#FFFFFF") // Preview background color
+    generatePreview.set(false)  // Whether to generate Compose @Preview functions
 
     // Other options
     forceRegenerate.set(false)  // Force regenerate all icons
@@ -210,11 +203,14 @@ materialSymbols {
 
 ### Icon style parameters
 
-- **weight**: Icon line thickness (300-700)
-  - 300: Light
-  - 400: Regular (default)
-  - 500: Medium
-  - 700: Bold
+- **weight**: Icon stroke weight (100-700)
+  - 100: Thinnest (SymbolWeight.W100 or THIN)
+  - 200: Extra light (SymbolWeight.W200 or EXTRA_LIGHT)
+  - 300: Light (SymbolWeight.W300 or LIGHT)
+  - 400: Regular/Normal (SymbolWeight.W400 or REGULAR - default)
+  - 500: Medium (SymbolWeight.W500 or MEDIUM)
+  - 600: Semi-bold (SymbolWeight.W600 or SEMI_BOLD)
+  - 700: Bold (SymbolWeight.W700 or BOLD)
 
 - **variant**: Icon style
   - `SymbolVariant.OUTLINED`: Line style (default)
@@ -230,20 +226,28 @@ materialSymbols {
 ```kotlin
 materialSymbols {
     symbol("example") {
-        // Basic method
+        // Basic method (using Int)
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
 
-        // Batch weight configuration
+        // Using SymbolWeight enum for type safety
+        style(weight = SymbolWeight.W400, variant = SymbolVariant.OUTLINED)
+
+        // Batch weight configuration (Int values)
         weights(400, 500, 700, variant = SymbolVariant.ROUNDED)
 
-        // Material Design standard weights
-        standardWeights(variant = SymbolVariant.OUTLINED)  // Add 400, 500, 700
+        // Batch weight configuration (SymbolWeight enum)
+        weights(SymbolWeight.W400, SymbolWeight.W500, SymbolWeight.W700, variant = SymbolVariant.ROUNDED)
+
+        // Material Design standard weights (adds 400, 500, 700)
+        standardWeights(variant = SymbolVariant.OUTLINED)
 
         // All variants (outlined, rounded, sharp)
         allVariants(weight = 400, fill = SymbolFill.UNFILLED)
+        // Or with enum: allVariants(weight = SymbolWeight.W400, fill = SymbolFill.UNFILLED)
 
         // Add both filled and unfilled versions
         bothFills(weight = 500, variant = SymbolVariant.OUTLINED)
+        // Or with enum: bothFills(weight = SymbolWeight.W500, variant = SymbolVariant.OUTLINED)
     }
 }
 ```
@@ -265,6 +269,7 @@ The plugin provides the following Gradle tasks:
 |------|-------------|
 | `generateMaterialSymbols` | Generate configured Material Symbols icons |
 | `cleanSymbolsCache` | Clean cached SVG files |
+| `cleanGeneratedSymbols` | Clean generated Material Symbols files |
 | `validateSymbolsConfig` | Validate icon configuration validity |
 
 ### Task examples
@@ -279,6 +284,9 @@ The plugin provides the following Gradle tasks:
 # Clean cache
 ./gradlew cleanSymbolsCache
 
+# Clean generated files
+./gradlew cleanGeneratedSymbols
+
 # Validate configuration
 ./gradlew validateSymbolsConfig
 ```
@@ -290,21 +298,22 @@ After using the plugin, your project structure might look like this:
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                              # Recommend adding generated files to ignore list
+├── .gitignore                          # Recommend adding generated files to ignore list
 ├── src/
-│   └── commonMain/                         # Multiplatform project support
+│   └── commonMain/                     # Multiplatform project support
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── generated/                  # Generated code directory
-│               └── symbols/                # Icons package
-│                   ├── MaterialSymbols.kt  # Icon access object
-│                   ├── com/app/symbols/materialsymbols/
-│                   │   ├── SearchW400Outlined.kt
-│                   │   ├── HomeW500RoundedFill.kt
-│                   │   └── PersonW700Sharp.kt
-└── material-symbols-cache/                 # Temporary cache directory
-    └── temp-svgs/                          # SVG temporary files
+│           └── com/app/symbols/        # Generated icons package
+│               ├── __MaterialSymbols.kt          # Icon access object
+│               └── materialsymbols/              # Individual icon files
+│                   ├── SearchW400Outlined.kt
+│                   ├── HomeW500RoundedFill.kt
+│                   └── PersonW700Sharp.kt
+└── build/
+    └── material-symbols-cache/         # Cache directory (in build folder by default)
+        ├── temp-svgs/                  # SVG temporary files
+        └── svg-cache/                  # Cached SVG files with metadata
 ```
 
 ## 📁 Git Configuration Recommendations
@@ -314,14 +323,15 @@ your-project/
 To avoid generated files showing as new files in Git, recommend adding the generation directory to `.gitignore`:
 
 ```gitignore
-# SymbolCraft generated files
-**/generated/symbols/
-src/**/generated/
-material-symbols-cache/
+# SymbolCraft generated files (adjust package name to match your configuration)
+**/materialsymbols/
+**/__MaterialSymbols.kt
 
-# Or more specific ignoring
-src/commonMain/kotlin/generated/
-src/main/kotlin/generated/
+# Or ignore the entire package
+**/com/app/symbols/
+
+# Cache directory is in build/ by default and auto-cleaned by `./gradlew clean`
+# No need to add to .gitignore unless using custom cache location
 ```
 
 ### Generated File Management Strategy
@@ -527,10 +537,10 @@ materialSymbols {
    ```
 
 5. **Generated files showing as new files in Git**
-   Add generation directory to `.gitignore`:
+   Add generation directory to `.gitignore` (adjust package name to match your configuration):
    ```gitignore
-   **/generated/symbols/
-   src/**/generated/
+   **/materialsymbols/
+   **/__MaterialSymbols.kt
    ```
 
 ### Debug options
@@ -548,11 +558,11 @@ materialSymbols {
 ### Core components
 
 - **MaterialSymbolsPlugin** - Main plugin class
-- **MaterialSymbolsExtension** - DSL configuration interface
-- **GenerateSymbolsTask** - Core generation task
-- **SvgDownloader** - Smart SVG downloader
-- **Svg2ComposeConverter** - SVG to Compose converter
-- **PreviewGenerator** - Compose preview generator
+- **MaterialSymbolsExtension** - DSL configuration interface with SymbolConfigBuilder
+- **GenerateSymbolsTask** - Core generation task with parallel downloads
+- **SvgDownloader** - Smart SVG downloader with caching
+- **Svg2ComposeConverter** - SVG to Compose converter using DevSrSouza/svg-to-compose library
+- **SymbolStyle** - Icon style model with SymbolWeight, SymbolVariant, and SymbolFill enums
 
 ### Data flow
 
@@ -599,23 +609,24 @@ materialSymbols {
     outputDirectory.set("src/commonMain/kotlin")
     generatePreview.set(true)
 
-    symbol("home") {
-        standardWeights()
-        style(400, SymbolVariant.ROUNDED)
-        style(400, SymbolVariant.OUTLINED, SymbolFill.FILLED)
+    // Using convenient methods
+    symbol("search") {
+        standardWeights() // Adds 400, 500, 700 weights
     }
 
-    symbol("search") {
-        standardWeights(SymbolVariant.OUTLINED)
+    symbol("home") {
+        weights(400, 500, variant = SymbolVariant.ROUNDED)
+        bothFills(weight = 400) // Adds both filled and unfilled
     }
 
     symbol("person") {
-        allVariants(500)
+        allVariants(weight = SymbolWeight.W500) // All variants (outlined, rounded, sharp)
     }
 
+    // Traditional style configuration
     symbol("settings") {
-        style(400, SymbolVariant.OUTLINED)
-        bothFills(500, SymbolVariant.ROUNDED)
+        style(weight = 400, variant = SymbolVariant.OUTLINED)
+        style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
     }
 }
 ```
