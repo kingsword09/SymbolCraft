@@ -194,10 +194,6 @@ materialSymbols {
 
     // Preview configuration
     generatePreview.set(false)  // Whether to generate Compose @Preview functions
-
-    // Other options
-    forceRegenerate.set(false)  // Force regenerate all icons
-    minifyOutput.set(true)      // Minify output code
 }
 ```
 
@@ -494,10 +490,12 @@ materialSymbols {
 
     // Or use absolute path for shared cache across projects
     cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
-
-    // Force regenerate
-    forceRegenerate.set(true)
 }
+```
+
+**Note**: To force regenerate all icons, use Gradle's built-in option:
+```bash
+./gradlew generateMaterialSymbols --rerun-tasks
 ```
 
 ## 🔍 Troubleshooting

@@ -194,10 +194,6 @@ materialSymbols {
 
     // 预览配置
     generatePreview.set(false)  // 是否生成 Compose @Preview 函数
-
-    // 其他选项
-    forceRegenerate.set(false)  // 强制重新生成所有图标
-    minifyOutput.set(true)      // 压缩输出代码
 }
 ```
 
@@ -494,10 +490,12 @@ materialSymbols {
 
     // 或使用绝对路径实现跨项目共享缓存
     cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
-
-    // 强制重新生成
-    forceRegenerate.set(true)
 }
+```
+
+**注意**: 如需强制重新生成所有图标，请使用 Gradle 内置选项：
+```bash
+./gradlew generateMaterialSymbols --rerun-tasks
 ```
 
 ## 🔍 故障排除
