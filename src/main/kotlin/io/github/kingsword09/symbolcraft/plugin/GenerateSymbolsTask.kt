@@ -27,9 +27,6 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
-    @get:OutputDirectory
-    abstract val assetsDir: DirectoryProperty
-
     @get:Input
     abstract val cacheDirectory: Property<String>
 

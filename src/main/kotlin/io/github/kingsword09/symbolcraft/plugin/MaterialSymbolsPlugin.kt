@@ -16,7 +16,6 @@ class MaterialSymbolsPlugin : Plugin<Project> {
             task.description = "Generate Material Symbols icons based on configuration"
             task.extension.set(extension)
             task.outputDir.set(project.layout.projectDirectory.dir(extension.outputDirectory))
-            task.assetsDir.set(project.layout.projectDirectory.dir(extension.assetsDirectory))
             task.cacheDirectory.set(extension.cacheDirectory)
             task.gradleUserHomeDir.set(project.gradle.gradleUserHomeDir.absolutePath)
             task.projectBuildDir.set(project.layout.buildDirectory.get().asFile.absolutePath)

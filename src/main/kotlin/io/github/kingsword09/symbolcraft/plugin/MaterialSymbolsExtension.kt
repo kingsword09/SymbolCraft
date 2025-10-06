@@ -11,15 +11,9 @@ abstract class MaterialSymbolsExtension {
     abstract val cacheEnabled: Property<Boolean>
     abstract val cacheDirectory: Property<String>
     abstract val outputDirectory: Property<String>
-    abstract val forceRegenerate: Property<Boolean>
-    abstract val minifyOutput: Property<Boolean>
     abstract val packageName: Property<String>
-    abstract val assetsDirectory: Property<String>
     // Preview generation configuration
     abstract val generatePreview: Property<Boolean>
-    // Optional: external SVG->Compose converter (CLI) support
-    abstract val converterPath: Property<String>
-    abstract val converterArgs: ListProperty<String>
 
     private val symbolsConfig = mutableMapOf<String, MutableList<SymbolStyle>>()
 
@@ -29,13 +23,8 @@ abstract class MaterialSymbolsExtension {
         // Default to the main source set, inside the configured package
         // svg-to-compose will place files under this directory following the package path
         outputDirectory.convention("src/main/kotlin")
-        forceRegenerate.convention(false)
-        minifyOutput.convention(true)
         packageName.convention("io.github.kingsword09.symbolcraft.symbols")
-        assetsDirectory.convention("src/main/assets/material-symbols")
         generatePreview.convention(false)
-        converterPath.convention("")
-        converterArgs.convention(emptyList())
     }
 
     fun symbol(name: String, configure: SymbolConfigBuilder.() -> Unit) {

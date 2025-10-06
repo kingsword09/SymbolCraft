@@ -21,7 +21,7 @@
 | Kotlin Coroutines | 1.8.1 | 并行下载 |
 | Ktor Client | 2.3.12 | HTTP 客户端 |
 | Kotlinx Serialization | - | JSON 序列化 |
-| svg-to-compose | 0.11.1 | SVG 转换库 |
+| svg-to-compose | 0.1.0 | SVG 转换库(io.github.kingsword09 fork) |
 
 ---
 
@@ -75,7 +75,7 @@ SymbolCraft/
 ## 核心组件说明
 
 ### 1. **MaterialSymbolsPlugin** (插件入口)
-**位置**: `src/main/kotlin/.../plugin/MaterialSymbolsPlugin.kt`
+**位置**: `src/main/kotlin/io/github/kingsword09/symbolcraft/plugin/MaterialSymbolsPlugin.kt`
 
 **职责**:
 - 注册 `materialSymbols` DSL 扩展
@@ -120,8 +120,6 @@ abstract class MaterialSymbolsExtension {
     abstract val cacheEnabled: Property<Boolean>            // 缓存开关
     abstract val cacheDirectory: Property<String>           // 缓存目录
     abstract val generatePreview: Property<Boolean>         // 生成预览
-    abstract val forceRegenerate: Property<Boolean>         // 强制重新生成
-    // ...
 }
 ```
 
@@ -293,7 +291,10 @@ cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cach
 
 **绝对路径（共享缓存）**:
 ```kotlin
+// Unix/Linux/macOS
 cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
+// Windows
+cacheDirectory.set("""C:\Temp\SymbolCraft""")
 ```
 - ✅ 跨项目共享
 - ⚠️ 跳过自动清理（防止冲突）
@@ -304,22 +305,6 @@ cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
 
 ### 当前状态
 ❌ **无单元测试** - `src/test/` 目录不存在
-
-### 测试计划（建议）
-
-**高优先级**:
-1. ✅ `SvgDownloaderTest` - 缓存逻辑、下载重试
-2. ✅ `SymbolStyleTest` - 样式解析、枚举转换
-3. ✅ `PathUtilsTest` - 路径解析（相对/绝对）
-4. ✅ `MaterialSymbolsExtensionTest` - DSL 配置构建
-
-**中优先级**:
-5. ⚪ `GenerateSymbolsTaskTest` - 任务执行集成测试
-6. ⚪ `Svg2ComposeConverterTest` - 转换器输出验证
-
-**测试框架**:
-- JUnit 5 (已配置 `kotlin.test`)
-- Gradle TestKit (用于插件集成测试)
 
 ---
 
@@ -378,7 +363,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
     implementation("io.ktor:ktor-client-core:2.3.12")
     implementation("io.ktor:ktor-client-cio:2.3.12")
-    implementation("br.com.devsrsouza.compose.icons:svg-to-compose:0.11.1")
+    implementation("io.github.kingsword09:svg-to-compose:0.1.0")
 
     compileOnly("org.gradle:gradle-api")
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin")
