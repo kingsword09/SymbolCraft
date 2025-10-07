@@ -68,7 +68,7 @@ gradlePlugin {
 
 // Configure Vanniktech Maven Publish
 mavenPublishing {
-    publishToMavenCentral()
+    publishToMavenCentral(automaticRelease = true)
     signAllPublications()
     coordinates(group.toString(), "symbolcraft", version.toString())
 
