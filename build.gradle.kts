@@ -1,6 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinJvm
+import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
+import org.gradle.jvm.tasks.Jar
+import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -141,21 +144,38 @@ java {
     // withJavadocJar()
 }
 
-if ("dokkaJavadoc" !in tasks.names) {
-    tasks.register("dokkaJavadoc") {
-        group = "documentation"
-        description = "Compatibility alias for Dokka V2 Javadoc generation."
-        dependsOn(tasks.named("dokkaGeneratePublicationJavadoc"))
-    }
-}
-
-tasks.named("dokkaJavadocJar") {
-    dependsOn(tasks.named("dokkaGeneratePublicationJavadoc"))
-}
-
 afterEvaluate {
+    val dokkaJavadocProvider = tasks.named("dokkaGeneratePublicationJavadoc", DokkaGeneratePublicationTask::class.java)
+
+    tasks.named("dokkaJavadocJar", Jar::class.java) {
+        dependsOn(dokkaJavadocProvider)
+        from(dokkaJavadocProvider.flatMap { it.outputDirectory })
+        archiveClassifier.set("javadoc")
+    }
+
     tasks.named("generateMetadataFileForMavenPublication") {
         dependsOn("dokkaJavadocJar")
+    }
+
+    tasks.named("generateMetadataFileForPluginMavenPublication") {
+        dependsOn("dokkaJavadocJar")
+    }
+
+    publishing.publications.named("maven", MavenPublication::class.java) {
+        artifacts.removeIf { it.classifier == "javadoc" }
+        artifact(tasks.named("dokkaJavadocJar"))
+    }
+
+    if ("dokkaJavadoc" !in tasks.names) {
+        tasks.register("dokkaJavadoc") {
+            group = "documentation"
+            description = "Compatibility alias for Dokka V2 Javadoc generation."
+            dependsOn(dokkaJavadocProvider)
+        }
+    } else {
+        tasks.named("dokkaJavadoc") {
+            dependsOn(dokkaJavadocProvider)
+        }
     }
 }
 
