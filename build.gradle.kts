@@ -153,6 +153,12 @@ tasks.named("dokkaJavadocJar") {
     dependsOn(tasks.named("dokkaGeneratePublicationJavadoc"))
 }
 
+afterEvaluate {
+    tasks.named("generateMetadataFileForMavenPublication") {
+        dependsOn("dokkaJavadocJar")
+    }
+}
+
 // Configure JAR manifest
 tasks.jar {
     manifest {
