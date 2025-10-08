@@ -161,6 +161,10 @@ afterEvaluate {
         dependsOn("dokkaJavadocJar")
     }
 
+    tasks.named("publishMavenPublicationToMavenLocal") {
+        dependsOn("signPluginMavenPublication")
+    }
+
     publishing.publications.named("maven", MavenPublication::class.java) {
         artifacts.removeIf { it.classifier == "javadoc" }
         artifact(tasks.named("dokkaJavadocJar"))
