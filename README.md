@@ -1,5 +1,8 @@
 # SymbolCraft 🎨
 
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.kingsword09/symbolcraft)
+
+
 > **Language**: [English](README.md) | [中文](README_ZH.md)
 
 A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
@@ -286,6 +289,25 @@ The plugin provides the following Gradle tasks:
 # Validate configuration
 ./gradlew validateSymbolsConfig
 ```
+
+## 📚 Documentation (Dokka)
+
+SymbolCraft includes a Dokka V2 setup so you can publish API documentation for the plugin and its DSL.
+
+### Generate documentation locally
+
+```bash
+# Javadoc-style output (used for Maven Central / Plugin Portal publishing)
+./gradlew dokkaGeneratePublicationJavadoc
+
+# Optional: modern HTML format
+./gradlew dokkaGeneratePublicationHtml
+```
+
+Both tasks emit their output under `build/dokka/`. Open `build/dokka/javadoc/index.html` (or `build/dokka/html/index.html`) in your browser to review the generated docs.  
+If you enabled the compatibility alias in your build, `./gradlew dokkaJavadoc` will forward to the Javadoc task as well.
+
+> **Note:** The project defaults to Dokka V2 with `org.jetbrains.dokka.experimental.gradle.pluginMode` set to `V2Enabled`. This means the modern Dokka task names are used directly. If you need to use older task names for compatibility, you can temporarily switch the mode to `V2EnabledWithHelpers` in `gradle.properties`.
 
 ## 🗂 Project Structure
 

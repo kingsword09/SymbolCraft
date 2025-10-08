@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.gradle.plugin.publish)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.dokka.javadoc)
     `java-gradle-plugin`
     signing
 }
@@ -125,10 +127,16 @@ tasks.test {
     useJUnitPlatform()
 }
 
-// Generate sources JAR
+// Generate sources and javadoc JARs
 java {
     withSourcesJar()
     withJavadocJar()
+}
+
+// Configure javadocJar to use Dokka V2 output
+tasks.named<Jar>("javadocJar") {
+    dependsOn("dokkaGeneratePublicationJavadoc")
+    from(layout.buildDirectory.dir("dokka/javadoc"))
 }
 
 // Configure JAR manifest

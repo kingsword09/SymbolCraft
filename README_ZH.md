@@ -1,5 +1,8 @@
 # SymbolCraft 🎨
 
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.kingsword09/symbolcraft)
+
+
 > **语言版本**: [English](README.md) | [中文](README_ZH.md)
 
 一个强大的 Gradle 插件，用于在 Kotlin Multiplatform 项目中按需生成 Material Symbols 图标，支持智能缓存、确定性构建和高性能并行生成。
@@ -286,6 +289,25 @@ materialSymbols {
 # 验证配置
 ./gradlew validateSymbolsConfig
 ```
+
+## 📚 文档生成（Dokka）
+
+SymbolCraft 提供 Dokka V2 配置，可为插件及其 DSL 生成可发布的 API 文档，便于同步到 Gradle Plugin Portal 或 Maven Central。
+
+### 本地生成文档
+
+```bash
+# 生成 Javadoc 风格的文档（用于发布工件）
+./gradlew dokkaGeneratePublicationJavadoc
+
+# 可选：生成现代 HTML 文档
+./gradlew dokkaGeneratePublicationHtml
+```
+
+任务会将结果写入 `build/dokka/` 目录中。打开 `build/dokka/javadoc/index.html`（或 `build/dokka/html/index.html`）即可在浏览器中查看。  
+如果你在构建脚本中保留了兼容别名，`./gradlew dokkaJavadoc` 同样会转发到上述 Javadoc 任务。
+
+> **提示：** 项目默认将 `org.jetbrains.dokka.experimental.gradle.pluginMode` 设置为 `V2Enabled`，直接使用 Dokka V2 的新任务名称。如果需要兼容旧任务，可暂时把该属性切换成 `V2EnabledWithHelpers`。
 
 ## 🗂 项目结构
 

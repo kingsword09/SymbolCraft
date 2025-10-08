@@ -4,7 +4,16 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import java.io.File
 
+/**
+ * Gradle plugin entry point registered as `io.github.kingsword09.symbolcraft`.
+ *
+ * The plugin wires the [MaterialSymbolsExtension] DSL, registers generation/cleanup tasks,
+ * and ensures Kotlin compilation depends on freshly generated icons.
+ */
 class MaterialSymbolsPlugin : Plugin<Project> {
+    /**
+     * Installs the extension and all supporting tasks on the target [project].
+     */
     override fun apply(project: Project) {
         val extension = project.extensions.create(
             "materialSymbols",
