@@ -40,4 +40,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 gradle-plugin-publish = { id = "com.gradle.plugin-publish", version.ref = "gradle-plugin-publish" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
-dokkaJavadoc = { id = "org.jetbrains.dokka-javadoc", version.ref = "dokka" }
+dokka-javadoc = { id = "org.jetbrains.dokka-javadoc", version.ref = "dokka" }

@@ -1,9 +1,4 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-import org.jetbrains.dokka.gradle.tasks.DokkaGeneratePublicationTask
-import org.gradle.jvm.tasks.Jar
-import org.gradle.api.publish.maven.MavenPublication
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -11,7 +6,7 @@ plugins {
     alias(libs.plugins.gradle.plugin.publish)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
-    alias(libs.plugins.dokkaJavadoc)
+    alias(libs.plugins.dokka.javadoc)
     `java-gradle-plugin`
     signing
 }
@@ -75,18 +70,12 @@ gradlePlugin {
 
 // Configure Vanniktech Maven Publish
 mavenPublishing {
-    configure(
-      KotlinJvm(
-        javadocJar = JavadocJar.Dokka(tasks.dokkaGeneratePublicationJavadoc.name),
-        sourcesJar = true
-      )
-    )
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()
-    coordinates(group.toString(), rootProject.name.lowercase(), version.toString())
+    coordinates(group.toString(), "symbolcraft", version.toString())
 
     pom {
-        name.set(rootProject.name)
+        name.set("SymbolCraft")
         description.set("A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects")
         inceptionYear.set("2025")
         url.set("https://github.com/kingsword09/SymbolCraft")
@@ -138,49 +127,16 @@ tasks.test {
     useJUnitPlatform()
 }
 
-// Generate sources JAR
+// Generate sources and javadoc JARs
 java {
     withSourcesJar()
-    // withJavadocJar()
+    withJavadocJar()
 }
 
-afterEvaluate {
-    val dokkaJavadocProvider = tasks.named("dokkaGeneratePublicationJavadoc", DokkaGeneratePublicationTask::class.java)
-
-    tasks.named("dokkaJavadocJar", Jar::class.java) {
-        dependsOn(dokkaJavadocProvider)
-        from(dokkaJavadocProvider.flatMap { it.outputDirectory })
-        archiveClassifier.set("javadoc")
-    }
-
-    tasks.named("generateMetadataFileForMavenPublication") {
-        dependsOn("dokkaJavadocJar")
-    }
-
-    tasks.named("generateMetadataFileForPluginMavenPublication") {
-        dependsOn("dokkaJavadocJar")
-    }
-
-    tasks.named("publishMavenPublicationToMavenLocal") {
-        dependsOn("signPluginMavenPublication")
-    }
-
-    publishing.publications.named("maven", MavenPublication::class.java) {
-        artifacts.removeIf { it.classifier == "javadoc" }
-        artifact(tasks.named("dokkaJavadocJar"))
-    }
-
-    if ("dokkaJavadoc" !in tasks.names) {
-        tasks.register("dokkaJavadoc") {
-            group = "documentation"
-            description = "Compatibility alias for Dokka V2 Javadoc generation."
-            dependsOn(dokkaJavadocProvider)
-        }
-    } else {
-        tasks.named("dokkaJavadoc") {
-            dependsOn(dokkaJavadocProvider)
-        }
-    }
+// Configure javadocJar to use Dokka V2 output
+tasks.named<Jar>("javadocJar") {
+    dependsOn("dokkaGeneratePublicationJavadoc")
+    from(layout.buildDirectory.dir("dokka/javadoc"))
 }
 
 // Configure JAR manifest
