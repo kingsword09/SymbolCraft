@@ -307,7 +307,7 @@ SymbolCraft includes a Dokka V2 setup so you can publish API documentation for t
 Both tasks emit their output under `build/dokka/`. Open `build/dokka/javadoc/index.html` (or `build/dokka/html/index.html`) in your browser to review the generated docs.  
 If you enabled the compatibility alias in your build, `./gradlew dokkaJavadoc` will forward to the Javadoc task as well.
 
-> **Note:** The project defaults to Dokka V2 with migration helpers enabled. Once you have updated all custom integrations to use the new task names, switch `org.jetbrains.dokka.experimental.gradle.pluginMode` to `V2Enabled` in `gradle.properties` to remove the helper layer.
+> **Note:** The project defaults to Dokka V2 with `org.jetbrains.dokka.experimental.gradle.pluginMode` set to `V2Enabled`. This means the modern Dokka task names are used directly. If you need to use older task names for compatibility, you can temporarily switch the mode to `V2EnabledWithHelpers` in `gradle.properties`.
 
 ## 🗂 Project Structure
 
