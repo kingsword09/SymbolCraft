@@ -290,6 +290,25 @@ materialSymbols {
 ./gradlew validateSymbolsConfig
 ```
 
+## 📚 文档生成（Dokka）
+
+SymbolCraft 默认启用 Dokka V2，可生成插件及 DSL 的 API 文档，便于发布到 Gradle Plugin Portal 或 Maven Central。
+
+### 本地生成文档
+
+```bash
+# 生成 Javadoc 风格的文档（用于发布工件）
+./gradlew dokkaGeneratePublicationJavadoc
+
+# 可选：生成现代 HTML 文档
+./gradlew dokkaGeneratePublicationHtml
+```
+
+任务会将结果写入 `build/dokka/` 目录中。打开 `build/dokka/javadoc/index.html`（或 `build/dokka/html/index.html`）即可在浏览器中查看。  
+如果你在构建脚本中保留了兼容别名，`./gradlew dokkaJavadoc` 同样会转发到上述 Javadoc 任务。
+
+> **提示：** 项目当前使用 Dokka V2 的迁移辅助模式。等所有自定义集成都切换到新的任务名称后，可以把 `gradle.properties` 中的 `org.jetbrains.dokka.experimental.gradle.pluginMode` 改为 `V2Enabled` 以关闭辅助层。
+
 ## 🗂 项目结构
 
 使用插件后，你的项目结构可能如下：

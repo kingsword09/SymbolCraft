@@ -290,6 +290,25 @@ The plugin provides the following Gradle tasks:
 ./gradlew validateSymbolsConfig
 ```
 
+## 📚 Documentation (Dokka)
+
+SymbolCraft includes a Dokka V2 setup so you can publish API documentation for the plugin and its DSL.
+
+### Generate documentation locally
+
+```bash
+# Javadoc-style output (used for Maven Central / Plugin Portal publishing)
+./gradlew dokkaGeneratePublicationJavadoc
+
+# Optional: modern HTML format
+./gradlew dokkaGeneratePublicationHtml
+```
+
+Both tasks emit their output under `build/dokka/`. Open `build/dokka/javadoc/index.html` (or `build/dokka/html/index.html`) in your browser to review the generated docs.  
+If you enabled the compatibility alias in your build, `./gradlew dokkaJavadoc` will forward to the Javadoc task as well.
+
+> **Note:** The project defaults to Dokka V2 with migration helpers enabled. Once you have updated all custom integrations to use the new task names, switch `org.jetbrains.dokka.experimental.gradle.pluginMode` to `V2Enabled` in `gradle.properties` to remove the helper layer.
+
 ## 🗂 Project Structure
 
 After using the plugin, your project structure might look like this:

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.gradle.plugin.publish)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.dokkaJavadoc)
     `java-gradle-plugin`
     signing
 }
@@ -71,7 +72,7 @@ gradlePlugin {
 
 // Configure Vanniktech Maven Publish
 mavenPublishing {
-    configure(KotlinJvm(JavadocJar.Dokka(tasks.dokkaJavadoc)))
+    configure(KotlinJvm(JavadocJar.Dokka(tasks.dokkaGeneratePublicationJavadoc)))
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()
     coordinates(group.toString(), rootProject.name.lowercase(), version.toString())
