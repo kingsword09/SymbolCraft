@@ -1,5 +1,8 @@
 # SymbolCraft 🎨
 
+![Maven Central Version](https://img.shields.io/maven-central/v/io.github.kingsword09/symbolcraft)
+
+
 > **Language**: [English](README.md) | [中文](README_ZH.md)
 
 A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.

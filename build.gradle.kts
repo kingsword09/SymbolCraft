@@ -1,10 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.KotlinJvm
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.gradle.plugin.publish)
     alias(libs.plugins.maven.publish)
+    alias(libs.plugins.dokka)
     `java-gradle-plugin`
     signing
 }
@@ -68,12 +71,13 @@ gradlePlugin {
 
 // Configure Vanniktech Maven Publish
 mavenPublishing {
+    configure(KotlinJvm(JavadocJar.Dokka(tasks.dokkaJavadoc)))
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()
-    coordinates(group.toString(), "symbolcraft", version.toString())
+    coordinates(group.toString(), rootProject.name.lowercase(), version.toString())
 
     pom {
-        name.set("SymbolCraft")
+        name.set(rootProject.name)
         description.set("A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects")
         inceptionYear.set("2025")
         url.set("https://github.com/kingsword09/SymbolCraft")
@@ -128,7 +132,7 @@ tasks.test {
 // Generate sources JAR
 java {
     withSourcesJar()
-    withJavadocJar()
+    // withJavadocJar()
 }
 
 // Configure JAR manifest

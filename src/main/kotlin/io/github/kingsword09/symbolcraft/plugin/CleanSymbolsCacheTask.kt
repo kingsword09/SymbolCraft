@@ -6,6 +6,11 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
+/**
+ * Task that deletes cached SVG assets created by [GenerateSymbolsTask].
+ *
+ * Exposed to consumers as `cleanSymbolsCache`.
+ */
 abstract class CleanSymbolsCacheTask : DefaultTask() {
     @get:Internal
     abstract val extension: Property<MaterialSymbolsExtension>
@@ -13,6 +18,9 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
     @get:Internal
     abstract val projectBuildDir: Property<String>
 
+    /**
+     * Deletes the configured cache directory.
+     */
     @TaskAction
     fun clean() {
         val cacheDirPath = extension.get().cacheDirectory.get()

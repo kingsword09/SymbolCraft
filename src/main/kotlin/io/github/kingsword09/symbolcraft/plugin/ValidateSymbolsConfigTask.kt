@@ -5,10 +5,18 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
+/**
+ * Task that validates the DSL configuration before generation.
+ *
+ * Exposed to consumers as `validateSymbolsConfig`.
+ */
 abstract class ValidateSymbolsConfigTask : DefaultTask() {
     @get:Internal
     abstract val extension: Property<MaterialSymbolsExtension>
 
+    /**
+     * Checks that at least one symbol and variant has been declared.
+     */
     @TaskAction
     fun validate() {
         val config = extension.get().getSymbolsConfig()

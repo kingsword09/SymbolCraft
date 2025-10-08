@@ -14,6 +14,17 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Gradle task responsible for downloading Material Symbols and converting them into Compose APIs.
+ *
+ * The task is cacheable and honours [MaterialSymbolsExtension] settings supplied via the plugin DSL.
+ *
+ * @property extension lazily provides the extension backing the current project configuration.
+ * @property outputDir destination directory for the generated Kotlin sources.
+ * @property cacheDirectory path used for storing SVG payloads between executions.
+ * @property gradleUserHomeDir exposed for cache resolution when Gradle configuration cache is enabled.
+ * @property projectBuildDir points at the consuming project's `build` directory for relative cache resolution.
+ */
 @CacheableTask
 abstract class GenerateSymbolsTask : DefaultTask() {
 
@@ -36,6 +47,12 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @get:Input
     abstract val projectBuildDir: Property<String>
 
+    /**
+     * Downloads the requested icons and regenerates the Kotlin sources.
+     *
+     * The implementation uses structured concurrency to download SVGs in parallel and
+     * cleans stale cache entries when safe to do so.
+     */
     @TaskAction
     fun generate() = runBlocking {
         val ext = extension.get()
@@ -333,7 +350,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     }
 }
 
-// Data classes for download tracking
+/** Data aggregated from the parallel download stage for logging and diagnostics. */
 data class DownloadStats(
     val totalCount: Int,
     val successCount: Int,
@@ -342,6 +359,7 @@ data class DownloadStats(
     val results: List<DownloadResult>
 )
 
+/** Result wrapper representing either a successful or failed SVG download. */
 sealed class DownloadResult {
     data class Success(
         val iconName: String,
