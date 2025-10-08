@@ -72,7 +72,12 @@ gradlePlugin {
 
 // Configure Vanniktech Maven Publish
 mavenPublishing {
-    configure(KotlinJvm(JavadocJar.Dokka(tasks.dokkaGeneratePublicationJavadoc)))
+    configure(
+      KotlinJvm(
+        javadocJar = JavadocJar.Dokka(tasks.dokkaGeneratePublicationJavadoc.name),
+        sourcesJar = true
+      )
+    )
     publishToMavenCentral(automaticRelease = true)
     signAllPublications()
     coordinates(group.toString(), rootProject.name.lowercase(), version.toString())
@@ -134,6 +139,18 @@ tasks.test {
 java {
     withSourcesJar()
     // withJavadocJar()
+}
+
+if ("dokkaJavadoc" !in tasks.names) {
+    tasks.register("dokkaJavadoc") {
+        group = "documentation"
+        description = "Compatibility alias for Dokka V2 Javadoc generation."
+        dependsOn(tasks.named("dokkaGeneratePublicationJavadoc"))
+    }
+}
+
+tasks.named("dokkaJavadocJar") {
+    dependsOn(tasks.named("dokkaGeneratePublicationJavadoc"))
 }
 
 // Configure JAR manifest
