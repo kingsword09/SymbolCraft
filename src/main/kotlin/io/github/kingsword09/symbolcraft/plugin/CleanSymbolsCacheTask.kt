@@ -66,7 +66,6 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
             logger.lifecycle("✅ Total cache cleaned: $deletedCount files")
         } else {
             logger.lifecycle("ℹ️  No cache to clean (directory does not exist)")
-            logger.lifecycle("没有要清理的缓存（目录不存在）")
         }
     }
 }
