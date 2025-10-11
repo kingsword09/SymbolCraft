@@ -17,6 +17,7 @@ import org.gradle.api.provider.ListProperty
  * @property outputDirectory Kotlin source folder where generated code will be written.
  * @property packageName root package used for generated Kotlin types.
  * @property generatePreview toggles Compose preview function generation for each icon.
+ * @property cdnBaseUrl base URL for the CDN serving Material Symbols (default: https://esm.sh).
  */
 abstract class MaterialSymbolsExtension {
     abstract val cacheEnabled: Property<Boolean>
@@ -25,6 +26,8 @@ abstract class MaterialSymbolsExtension {
     abstract val packageName: Property<String>
     // Preview generation configuration
     abstract val generatePreview: Property<Boolean>
+    // CDN configuration for security and flexibility
+    abstract val cdnBaseUrl: Property<String>
 
     private val symbolsConfig = mutableMapOf<String, MutableList<SymbolStyle>>()
 
@@ -36,6 +39,8 @@ abstract class MaterialSymbolsExtension {
         outputDirectory.convention("src/main/kotlin")
         packageName.convention("io.github.kingsword09.symbolcraft.symbols")
         generatePreview.convention(false)
+        // Default CDN is esm.sh, but can be overridden for mirrors or custom hosting
+        cdnBaseUrl.convention("https://esm.sh")
     }
 
     /**
@@ -74,7 +79,7 @@ abstract class MaterialSymbolsExtension {
         // Create a more comprehensive hash that includes all configuration
         val configString = buildString {
             // Add version identifier to invalidate cache when we change the model
-            append("version:1.1|")
+            append("version:1.2|")
 
             append("symbols:")
             symbolsConfig.toSortedMap().forEach { (name, styles) ->
@@ -87,6 +92,7 @@ abstract class MaterialSymbolsExtension {
             append("|package:").append(packageName.orNull)
             append("|outputDir:").append(outputDirectory.orNull)
             append("|preview:").append(generatePreview.orNull)
+            append("|cdnBaseUrl:").append(cdnBaseUrl.orNull)
         }
         return configString.hashCode().toString()
     }

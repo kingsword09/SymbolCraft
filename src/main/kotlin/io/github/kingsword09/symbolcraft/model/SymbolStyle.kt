@@ -19,12 +19,33 @@ data class SymbolStyle(
         }
 
     /**
-     * Generate esm.sh URL for downloading SVG from @material-symbols packages
+     * Generate CDN URL for downloading SVG from @material-symbols packages.
+     *
+     * Default format (esm.sh): https://esm.sh/@material-symbols/svg-400/outlined/face.svg
+     * Custom CDN format: {cdnBaseUrl}/@material-symbols/svg-{weight}/{variant}/{name}{suffix}.svg
+     *
+     * @param iconName Name of the icon (e.g., "home", "search")
+     * @param cdnBaseUrl Base URL for the CDN (default: "https://esm.sh")
+     * @return Full URL to the SVG file
+     */
+    fun buildUrl(iconName: String, cdnBaseUrl: String = "https://esm.sh"): String {
+        val suffix = if (fill == SymbolFill.FILLED) "-fill" else ""
+        return "$cdnBaseUrl/@material-symbols/svg-${weight.value}/${variant.pathName}/$iconName$suffix.svg"
+    }
+
+    /**
+     * Generate esm.sh URL for downloading SVG from @material-symbols packages.
+     *
+     * @deprecated Use [buildUrl] instead for better flexibility with CDN configuration
      * Example: https://esm.sh/@material-symbols/svg-400/outlined/face.svg
      */
+    @Deprecated(
+        message = "Use buildUrl(iconName, cdnBaseUrl) for configurable CDN support",
+        replaceWith = ReplaceWith("buildUrl(iconName, \"https://esm.sh\")"),
+        level = DeprecationLevel.WARNING
+    )
     fun buildEsmUrl(iconName: String): String {
-        val suffix = if (fill == SymbolFill.FILLED) "-fill" else ""
-        return "https://esm.sh/@material-symbols/svg-${weight.value}/${variant.pathName}/$iconName$suffix.svg"
+        return buildUrl(iconName, "https://esm.sh")
     }
 
     /**
