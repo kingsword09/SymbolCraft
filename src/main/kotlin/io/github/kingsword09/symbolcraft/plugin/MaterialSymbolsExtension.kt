@@ -5,7 +5,6 @@ import io.github.kingsword09.symbolcraft.model.SymbolVariant
 import io.github.kingsword09.symbolcraft.model.SymbolStyle
 import io.github.kingsword09.symbolcraft.model.SymbolWeight
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.ListProperty
 
 /**
  * DSL entry point exposed as `materialSymbols { ... }` in a consuming build script.

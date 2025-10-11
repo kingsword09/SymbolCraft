@@ -1,11 +1,17 @@
 package io.github.kingsword09.symbolcraft.download
 
 import io.github.kingsword09.symbolcraft.model.SymbolStyle
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.cio.endpoint
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.contentLength
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.io.path.*
@@ -59,11 +65,6 @@ class SvgDownloader(
             maxConnectionsCount = MAX_CONNECTIONS_COUNT
             endpoint {
                 maxConnectionsPerRoute = MAX_CONNECTIONS_PER_ROUTE
-            }
-            // Enforce HTTPS with TLS 1.2+
-            https {
-                // Use system's default trust manager
-                // This ensures TLS 1.2+ is used
             }
         }
     }
@@ -133,7 +134,21 @@ class SvgDownloader(
                     throw IllegalStateException("SVG too large: $contentLength bytes (max: $MAX_SVG_SIZE) from URL: $url")
                 }
 
-                val svgContent = response.bodyAsText()
+                val svgContent = if (contentLength == null) {
+                    // Stream read with a limit if content length is unknown
+                    val channel = response.body<ByteReadChannel>()
+                    val packet = channel.readRemaining(MAX_SVG_SIZE.toLong() + 1)
+                    try {
+                        if (packet.remaining > MAX_SVG_SIZE || !channel.isClosedForRead) {
+                            throw IllegalStateException("SVG response exceeds max size of $MAX_SVG_SIZE bytes from URL: $url")
+                        }
+                        packet.readText()
+                    } finally {
+                        packet.release()
+                    }
+                } else {
+                    response.bodyAsText()
+                }
 
                 // Validate basic SVG structure
                 if (!svgContent.contains("<svg") || !svgContent.contains("</svg>")) {

@@ -2,7 +2,11 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
