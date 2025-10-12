@@ -161,6 +161,83 @@ abstract class SymbolCraftExtension {
     }
 
     /**
+     * Configure external icon with multiple style variants (e.g., outline/solid, filled/unfilled).
+     *
+     * This is useful when the same icon needs different visual styles that come from different URLs.
+     * Common use case: Bottom navigation bars that need both filled and unfilled versions of icons.
+     *
+     * Examples:
+     * ```kotlin
+     * // Heroicons with outline and solid variants
+     * externalIconWithVariants("home", libraryName = "heroicons") {
+     *     variant("outline") {
+     *         urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
+     *     }
+     *     variant("solid") {
+     *         urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+     *     }
+     * }
+     *
+     * // Bootstrap Icons with different sizes
+     * externalIconWithVariants("bell", libraryName = "bootstrap-icons") {
+     *     variant("sm") {
+     *         urlTemplate = "{cdn}/bootstrap-icons/{name}-sm.svg"
+     *     }
+     *     variant("lg") {
+     *         urlTemplate = "{cdn}/bootstrap-icons/{name}-lg.svg"
+     *     }
+     * }
+     * ```
+     *
+     * This will generate separate icon files for each variant:
+     * - `HomeOutlineHeroicons.kt`
+     * - `HomeSolidHeroicons.kt`
+     *
+     * @param name Icon name (replaces {name} in URL templates)
+     * @param libraryName Library identifier (used for cache isolation)
+     * @param configure Configuration block for defining variants
+     */
+    fun externalIconWithVariants(name: String, libraryName: String, configure: ExternalIconVariantsBuilder.() -> Unit) {
+        val builder = ExternalIconVariantsBuilder(libraryName)
+        builder.configure()
+        builder.variants.forEach { (variantName, variantBuilder) ->
+            val config = variantBuilder.build()
+            iconConfig(name, config)
+        }
+    }
+
+    /**
+     * Convenience overload for configuring multiple external icons with the same style variants.
+     *
+     * All icons will share the same variant configuration.
+     *
+     * Examples:
+     * ```kotlin
+     * // Multiple Heroicons with outline and solid variants
+     * externalIconsWithVariants("home", "search", "user", libraryName = "heroicons") {
+     *     variant("outline") {
+     *         urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
+     *     }
+     *     variant("solid") {
+     *         urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+     *     }
+     * }
+     * ```
+     *
+     * This will generate:
+     * - `HomeOutlineHeroicons.kt`, `HomeSolidHeroicons.kt`
+     * - `SearchOutlineHeroicons.kt`, `SearchSolidHeroicons.kt`
+     * - `UserOutlineHeroicons.kt`, `UserSolidHeroicons.kt`
+     *
+     * @param names Icon names to configure
+     * @param libraryName Library identifier shared by all icons
+     * @param configure Configuration block for defining variants
+     */
+    fun externalIconsWithVariants(vararg names: String, libraryName: String, configure: ExternalIconVariantsBuilder.() -> Unit) {
+        names.forEach { name -> externalIconWithVariants(name, libraryName, configure) }
+    }
+
+    /**
      * Returns an immutable snapshot of all icon requests declared via the DSL.
      */
     fun getIconsConfig(): Map<String, List<IconConfig>> = iconsConfig.toMap()
@@ -323,5 +400,39 @@ class ExternalIconBuilder(private val libraryName: String) {
             "urlTemplate must be specified for external icon"
         }
         return ExternalIconConfig(libraryName, urlTemplate, styleParams.toMap())
+    }
+}
+
+/**
+ * Builder for external icon with multiple style variants.
+ *
+ * This builder allows defining multiple variants of the same icon, each with its own URL template.
+ */
+class ExternalIconVariantsBuilder(private val libraryName: String) {
+    internal val variants = mutableMapOf<String, ExternalIconBuilder>()
+
+    /**
+     * Define a style variant with its own URL template and parameters.
+     *
+     * Example:
+     * ```kotlin
+     * variant("outline") {
+     *     urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
+     * }
+     * variant("solid") {
+     *     urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+     *     styleParam("weight", "bold")
+     * }
+     * ```
+     *
+     * @param name Variant name (will be included in the generated icon file name)
+     * @param configure Configuration block for this variant
+     */
+    fun variant(name: String, configure: ExternalIconBuilder.() -> Unit) {
+        val builder = ExternalIconBuilder(libraryName)
+        // Add variant name as a style parameter to differentiate variants
+        builder.styleParam("variant", name)
+        builder.configure()
+        variants[name] = builder
     }
 }

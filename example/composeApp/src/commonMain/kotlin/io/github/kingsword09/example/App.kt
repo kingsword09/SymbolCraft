@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +35,17 @@ import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Round
 import io.github.kingsword09.example.icons.mdi.Icons as MdiIcons
 import io.github.kingsword09.example.icons.mdi.icons.AbTestingMdi
 import io.github.kingsword09.example.icons.mdi.icons.AbacusMdi
+import io.github.kingsword09.example.icons.official.Icons as OfficialIcons
+import io.github.kingsword09.example.icons.official.icons.HomeFilled as HomeFilledOfficial
+import io.github.kingsword09.example.icons.official.icons.HomeUnfilled as HomeUnfilledOfficial
+import io.github.kingsword09.example.icons.official.icons.SearchFilled
+import io.github.kingsword09.example.icons.official.icons.SearchUnfilled
+import io.github.kingsword09.example.icons.official.icons.SettingsFilled
+import io.github.kingsword09.example.icons.official.icons.SettingsUnfilled
+import io.github.kingsword09.example.icons.official.icons.PersonFilled
+import io.github.kingsword09.example.icons.official.icons.PersonUnfilled
+import io.github.kingsword09.example.icons.official.icons.ArrowBackFilled
+import io.github.kingsword09.example.icons.official.icons.ArrowBackUnfilled
 
 @Composable
 @Preview
@@ -39,9 +53,12 @@ fun App() {
     MaterialTheme {
         Column(
             modifier = Modifier
+                .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .safeContentPadding()
-                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -223,6 +240,134 @@ fun App() {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text("Abacus Icon (MDI External Library)")
+            }
+
+            // Official Material Symbols with variants (filled/unfilled)
+            Text(
+                "Official Material Symbols (externalIconsWithVariants)",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.HomeUnfilledOfficial,
+                    contentDescription = "Home",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Home (Unfilled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.HomeFilledOfficial,
+                    contentDescription = "Home",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Home (Filled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.SearchUnfilled,
+                    contentDescription = "Search",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Search (Unfilled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.SearchFilled,
+                    contentDescription = "Search",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Search (Filled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.SettingsUnfilled,
+                    contentDescription = "Settings",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Settings (Unfilled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.SettingsFilled,
+                    contentDescription = "Settings",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Settings (Filled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.PersonUnfilled,
+                    contentDescription = "Person",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Person (Unfilled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.PersonFilled,
+                    contentDescription = "Person",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Person (Filled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.ArrowBackUnfilled,
+                    contentDescription = "Arrow Back",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Arrow Back (Unfilled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = OfficialIcons.ArrowBackFilled,
+                    contentDescription = "Arrow Back",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Arrow Back (Filled) - Official")
             }
         }
     }

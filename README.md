@@ -609,6 +609,35 @@ symbolCraft {
 }
 ```
 
+**Icons with multiple style variants** (e.g., outline/solid, filled/unfilled):
+
+```kotlin
+symbolCraft {
+    // Single icon with multiple variants
+    externalIconWithVariants("home", libraryName = "heroicons") {
+        variant("outline") {
+            urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
+        }
+        variant("solid") {
+            urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+        }
+    }
+    // Generates: HomeOutlineHeroicons.kt, HomeSolidHeroicons.kt
+
+    // Multiple icons with the same variants (for bottom navigation, etc.)
+    val navIcons = listOf("home", "search", "user", "settings")
+    externalIconsWithVariants(*navIcons.toTypedArray(), libraryName = "heroicons") {
+        variant("outline") {
+            urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
+        }
+        variant("solid") {
+            urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+        }
+    }
+    // Generates outline and solid versions for all icons
+}
+```
+
 **Using built-in CDN (default: https://esm.sh):**
 
 ```kotlin
