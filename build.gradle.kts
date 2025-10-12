@@ -76,7 +76,7 @@ mavenPublishing {
 
     pom {
         name.set("SymbolCraft")
-        description.set("A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects")
+        description.set("Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching.")
         inceptionYear.set("2025")
         url.set("https://github.com/kingsword09/SymbolCraft")
 

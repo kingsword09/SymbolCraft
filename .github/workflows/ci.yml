@@ -198,7 +198,7 @@ jobs:
         body: |
           ## SymbolCraft v${{ steps.extract_version.outputs.version }}
 
-          A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects.
+          Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching.
 
           ### 📦 Installation
           ```kotlin
