@@ -1,6 +1,4 @@
-import io.github.kingsword09.symbolcraft.model.SymbolFill
-import io.github.kingsword09.symbolcraft.model.SymbolVariant
-import io.github.kingsword09.symbolcraft.model.SymbolWeight
+import io.github.kingsword09.symbolcraft.model.*
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -86,33 +84,41 @@ android {
     }
 }
 
-materialSymbols {
-    // where to output generated vectors
+symbolCraft {
+    // Output directory for generated icons
     outputDirectory.set("src/commonMain/kotlin/generated/symbols")
     packageName.set("io.github.kingsword09.example")
 
-    // 测试：启用预览生成但没有依赖
+    // Enable preview generation (optional)
     generatePreview.set(true)
 
-    // 使用新的便捷方法
-    symbol("search") {
-        standardWeights() // 添加 400, 500, 700 权重的 outlined 样式
+    // Material Symbols examples
+    materialSymbol("search") {
+        standardWeights() // Adds 400, 500, 700 weights with outlined variant
     }
 
-    symbol("home") {
-        weights(400, 500, variant = SymbolVariant.ROUNDED) // 指定变体
-        bothFills(weight = 400) // 同时添加填充和未填充
+    materialSymbol("home") {
+        weights(400, 500, variant = SymbolVariant.ROUNDED) // Specify variant
+        bothFills(weight = 400) // Both filled and unfilled
     }
 
-    symbol("person") {
-        allVariants(weight = SymbolWeight.W500) // 所有变体（outlined, rounded, sharp）
+    materialSymbol("person") {
+        allVariants(weight = SymbolWeight.W500) // All variants (outlined, rounded, sharp)
     }
 
-    // 传统方式仍然支持
-    symbol("settings") {
+    // Traditional style method still supported
+    materialSymbol("settings") {
         style(weight = 400, variant = SymbolVariant.OUTLINED)
         style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
     }
+
+    // External icons with URL template
+     externalIcon("ab-testing", libraryName = "mdi") {
+         urlTemplate = "{cdn}/@mdi/svg@latest/svg/{name}.svg"
+     }
+
+    // Generic method for custom IconConfig implementations
+    // iconConfig("custom", MyCustomIconConfig())
 }
 
 compose.desktop {

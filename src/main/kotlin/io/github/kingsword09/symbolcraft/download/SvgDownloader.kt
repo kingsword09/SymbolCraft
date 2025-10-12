@@ -1,6 +1,6 @@
 package io.github.kingsword09.symbolcraft.download
 
-import io.github.kingsword09.symbolcraft.model.SymbolStyle
+import io.github.kingsword09.symbolcraft.model.IconConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -14,10 +14,20 @@ import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.readLines
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 /**
- * Downloads Material Symbols SVG files from CDN with local caching and validation.
+ * Downloads icon SVG files from CDN with local caching and validation.
+ *
+ * Supports multiple icon libraries through the IconConfig interface.
  *
  * Features:
  * - Configurable CDN base URL with fallback support
@@ -27,7 +37,7 @@ import kotlin.io.path.*
  *
  * @property cacheDirectory Directory path for storing cached SVG files
  * @property cacheEnabled Whether to enable caching (default: true)
- * @property cdnBaseUrl Base URL for the CDN serving Material Symbols (default: esm.sh)
+ * @property cdnBaseUrl Base URL for the CDN serving icons (default: esm.sh)
  * @property logger Optional logger for status messages, if not provided uses println
  */
 class SvgDownloader(
@@ -85,7 +95,7 @@ class SvgDownloader(
     }
     
     /**
-     * Download an SVG file for the given icon and style.
+     * Download an SVG file for the given icon and configuration.
      *
      * This method:
      * 1. Checks the local cache first
@@ -93,13 +103,13 @@ class SvgDownloader(
      * 3. Validates content type, size, and structure
      * 4. Caches valid content for future use
      *
-     * @param iconName Name of the Material Symbol icon
-     * @param style Style configuration (weight, variant, fill)
+     * @param iconName Name of the icon
+     * @param config Icon library configuration
      * @return SVG content as string, or null if download fails
      */
-    suspend fun downloadSvg(iconName: String, style: SymbolStyle): String? = withContext(Dispatchers.IO) {
-        val url = style.buildUrl(iconName, cdnBaseUrl)
-        val cacheKey = style.getCacheKey(iconName)
+    suspend fun downloadSvg(iconName: String, config: IconConfig): String? = withContext(Dispatchers.IO) {
+        val url = config.buildUrl(iconName, cdnBaseUrl)
+        val cacheKey = config.getCacheKey(iconName)
 
         // Check cache first
         if (cacheEnabled) {

@@ -19,9 +19,9 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Gradle task responsible for downloading Material Symbols and converting them into Compose APIs.
+ * Gradle task responsible for downloading icons from multiple libraries and converting them into Compose APIs.
  *
- * The task is cacheable and honours [MaterialSymbolsExtension] settings supplied via the plugin DSL.
+ * The task is cacheable and honours [SymbolCraftExtension] settings supplied via the plugin DSL.
  *
  * @property extension lazily provides the extension backing the current project configuration.
  * @property outputDir destination directory for the generated Kotlin sources.
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger
 abstract class GenerateSymbolsTask : DefaultTask() {
 
     @get:Internal
-    abstract val extension: Property<MaterialSymbolsExtension>
+    abstract val extension: Property<SymbolCraftExtension>
 
     @get:Input
     val symbolsConfigHash: String
@@ -60,7 +60,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @TaskAction
     fun generate() = runBlocking {
         val ext = extension.get()
-        val config = ext.getSymbolsConfig()
+        val config = ext.getIconsConfig()
         val packageName = ext.packageName.get()
         val cacheDirPath = cacheDirectory.get()
         val projectBuildDirPath = projectBuildDir.get()
@@ -71,8 +71,8 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val svgCacheDir = File(cacheBaseDir, "svg-cache")
         val outputDirFile = outputDir.get().asFile
 
-        logger.lifecycle("🎨 Generating Material Symbols...")
-        logger.lifecycle("📊 Symbols to generate: ${config.values.sumOf { it.size }} icons")
+        logger.lifecycle("🎨 Generating icons...")
+        logger.lifecycle("📊 Icons to generate: ${config.values.sumOf { it.size }} total")
         logger.debug("📂 Cache directory: ${cacheBaseDir.absolutePath}")
 
         // Clean old generated files to ensure fresh generation
@@ -169,8 +169,8 @@ abstract class GenerateSymbolsTask : DefaultTask() {
      */
     private fun cleanOldGeneratedFiles(outputDir: File, packageName: String) {
         val packagePath = packageName.replace('.', '/')
-        val symbolsDir = File(outputDir, "$packagePath/materialsymbols")
-        val mainSymbolsFile = File(outputDir, "$packagePath/__MaterialSymbols.kt")
+        val symbolsDir = File(outputDir, "$packagePath/icons")
+        val mainSymbolsFile = File(outputDir, "$packagePath/__Icons.kt")
 
         var cleanedCount = 0
 
@@ -200,12 +200,12 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     /**
      * Clean unused SVG cache files that are no longer in the configuration
      */
-    private fun cleanUnusedCache(cacheDir: File, config: Map<String, List<io.github.kingsword09.symbolcraft.model.SymbolStyle>>) {
+    private fun cleanUnusedCache(cacheDir: File, config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>) {
         if (!cacheDir.exists()) return
 
         // Build set of required cache keys
-        val requiredCacheKeys = config.flatMap { (iconName, styles) ->
-            styles.map { style -> style.getCacheKey(iconName) }
+        val requiredCacheKeys = config.flatMap { (iconName, configs) ->
+            configs.map { iconConfig -> iconConfig.getCacheKey(iconName) }
         }.toSet()
 
         var cleanedCount = 0
@@ -232,7 +232,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
     private suspend fun downloadSvgsParallel(
         downloader: SvgDownloader,
-        config: Map<String, List<io.github.kingsword09.symbolcraft.model.SymbolStyle>>,
+        config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>,
         tempDir: File
     ): DownloadStats = coroutineScope {
         val totalIcons = config.values.sumOf { it.size }
@@ -243,17 +243,17 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         logger.lifecycle("⬇️ Downloading SVG files...")
 
         // Create download jobs for parallel execution
-        val downloadJobs = config.flatMap { (iconName, styles) ->
-            styles.map { style ->
+        val downloadJobs = config.flatMap { (iconName, iconConfigs) ->
+            iconConfigs.map { iconConfig ->
                 async(Dispatchers.IO) {
                     try {
-                        val cacheKey = style.getCacheKey(iconName)
+                        val cacheKey = iconConfig.getCacheKey(iconName)
                         val wasCached = downloader.isCached(cacheKey)
 
-                        val svgContent = downloader.downloadSvg(iconName, style)
+                        val svgContent = downloader.downloadSvg(iconName, iconConfig)
 
                         if (svgContent != null && svgContent.isNotBlank()) {
-                            val fileName = "${iconName.replaceFirstChar { it.titlecase() }}${style.signature}.svg"
+                            val fileName = "${iconName.replaceFirstChar { it.titlecase() }}${iconConfig.getSignature()}.svg"
                             val tempFile = File(tempDir, fileName)
                             tempFile.writeText(svgContent)
 
@@ -266,23 +266,23 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                                 logger.lifecycle("   Progress: $progress/$totalIcons")
                             }
 
-                            DownloadResult.Success(iconName, style, fileName)
+                            DownloadResult.Success(iconName, iconConfig, fileName)
                         } else {
                             failed.incrementAndGet()
                             val errorMsg = if (svgContent == null) "Download returned null" else "Empty SVG content"
-                            logger.warn("   ⚠️ Failed to download: $iconName-${style.signature} ($errorMsg)")
-                            DownloadResult.Failed(iconName, style, errorMsg)
+                            logger.warn("   ⚠️ Failed to download: $iconName-${iconConfig.getSignature()} ($errorMsg)")
+                            DownloadResult.Failed(iconName, iconConfig, errorMsg)
                         }
                     } catch (e: Exception) {
                         failed.incrementAndGet()
                         val detailedError = when {
                             e.message?.contains("timeout", ignoreCase = true) == true -> "Timeout - network too slow"
-                            e.message?.contains("404", ignoreCase = true) == true -> "Icon not found in Material Symbols"
+                            e.message?.contains("404", ignoreCase = true) == true -> "Icon not found"
                             e.message?.contains("connection", ignoreCase = true) == true -> "Network connection failed"
                             else -> e.message ?: "Unknown error"
                         }
-                        logger.warn("   ❌ Error downloading $iconName-${style.signature}: $detailedError")
-                        DownloadResult.Failed(iconName, style, detailedError)
+                        logger.warn("   ❌ Error downloading $iconName-${iconConfig.getSignature()}: $detailedError")
+                        DownloadResult.Failed(iconName, iconConfig, detailedError)
                     }
                 }
             }
@@ -329,7 +329,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 outputDirectory = outputDir,
                 packageName = packageName,
                 generatePreview = generatePreview,
-                accessorName = "MaterialSymbols",
+                accessorName = "Icons",
                 allAssetsPropertyName = "AllIcons"
             )
             logger.lifecycle("✅ Successfully converted $iconCount icons")
@@ -369,13 +369,13 @@ data class DownloadStats(
 sealed class DownloadResult {
     data class Success(
         val iconName: String,
-        val style: io.github.kingsword09.symbolcraft.model.SymbolStyle,
+        val config: io.github.kingsword09.symbolcraft.model.IconConfig,
         val fileName: String
     ) : DownloadResult()
 
     data class Failed(
         val iconName: String,
-        val style: io.github.kingsword09.symbolcraft.model.SymbolStyle,
+        val config: io.github.kingsword09.symbolcraft.model.IconConfig,
         val error: String
     ) : DownloadResult()
 }

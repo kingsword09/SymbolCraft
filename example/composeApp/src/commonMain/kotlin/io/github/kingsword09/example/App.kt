@@ -28,6 +28,7 @@ import io.github.kingsword09.example.materialsymbols.SettingsW500RoundedFill
 import io.github.kingsword09.example.materialsymbols.PersonW500Outlined
 import io.github.kingsword09.example.materialsymbols.PersonW500Sharp
 import io.github.kingsword09.example.materialsymbols.PersonW500Rounded
+import io.github.kingsword09.example.icons.AbTestingMdi
 
 @Composable
 @Preview
@@ -195,6 +196,18 @@ fun App() {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text("Settings (Weight 500, Rounded, Fill)")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AbTestingMdi,
+                    contentDescription = "AbTest",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Home (Weight 400, Rounded)")
             }
         }
     }

@@ -7,22 +7,22 @@ import java.io.File
 /**
  * Gradle plugin entry point registered as `io.github.kingsword09.symbolcraft`.
  *
- * The plugin wires the [MaterialSymbolsExtension] DSL, registers generation/cleanup tasks,
+ * The plugin wires the [SymbolCraftExtension] DSL, registers generation/cleanup tasks,
  * and ensures Kotlin compilation depends on freshly generated icons.
  */
-class MaterialSymbolsPlugin : Plugin<Project> {
+class SymbolCraftPlugin : Plugin<Project> {
     /**
      * Installs the extension and all supporting tasks on the target [project].
      */
     override fun apply(project: Project) {
         val extension = project.extensions.create(
-            "materialSymbols",
-            MaterialSymbolsExtension::class.java
+            "symbolCraft",
+            SymbolCraftExtension::class.java
         )
 
-        val generateTaskProvider = project.tasks.register("generateMaterialSymbols", GenerateSymbolsTask::class.java) { task ->
-            task.group = "material symbols"
-            task.description = "Generate Material Symbols icons based on configuration"
+        val generateTaskProvider = project.tasks.register("generateSymbolCraftIcons", GenerateSymbolsTask::class.java) { task ->
+            task.group = "symbolcraft"
+            task.description = "Generate icons from configured libraries"
             task.extension.set(extension)
             task.outputDir.set(project.layout.projectDirectory.dir(extension.outputDirectory))
             task.cacheDirectory.set(extension.cacheDirectory)
@@ -32,22 +32,22 @@ class MaterialSymbolsPlugin : Plugin<Project> {
             task.inputs.property("generatePreview", extension.generatePreview)
         }
 
-        project.tasks.register("cleanSymbolsCache", CleanSymbolsCacheTask::class.java) { task ->
-            task.group = "material symbols"
-            task.description = "Clean Material Symbols cache"
+        project.tasks.register("cleanSymbolCraftCache", CleanSymbolsCacheTask::class.java) { task ->
+            task.group = "symbolcraft"
+            task.description = "Clean SymbolCraft icon cache"
             task.extension.set(extension)
             task.projectBuildDir.set(project.layout.buildDirectory.get().asFile.absolutePath)
         }
 
-        project.tasks.register("cleanGeneratedSymbols") { task ->
-            task.group = "material symbols"
-            task.description = "Clean generated Material Symbols files"
+        project.tasks.register("cleanSymbolCraftIcons") { task ->
+            task.group = "symbolcraft"
+            task.description = "Clean generated SymbolCraft icon files"
             task.doLast {
                 val packageName = extension.packageName.get()
                 val outputDir = project.layout.projectDirectory.dir(extension.outputDirectory).get().asFile
                 val packagePath = packageName.replace('.', '/')
-                val symbolsDir = File(outputDir, "$packagePath/materialsymbols")
-                val mainSymbolsFile = File(outputDir, "$packagePath/__MaterialSymbols.kt")
+                val symbolsDir = File(outputDir, "$packagePath/icons")
+                val mainSymbolsFile = File(outputDir, "$packagePath/__Icons.kt")
 
                 var deletedCount = 0
                 if (symbolsDir.exists()) {
@@ -67,13 +67,13 @@ class MaterialSymbolsPlugin : Plugin<Project> {
                     deletedCount++
                 }
 
-                project.logger.lifecycle("🧹 Cleaned $deletedCount generated symbol files")
+                project.logger.lifecycle("🧹 Cleaned $deletedCount generated icon files")
             }
         }
 
-        project.tasks.register("validateSymbolsConfig", ValidateSymbolsConfigTask::class.java) { task ->
-            task.group = "material symbols"
-            task.description = "Validate Material Symbols configuration"
+        project.tasks.register("validateSymbolCraftConfig", ValidateSymbolsConfigTask::class.java) { task ->
+            task.group = "symbolcraft"
+            task.description = "Validate SymbolCraft icon configuration"
             task.extension.set(extension)
         }
 

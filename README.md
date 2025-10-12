@@ -5,7 +5,7 @@
 
 > **Language**: [English](README.md) | [中文](README_ZH.md)
 
-A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotlin Multiplatform projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
+A powerful Gradle plugin for generating icons on-demand from multiple icon libraries (Material Symbols, Bootstrap Icons, Heroicons, etc.) in Kotlin Multiplatform projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
 
 ## ✨ Features
 
@@ -15,6 +15,7 @@ A powerful Gradle plugin for generating Material Symbols icons on-demand in Kotl
 - 🎯 **Deterministic builds** - Ensure completely consistent code generation every time, Git-friendly and cache-friendly
 - 🎨 **Full style support** - Support all Material Symbols styles (weight, variant, fill state)
 - 🔧 **Smart DSL** - Convenient batch configuration methods and preset styles
+- 📚 **Multi-library support** - Use icons from Material Symbols, Bootstrap Icons, Heroicons, Feather Icons, Font Awesome, and any custom icon library via URL templates
 - 📱 **High-quality output** - Use DevSrSouza/svg-to-compose library to generate authentic SVG path data
 - 🔄 **Incremental builds** - Gradle task caching support, only regenerate changed icons
 - 🏗️ **Configuration cache compatible** - Fully supports Gradle configuration cache for improved build performance
@@ -43,7 +44,7 @@ plugins {
 ### 2. Configure the plugin
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Basic configuration
     packageName.set("com.app.symbols")
     outputDirectory.set("src/commonMain/kotlin")  // Support multiplatform projects
@@ -53,32 +54,32 @@ materialSymbols {
     generatePreview.set(true)  // Enable preview generation
 
     // Individual icon configuration (using Int weight values)
-    symbol("search") {
+    materialSymbol("search") {
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
         style(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
     }
 
     // Or using SymbolWeight enum for type safety
-    symbol("home") {
+    materialSymbol("home") {
         style(weight = SymbolWeight.W400, variant = SymbolVariant.OUTLINED)
         style(weight = SymbolWeight.W500, variant = SymbolVariant.ROUNDED)
     }
 
     // Convenient batch configuration methods
-    symbol("person") {
+    materialSymbol("person") {
         standardWeights() // Auto-add 400, 500, 700 weights
     }
 
-    symbol("settings") {
+    materialSymbol("settings") {
         allVariants(weight = 400) // Add all variants (outlined, rounded, sharp)
     }
 
-    symbol("favorite") {
+    materialSymbol("favorite") {
         bothFills(weight = 500, variant = SymbolVariant.ROUNDED) // Add both filled and unfilled
     }
 
     // Batch configure multiple icons
-    symbols("star", "bookmark") {
+    materialSymbols("star", "bookmark") {
         weights(400, 500, variant = SymbolVariant.OUTLINED)
     }
 }
@@ -91,7 +92,7 @@ materialSymbols {
 Run the following command to generate configured icons:
 
 ```bash
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 ```
 
 The generation process will show detailed progress:
@@ -117,9 +118,9 @@ The generation process will show detailed progress:
 Generated icons can be used directly in your Compose code:
 
 ```kotlin
-import com.yourcompany.app.symbols.MaterialSymbols
-import com.yourcompany.app.symbols.materialsymbols.SearchW400Outlined
-import com.yourcompany.app.symbols.materialsymbols.HomeW400Rounded
+import com.yourcompany.app.symbols.Icons
+import com.yourcompany.app.symbols.icons.SearchW400Outlined
+import com.yourcompany.app.symbols.icons.HomeW400Rounded
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 
@@ -131,14 +132,14 @@ fun MyScreen() {
         contentDescription = "Search"
     )
 
-    // Method 2: Use through MaterialSymbols object
+    // Method 2: Use through Icons object
     Icon(
-        imageVector = MaterialSymbols.SearchW400Outlined,
+        imageVector = Icons.SearchW400Outlined,
         contentDescription = "Search"
     )
 
     Icon(
-        imageVector = MaterialSymbols.HomeW400Rounded,
+        imageVector = Icons.HomeW400Rounded,
         contentDescription = "Home"
     )
 }
@@ -149,12 +150,12 @@ fun MyScreen() {
 ### Enable preview generation
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Enable preview functionality
     generatePreview.set(true)  // Generate @Preview functions for icons
 
     // Configure icons...
-    symbol("home") {
+    materialSymbol("home") {
         standardWeights()
     }
 }
@@ -184,7 +185,7 @@ The preview generation is handled by the underlying `svg-to-compose` library and
 ### Basic configuration
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Generated Kotlin package name
     packageName.set("com.yourcompany.app.symbols")
 
@@ -194,6 +195,9 @@ materialSymbols {
     // Cache configuration
     cacheEnabled.set(true)
     cacheDirectory.set("material-symbols-cache")
+
+    // CDN configuration
+    cdnBaseUrl.set("https://esm.sh")  // Default CDN URL (optional)
 
     // Preview configuration
     generatePreview.set(false)  // Whether to generate Compose @Preview functions
@@ -223,8 +227,8 @@ materialSymbols {
 ### Convenient configuration methods
 
 ```kotlin
-materialSymbols {
-    symbol("example") {
+symbolCraft {
+    materialSymbol("example") {
         // Basic method (using Int)
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
 
@@ -266,28 +270,28 @@ The plugin provides the following Gradle tasks:
 
 | Task | Description |
 |------|-------------|
-| `generateMaterialSymbols` | Generate configured Material Symbols icons |
-| `cleanSymbolsCache` | Clean cached SVG files |
-| `cleanGeneratedSymbols` | Clean generated Material Symbols files |
-| `validateSymbolsConfig` | Validate icon configuration validity |
+| `generateSymbolCraftIcons` | Generate configured Material Symbols icons |
+| `cleanSymbolCraftCache` | Clean cached SVG files |
+| `cleanSymbolCraftIcons` | Clean generated Material Symbols files |
+| `validateSymbolCraftConfig` | Validate icon configuration validity |
 
 ### Task examples
 
 ```bash
 # Generate icons (incremental build)
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 
 # Force regenerate all icons
-./gradlew generateMaterialSymbols --rerun-tasks
+./gradlew generateSymbolCraftIcons --rerun-tasks
 
 # Clean cache
-./gradlew cleanSymbolsCache
+./gradlew cleanSymbolCraftCache
 
 # Clean generated files
-./gradlew cleanGeneratedSymbols
+./gradlew cleanSymbolCraftIcons
 
 # Validate configuration
-./gradlew validateSymbolsConfig
+./gradlew validateSymbolCraftConfig
 ```
 
 ## 📚 Documentation (Dokka)
@@ -323,8 +327,8 @@ your-project/
 │           ├── com/app/
 │           │   └── MainActivity.kt
 │           └── com/app/symbols/        # Generated icons package
-│               ├── __MaterialSymbols.kt          # Icon access object
-│               └── materialsymbols/              # Individual icon files
+│               ├── __Icons.kt          # Icon access object
+│               └── icons/              # Individual icon files
 │                   ├── SearchW400Outlined.kt
 │                   ├── HomeW500RoundedFill.kt
 │                   └── PersonW700Sharp.kt
@@ -342,8 +346,8 @@ To avoid generated files showing as new files in Git, recommend adding the gener
 
 ```gitignore
 # SymbolCraft generated files (adjust package name to match your configuration)
-**/materialsymbols/
-**/__MaterialSymbols.kt
+**/icons/
+**/__Icons.kt
 
 # Or ignore the entire package
 **/com/app/symbols/
@@ -358,7 +362,7 @@ There are two strategies for handling generated files:
 
 1. **Ignore generated files (recommended)**
    - Add generation directory to `.gitignore`
-   - Run `generateMaterialSymbols` task in CI/CD
+   - Run `generateSymbolCraftIcons` task in CI/CD
    - Advantages: Keep repository clean, avoid merge conflicts
 
 2. **Commit generated files**
@@ -386,7 +390,7 @@ There are two strategies for handling generated files:
 
 **Relative path (default):**
 ```kotlin
-materialSymbols {
+symbolCraft {
     cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
     // Auto-cleanup: ✅ Enabled (project-local cache)
 }
@@ -394,7 +398,7 @@ materialSymbols {
 
 **Absolute path (for shared/global cache):**
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Unix/Linux/macOS
     cacheDirectory.set("/var/tmp/symbolcraft")
 
@@ -482,28 +486,154 @@ Use [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) to
 ### Batch configure icons
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Basic icon set
     val basicIcons = listOf("home", "search", "person", "settings")
     basicIcons.forEach { icon ->
-        symbol(icon) {
+        materialSymbol(icon) {
             standardWeights()
         }
     }
 
     // Navigation icon set
     val navIcons = listOf("arrow_back", "arrow_forward", "menu", "close")
-    symbols(*navIcons.toTypedArray()) {
+    materialSymbols(*navIcons.toTypedArray()) {
         weights(400, 500)
         bothFills(weight = 400)
     }
 }
 ```
 
+### External Icon Libraries
+
+You can add icons from other libraries or custom sources using URL templates.
+
+**Understanding parameters:**
+
+- **`name`**: The specific icon name (e.g., "bell", "home") - replaces `{name}` in URL template
+- **`libraryName`**: Library identifier (e.g., "bootstrap-icons") - used for cache isolation to avoid conflicts between different libraries
+
+**Single icon configuration:**
+
+```kotlin
+symbolCraft {
+    // Single external icon
+    externalIcon(
+        name = "bell",
+        libraryName = "bootstrap-icons"
+    ) {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+}
+```
+
+**Multiple icons from the same library:**
+
+```kotlin
+symbolCraft {
+    // Define icon list
+    val bootstrapIcons = listOf("bell", "house", "person", "gear")
+
+    // Use externalIcons() for batch configuration
+    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+
+    // With style parameters
+    val heroIcons = listOf("home", "search", "user", "cog")
+    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
+        styleParam("size", "24")
+    }
+}
+```
+
+**Using multiple different icon libraries:**
+
+```kotlin
+symbolCraft {
+    // Material Symbols icons
+    materialSymbol("favorite") {
+        standardWeights()
+    }
+
+    // Bootstrap Icons
+    val bootstrapIcons = listOf("bell", "calendar", "envelope")
+    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+
+    // Heroicons
+    val heroIcons = listOf("home", "user", "cog")
+    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+    }
+
+    // Feather Icons
+    val featherIcons = listOf("activity", "airplay", "alert-circle")
+    externalIcons(*featherIcons.toTypedArray(), libraryName = "feather-icons") {
+        urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
+    }
+
+    // Font Awesome (if CDN is available)
+    externalIcon("github", libraryName = "font-awesome") {
+        urlTemplate = "https://example-fa-cdn.com/svgs/brands/{name}.svg"
+    }
+}
+```
+
+**Using built-in CDN (default: https://esm.sh):**
+
+```kotlin
+symbolCraft {
+    // External icons with {cdn} placeholder
+    val bootstrapIcons = listOf("bell", "calendar", "clock", "envelope")
+    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+}
+```
+
+**Using custom/direct URLs:**
+
+```kotlin
+symbolCraft {
+    // Direct URL (no CDN placeholder)
+    externalIcon("my-icon", libraryName = "mylib") {
+        urlTemplate = "https://my-cdn.com/icons/{name}.svg"
+    }
+
+    // Another example with parameters
+    externalIcon("feather-icon", libraryName = "feather") {
+        urlTemplate = "https://cdn.feathericons.com/{size}/{name}.svg"
+        styleParam("size", "16")
+    }
+}
+```
+
+**Changing the global CDN URL:**
+
+```kotlin
+symbolCraft {
+    // Change CDN for all icon libraries using {cdn} placeholder
+    cdnBaseUrl.set("https://my-custom-cdn.com")
+
+    // Now all {cdn} placeholders will use this URL
+    externalIcon("icon", libraryName = "custom") {
+        urlTemplate = "{cdn}/icons/{name}.svg"  // → https://my-custom-cdn.com/icons/icon.svg
+    }
+}
+```
+
+**URL Template Placeholders:**
+- `{cdn}` - Replaced with `cdnBaseUrl` (default: "https://esm.sh")
+- `{name}` - Replaced with the icon name
+- `{key}` - Replaced with custom style parameter values (using `styleParam()`)
+
 ### Custom cache configuration
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Disable cache (not recommended)
     cacheEnabled.set(false)
 
@@ -517,7 +647,7 @@ materialSymbols {
 
 **Note**: To force regenerate all icons, use Gradle's built-in option:
 ```bash
-./gradlew generateMaterialSymbols --rerun-tasks
+./gradlew generateSymbolCraftIcons --rerun-tasks
 ```
 
 ## 🔍 Troubleshooting
@@ -533,13 +663,13 @@ materialSymbols {
 2. **Cache issues**
    ```bash
    # Clean SymbolCraft cache
-   ./gradlew cleanSymbolsCache
+   ./gradlew cleanSymbolCraftCache
 
    # Or clean entire build directory (including cache)
    ./gradlew clean
 
    # Force regenerate all icons
-   ./gradlew generateMaterialSymbols --rerun-tasks
+   ./gradlew generateSymbolCraftIcons --rerun-tasks
    ```
 
    Note: Starting from v0.1.2, cache files are stored in `build/material-symbols-cache/` by default and are automatically cleaned when running `./gradlew clean`.
@@ -553,32 +683,32 @@ materialSymbols {
 4. **Configuration cache issues**
    If you encounter configuration cache related errors, you can temporarily disable it:
    ```bash
-   ./gradlew generateMaterialSymbols --no-configuration-cache
+   ./gradlew generateSymbolCraftIcons --no-configuration-cache
    ```
 
 5. **Generated files showing as new files in Git**
    Add generation directory to `.gitignore` (adjust package name to match your configuration):
    ```gitignore
-   **/materialsymbols/
-   **/__MaterialSymbols.kt
+   **/icons/
+   **/__Icons.kt
    ```
 
 ### Debug options
 
 ```bash
 # Verbose logging
-./gradlew generateMaterialSymbols --info
+./gradlew generateSymbolCraftIcons --info
 
 # Stack trace
-./gradlew generateMaterialSymbols --stacktrace
+./gradlew generateSymbolCraftIcons --stacktrace
 ```
 
 ## 🏗 Architecture Design
 
 ### Core components
 
-- **MaterialSymbolsPlugin** - Main plugin class
-- **MaterialSymbolsExtension** - DSL configuration interface with SymbolConfigBuilder
+- **SymbolCraftPlugin** - Main plugin class
+- **SymbolCraftExtension** - DSL configuration interface with SymbolConfigBuilder
 - **GenerateSymbolsTask** - Core generation task with parallel downloads
 - **SvgDownloader** - Smart SVG downloader with caching
 - **Svg2ComposeConverter** - SVG to Compose converter using DevSrSouza/svg-to-compose library
@@ -608,7 +738,7 @@ The project includes a complete Kotlin Multiplatform example application that de
 cd example
 
 # Generate Material Symbols icons
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 
 # Run Android app
 ./gradlew :composeApp:assembleDebug
@@ -624,27 +754,27 @@ cd example
 The example app demonstrates various configuration options:
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     packageName.set("io.github.kingsword09.example")
     outputDirectory.set("src/commonMain/kotlin")
     generatePreview.set(true)
 
     // Using convenient methods
-    symbol("search") {
+    materialSymbol("search") {
         standardWeights() // Adds 400, 500, 700 weights
     }
 
-    symbol("home") {
+    materialSymbol("home") {
         weights(400, 500, variant = SymbolVariant.ROUNDED)
         bothFills(weight = 400) // Adds both filled and unfilled
     }
 
-    symbol("person") {
+    materialSymbol("person") {
         allVariants(weight = SymbolWeight.W500) // All variants (outlined, rounded, sharp)
     }
 
     // Traditional style configuration
-    symbol("settings") {
+    materialSymbol("settings") {
         style(weight = 400, variant = SymbolVariant.OUTLINED)
         style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
     }
@@ -676,7 +806,7 @@ cd SymbolCraft
 4. Run example application:
 ```bash
 cd example
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 ./gradlew :composeApp:assembleDebug
 ```
 
@@ -684,7 +814,7 @@ cd example
 
 1. Make changes to plugin source code in `src/main/kotlin/`
 2. Build and publish locally: `./gradlew publishToMavenLocal`
-3. Test changes using the example app: `cd example && ./gradlew generateMaterialSymbols`
+3. Test changes using the example app: `cd example && ./gradlew generateSymbolCraftIcons`
 4. Run tests: `./gradlew test`
 5. Submit pull request
 

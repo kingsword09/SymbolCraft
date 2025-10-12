@@ -12,18 +12,18 @@ import org.gradle.api.tasks.TaskAction
  */
 abstract class ValidateSymbolsConfigTask : DefaultTask() {
     @get:Internal
-    abstract val extension: Property<MaterialSymbolsExtension>
+    abstract val extension: Property<SymbolCraftExtension>
 
     /**
-     * Checks that at least one symbol and variant has been declared.
+     * Checks that at least one icon configuration has been declared.
      */
     @TaskAction
     fun validate() {
-        val config = extension.get().getSymbolsConfig()
+        val config = extension.get().getIconsConfig()
         if (config.isEmpty()) {
-            throw IllegalStateException("No symbols configured. Use materialSymbols { } in build.gradle.kts")
+            throw IllegalStateException("No icons configured. Use symbolCraft { } in build.gradle.kts")
         }
         val count = config.values.sumOf { it.size }
-        logger.lifecycle("Valid configuration. Symbols: ${config.size}, Variants: $count")
+        logger.lifecycle("✅ Valid configuration. Icons: ${config.size}, Total configurations: $count")
     }
 }
