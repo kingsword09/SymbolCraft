@@ -62,7 +62,7 @@ gradlePlugin {
             id = "io.github.kingsword09.symbolcraft"
             implementationClass = "io.github.kingsword09.symbolcraft.plugin.SymbolCraftPlugin"
             displayName = "SymbolCraft - Multi-Library Icon Generator"
-            description = "Generate icons from multiple libraries (Material Symbols, Simple Icons, etc.) on-demand with caching support for Compose Multiplatform."
+            description = "Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching."
             tags = listOf("KMP", "Compose-Multiplatform", "material", "icons", "symbols", "generator")
         }
     }
