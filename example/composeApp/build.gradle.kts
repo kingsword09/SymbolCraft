@@ -113,12 +113,9 @@ symbolCraft {
     }
 
     // External icons with URL template
-    externalIcon("ab-testing", libraryName = "mdi") {
+    externalIcons(*listOf("abacus", "ab-testing").toTypedArray(), libraryName = "mdi") {
         urlTemplate = "{cdn}/@mdi/svg@latest/svg/{name}.svg"
     }
-
-    // Generic method for custom IconConfig implementations
-    // iconConfig("custom", MyCustomIconConfig())
 }
 
 compose.desktop {

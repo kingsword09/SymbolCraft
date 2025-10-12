@@ -31,6 +31,7 @@ import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Sharp
 import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Rounded
 import io.github.kingsword09.example.icons.mdi.Icons as MdiIcons
 import io.github.kingsword09.example.icons.mdi.icons.AbTestingMdi
+import io.github.kingsword09.example.icons.mdi.icons.AbacusMdi
 
 @Composable
 @Preview
@@ -210,6 +211,18 @@ fun App() {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text("AB Testing Icon (MDI External Library)")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = MdiIcons.AbacusMdi,
+                    contentDescription = "Abacus",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Abacus Icon (MDI External Library)")
             }
         }
     }
