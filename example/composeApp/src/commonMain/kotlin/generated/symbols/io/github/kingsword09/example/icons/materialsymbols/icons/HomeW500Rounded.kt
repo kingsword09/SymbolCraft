@@ -1,4 +1,4 @@
-package io.github.kingsword09.example.materialsymbols
+package io.github.kingsword09.example.icons.materialsymbols.icons
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,10 +14,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import io.github.kingsword09.example.MaterialSymbols
+import io.github.kingsword09.example.icons.materialsymbols.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val MaterialSymbols.HomeW500Rounded: ImageVector
+public val Icons.HomeW500Rounded: ImageVector
     get() {
         if (_homeW500Rounded != null) {
             return _homeW500Rounded!!
@@ -78,6 +78,6 @@ private var _homeW500Rounded: ImageVector? = null
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = MaterialSymbols.HomeW500Rounded, contentDescription = "")
+        Image(imageVector = Icons.HomeW500Rounded, contentDescription = "")
     }
 }

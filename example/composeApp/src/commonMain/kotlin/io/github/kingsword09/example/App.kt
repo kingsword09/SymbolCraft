@@ -16,19 +16,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-import io.github.kingsword09.example.materialsymbols.HomeW400Rounded
-import io.github.kingsword09.example.materialsymbols.HomeW400Outlined
-import io.github.kingsword09.example.materialsymbols.HomeW500Rounded
-import io.github.kingsword09.example.materialsymbols.HomeW400OutlinedFill
-import io.github.kingsword09.example.materialsymbols.SearchW400Outlined
-import io.github.kingsword09.example.materialsymbols.SearchW500Outlined
-import io.github.kingsword09.example.materialsymbols.SearchW700Outlined
-import io.github.kingsword09.example.materialsymbols.SettingsW400Outlined
-import io.github.kingsword09.example.materialsymbols.SettingsW500RoundedFill
-import io.github.kingsword09.example.materialsymbols.PersonW500Outlined
-import io.github.kingsword09.example.materialsymbols.PersonW500Sharp
-import io.github.kingsword09.example.materialsymbols.PersonW500Rounded
-import io.github.kingsword09.example.icons.AbTestingMdi
+import io.github.kingsword09.example.icons.materialsymbols.Icons as MaterialSymbols
+import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400Rounded
+import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400Outlined
+import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW500Rounded
+import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400OutlinedFill
+import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW400Outlined
+import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW500Outlined
+import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW700Outlined
+import io.github.kingsword09.example.icons.materialsymbols.icons.SettingsW400Outlined
+import io.github.kingsword09.example.icons.materialsymbols.icons.SettingsW500RoundedFill
+import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Outlined
+import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Sharp
+import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Rounded
+import io.github.kingsword09.example.icons.mdi.Icons as MdiIcons
+import io.github.kingsword09.example.icons.mdi.icons.AbTestingMdi
 
 @Composable
 @Preview
@@ -202,12 +204,12 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.AbTestingMdi,
+                    imageVector = MdiIcons.AbTestingMdi,
                     contentDescription = "AbTest",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Text("Home (Weight 400, Rounded)")
+                Text("AB Testing Icon (MDI External Library)")
             }
         }
     }

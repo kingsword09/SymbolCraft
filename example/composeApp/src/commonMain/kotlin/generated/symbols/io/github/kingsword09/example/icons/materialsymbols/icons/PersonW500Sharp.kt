@@ -1,4 +1,4 @@
-package io.github.kingsword09.example.icons
+package io.github.kingsword09.example.icons.materialsymbols.icons
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,15 +14,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import io.github.kingsword09.example.Icons
+import io.github.kingsword09.example.icons.materialsymbols.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.PersonW500Rounded: ImageVector
+public val Icons.PersonW500Sharp: ImageVector
     get() {
-        if (_personW500Rounded != null) {
-            return _personW500Rounded!!
+        if (_personW500Sharp != null) {
+            return _personW500Sharp!!
         }
-        _personW500Rounded = Builder(name = "PersonW500Rounded", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _personW500Sharp = Builder(name = "PersonW500Sharp", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(479.95f, 475.89f)
                 quadToRelative(-68.68f, 0.0f, -112.3f, -43.62f)
@@ -34,22 +34,18 @@ public val Icons.PersonW500Rounded: ImageVector
                 quadToRelative(0.0f, 68.68f, -43.8f, 112.31f)
                 quadToRelative(-43.79f, 43.62f, -112.47f, 43.62f)
                 close()
-                moveTo(154.02f, 740.96f)
-                verticalLineToRelative(-32.33f)
-                quadToRelative(0.0f, -39.51f, 19.92f, -67.99f)
+                moveTo(154.02f, 809.09f)
+                verticalLineToRelative(-100.41f)
+                quadToRelative(0.0f, -39.56f, 19.92f, -68.04f)
                 quadToRelative(19.91f, -28.49f, 51.43f, -43.27f)
                 quadToRelative(67.48f, -30.24f, 129.69f, -45.36f)
                 quadToRelative(62.2f, -15.12f, 124.88f, -15.12f)
                 quadToRelative(63.13f, 0.0f, 124.79f, 15.62f)
                 quadToRelative(61.66f, 15.62f, 128.82f, 45.05f)
                 quadToRelative(32.88f, 14.6f, 52.78f, 43.0f)
-                quadToRelative(19.89f, 28.4f, 19.89f, 68.07f)
-                verticalLineToRelative(32.33f)
-                quadToRelative(0.0f, 28.09f, -19.96f, 48.11f)
-                reflectiveQuadToRelative(-48.41f, 20.02f)
-                horizontalLineToRelative(-515.7f)
-                quadToRelative(-28.35f, 0.0f, -48.24f, -20.02f)
-                reflectiveQuadToRelative(-19.89f, -48.11f)
+                quadToRelative(19.89f, 28.4f, 19.89f, 68.06f)
+                verticalLineToRelative(100.47f)
+                horizontalLineToRelative(-652.2f)
                 close()
                 moveTo(222.15f, 740.96f)
                 horizontalLineToRelative(515.7f)
@@ -81,15 +77,15 @@ public val Icons.PersonW500Rounded: ImageVector
             }
         }
         .build()
-        return _personW500Rounded!!
+        return _personW500Sharp!!
     }
 
-private var _personW500Rounded: ImageVector? = null
+private var _personW500Sharp: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.PersonW500Rounded, contentDescription = "")
+        Image(imageVector = Icons.PersonW500Sharp, contentDescription = "")
     }
 }

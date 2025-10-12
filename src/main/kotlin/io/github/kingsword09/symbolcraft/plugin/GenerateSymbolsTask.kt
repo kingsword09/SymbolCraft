@@ -96,12 +96,16 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             if (tempDir.exists()) tempDir.deleteRecursively()
             tempDir.mkdirs()
 
-            // Download SVGs with progress tracking
+            // Group icons by library
+            val iconsByLibrary = groupIconsByLibrary(config)
+            logger.debug("📚 Libraries found: ${iconsByLibrary.keys.joinToString()}")
+
+            // Download SVGs with progress tracking (all libraries together)
             val downloadStats = downloadSvgsParallel(downloader, config, tempDir)
             logDownloadStats(downloadStats)
 
-            // Convert SVGs to Compose code
-            convertSvgsToCompose(tempDir, outputDirFile, packageName, downloadStats.successCount, ext.generatePreview.get())
+            // Convert SVGs to Compose code, organized by library
+            convertSvgsToComposeByLibrary(tempDir, outputDirFile, packageName, iconsByLibrary, ext.generatePreview.get())
 
             // Log cache statistics
             val cacheStats = downloader.getCacheStats()
@@ -169,16 +173,16 @@ abstract class GenerateSymbolsTask : DefaultTask() {
      */
     private fun cleanOldGeneratedFiles(outputDir: File, packageName: String) {
         val packagePath = packageName.replace('.', '/')
-        val symbolsDir = File(outputDir, "$packagePath/icons")
+        val iconsBaseDir = File(outputDir, "$packagePath/icons")
         val mainSymbolsFile = File(outputDir, "$packagePath/__Icons.kt")
 
         var cleanedCount = 0
 
-        // Clean individual icon files
-        if (symbolsDir.exists()) {
-            symbolsDir.listFiles()?.forEach { file ->
+        // Clean all library subdirectories and icon files
+        if (iconsBaseDir.exists()) {
+            iconsBaseDir.walkTopDown().forEach { file ->
                 if (file.isFile && file.extension == "kt") {
-                    logger.debug("🧹 Cleaning old generated file: ${file.name}")
+                    logger.debug("🧹 Cleaning old generated file: ${file.relativeTo(iconsBaseDir).path}")
                     file.delete()
                     cleanedCount++
                 }
@@ -230,6 +234,21 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
+    /**
+     * Group icons by their library ID for organized output
+     */
+    private fun groupIconsByLibrary(config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>): Map<String, Set<String>> {
+        val libraryMap = mutableMapOf<String, MutableSet<String>>()
+
+        config.forEach { (iconName, iconConfigs) ->
+            iconConfigs.forEach { iconConfig ->
+                libraryMap.getOrPut(iconConfig.libraryId) { mutableSetOf() }.add(iconName)
+            }
+        }
+
+        return libraryMap
+    }
+
     private suspend fun downloadSvgsParallel(
         downloader: SvgDownloader,
         config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>,
@@ -253,8 +272,12 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                         val svgContent = downloader.downloadSvg(iconName, iconConfig)
 
                         if (svgContent != null && svgContent.isNotBlank()) {
+                            // Include library ID in the directory structure
+                            val librarySubdir = File(tempDir, iconConfig.libraryId)
+                            librarySubdir.mkdirs()
+
                             val fileName = "${iconName.replaceFirstChar { it.titlecase() }}${iconConfig.getSignature()}.svg"
-                            val tempFile = File(tempDir, fileName)
+                            val tempFile = File(librarySubdir, fileName)
                             tempFile.writeText(svgContent)
 
                             completed.incrementAndGet()
@@ -312,47 +335,69 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
-    private fun convertSvgsToCompose(
+    private fun convertSvgsToComposeByLibrary(
         tempDir: File,
         outputDir: File,
         packageName: String,
-        iconCount: Int,
+        iconsByLibrary: Map<String, Set<String>>,
         generatePreview: Boolean = true,
     ) {
         logger.lifecycle("🔄 Converting SVGs to Compose ImageVectors...")
 
         val converter = Svg2ComposeConverter()
+        var totalConverted = 0
 
-        try {
-            converter.convertDirectory(
-                inputDirectory = tempDir,
-                outputDirectory = outputDir,
-                packageName = packageName,
-                generatePreview = generatePreview,
-                accessorName = "Icons",
-                allAssetsPropertyName = "AllIcons"
-            )
-            logger.lifecycle("✅ Successfully converted $iconCount icons")
-        } catch (e: Exception) {
-            logger.error("❌ SVG conversion failed with DevSrSouza library: ${e.message}")
-            logger.error("   Stack trace: ${e.stackTraceToString()}")
+        iconsByLibrary.forEach { (libraryId, iconNames) ->
+            val libraryTempDir = File(tempDir, libraryId)
+            if (!libraryTempDir.exists() || libraryTempDir.listFiles()?.isEmpty() != false) {
+                logger.warn("⚠️ No SVG files found for library: $libraryId")
+                return@forEach
+            }
 
-            // Provide specific guidance based on error type
-            when {
-                e.message?.contains("directory", ignoreCase = true) == true -> {
-                    logger.error("   💡 Directory issue: Check input/output directories exist and are writable")
-                }
-                e.message?.contains("package", ignoreCase = true) == true -> {
-                    logger.error("   💡 Package issue: Check packageName is valid Kotlin package identifier")
-                }
-                e.message?.contains("SVG", ignoreCase = true) == true -> {
-                    logger.error("   💡 SVG parsing issue: Some downloaded SVG files may be malformed")
-                }
-                else -> {
-                    logger.error("   💡 Unexpected conversion error: ${e.javaClass.simpleName}")
+            // Determine subdirectory name for this library
+            val librarySubdir = when (libraryId) {
+                "material-symbols" -> "materialsymbols" // Keep backward compatibility
+                else -> libraryId.removePrefix("external-") // e.g., "bootstrap-icons", "heroicons"
+            }
+
+            logger.lifecycle("   📚 Converting library: $libraryId → icons/$librarySubdir/")
+
+            try {
+                converter.convertDirectory(
+                    inputDirectory = libraryTempDir,
+                    outputDirectory = outputDir,
+                    packageName = packageName,
+                    generatePreview = generatePreview,
+                    accessorName = "Icons",
+                    allAssetsPropertyName = "AllIcons",
+                    librarySubdir = librarySubdir
+                )
+                val iconCount = libraryTempDir.listFiles()?.size ?: 0
+                totalConverted += iconCount
+                logger.lifecycle("      ✅ Converted $iconCount icons")
+            } catch (e: Exception) {
+                logger.error("❌ SVG conversion failed for library $libraryId: ${e.message}")
+                logger.error("   Stack trace: ${e.stackTraceToString()}")
+
+                // Provide specific guidance based on error type
+                when {
+                    e.message?.contains("directory", ignoreCase = true) == true -> {
+                        logger.error("   💡 Directory issue: Check input/output directories exist and are writable")
+                    }
+                    e.message?.contains("package", ignoreCase = true) == true -> {
+                        logger.error("   💡 Package issue: Check packageName is valid Kotlin package identifier")
+                    }
+                    e.message?.contains("SVG", ignoreCase = true) == true -> {
+                        logger.error("   💡 SVG parsing issue: Some downloaded SVG files may be malformed")
+                    }
+                    else -> {
+                        logger.error("   💡 Unexpected conversion error: ${e.javaClass.simpleName}")
+                    }
                 }
             }
         }
+
+        logger.lifecycle("✅ Successfully converted $totalConverted icons total")
     }
 }
 

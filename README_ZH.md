@@ -118,21 +118,27 @@ symbolCraft {
 生成的图标可以直接在 Compose 代码中使用：
 
 ```kotlin
-import com.yourcompany.app.symbols.Icons
-import com.yourcompany.app.symbols.icons.SearchW400Outlined
-import com.yourcompany.app.symbols.icons.HomeW400Rounded
+// Material Symbols 图标
+import com.yourcompany.app.symbols.icons.materialsymbols.Icons
+import com.yourcompany.app.symbols.icons.materialsymbols.icons.SearchW400Outlined
+import com.yourcompany.app.symbols.icons.materialsymbols.icons.HomeW400Rounded
+
+// 外部图标库图标（例如：Bootstrap Icons）
+import com.yourcompany.app.symbols.icons.bootstrapicons.Icons as BootstrapIcons
+import com.yourcompany.app.symbols.icons.bootstrapicons.icons.BellBootstrapicons
+
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 
 @Composable
 fun MyScreen() {
-    // 方式1：直接导入使用
+    // Material Symbols 图标 - 方式1：直接导入使用
     Icon(
         imageVector = SearchW400Outlined,
         contentDescription = "Search"
     )
 
-    // 方式2：通过 Icons 对象使用
+    // Material Symbols 图标 - 方式2：通过 Icons 对象使用
     Icon(
         imageVector = Icons.SearchW400Outlined,
         contentDescription = "Search"
@@ -141,6 +147,18 @@ fun MyScreen() {
     Icon(
         imageVector = Icons.HomeW400Rounded,
         contentDescription = "Home"
+    )
+
+    // 外部库图标
+    Icon(
+        imageVector = BellBootstrapicons,
+        contentDescription = "Notifications"
+    )
+
+    // 或通过访问器对象使用
+    Icon(
+        imageVector = BootstrapIcons.BellBootstrapicons,
+        contentDescription = "Notifications"
     )
 }
 ```
@@ -320,22 +338,31 @@ SymbolCraft 提供 Dokka V2 配置，可为插件及其 DSL 生成可发布的 A
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                          # 建议添加生成文件到忽略列表
+├── .gitignore                                    # 建议添加生成文件到忽略列表
 ├── src/
-│   └── commonMain/                     # 多平台项目支持
+│   └── commonMain/                               # 多平台项目支持
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── com/app/symbols/        # 生成的图标包
-│               ├── __Icons.kt          # 图标访问对象
-│               └── icons/              # 单个图标文件
-│                   ├── SearchW400Outlined.kt
-│                   ├── HomeW500RoundedFill.kt
-│                   └── PersonW700Sharp.kt
+│           └── com/app/symbols/                  # 生成的图标包
+│               └── icons/                        # 按图标库组织的图标
+│                   ├── materialsymbols/          # Material Symbols 图标
+│                   │   ├── __Icons.kt            # Material Symbols 访问器
+│                   │   └── icons/
+│                   │       ├── SearchW400Outlined.kt
+│                   │       ├── HomeW500RoundedFill.kt
+│                   │       └── PersonW700Sharp.kt
+│                   └── bootstrap-icons/          # Bootstrap Icons (示例)
+│                       ├── __Icons.kt            # Bootstrap Icons 访问器
+│                       └── icons/
+│                           ├── BellBootstrapicons.kt
+│                           └── HouseBootstrapicons.kt
 └── build/
-    └── material-symbols-cache/         # 缓存目录（默认在 build 文件夹）
-        ├── temp-svgs/                  # SVG 临时文件
-        └── svg-cache/                  # 缓存的 SVG 文件及元数据
+    └── symbolcraft-cache/                        # 缓存目录（默认在 build 文件夹）
+        ├── temp-svgs/                            # SVG 临时文件（按库组织）
+        │   ├── material-symbols/
+        │   └── external-bootstrap-icons/
+        └── svg-cache/                            # 缓存的 SVG 文件及元数据
 ```
 
 ## 📁 Git 配置建议

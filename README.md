@@ -118,21 +118,27 @@ The generation process will show detailed progress:
 Generated icons can be used directly in your Compose code:
 
 ```kotlin
-import com.yourcompany.app.symbols.Icons
-import com.yourcompany.app.symbols.icons.SearchW400Outlined
-import com.yourcompany.app.symbols.icons.HomeW400Rounded
+// For Material Symbols icons
+import com.yourcompany.app.symbols.icons.materialsymbols.Icons
+import com.yourcompany.app.symbols.icons.materialsymbols.icons.SearchW400Outlined
+import com.yourcompany.app.symbols.icons.materialsymbols.icons.HomeW400Rounded
+
+// For external library icons (e.g., Bootstrap Icons)
+import com.yourcompany.app.symbols.icons.bootstrapicons.Icons as BootstrapIcons
+import com.yourcompany.app.symbols.icons.bootstrapicons.icons.BellBootstrapicons
+
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 
 @Composable
 fun MyScreen() {
-    // Method 1: Direct import usage
+    // Material Symbols icons - Method 1: Direct import
     Icon(
         imageVector = SearchW400Outlined,
         contentDescription = "Search"
     )
 
-    // Method 2: Use through Icons object
+    // Material Symbols icons - Method 2: Through Icons object
     Icon(
         imageVector = Icons.SearchW400Outlined,
         contentDescription = "Search"
@@ -141,6 +147,18 @@ fun MyScreen() {
     Icon(
         imageVector = Icons.HomeW400Rounded,
         contentDescription = "Home"
+    )
+
+    // External library icons
+    Icon(
+        imageVector = BellBootstrapicons,
+        contentDescription = "Notifications"
+    )
+
+    // Or through the accessor object
+    Icon(
+        imageVector = BootstrapIcons.BellBootstrapicons,
+        contentDescription = "Notifications"
     )
 }
 ```
@@ -320,22 +338,31 @@ After using the plugin, your project structure might look like this:
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                          # Recommend adding generated files to ignore list
+├── .gitignore                                    # Recommend adding generated files to ignore list
 ├── src/
-│   └── commonMain/                     # Multiplatform project support
+│   └── commonMain/                               # Multiplatform project support
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── com/app/symbols/        # Generated icons package
-│               ├── __Icons.kt          # Icon access object
-│               └── icons/              # Individual icon files
-│                   ├── SearchW400Outlined.kt
-│                   ├── HomeW500RoundedFill.kt
-│                   └── PersonW700Sharp.kt
+│           └── com/app/symbols/                  # Generated icons package
+│               └── icons/                        # Icons organized by library
+│                   ├── materialsymbols/          # Material Symbols icons
+│                   │   ├── __Icons.kt            # Material Symbols accessor
+│                   │   └── icons/
+│                   │       ├── SearchW400Outlined.kt
+│                   │       ├── HomeW500RoundedFill.kt
+│                   │       └── PersonW700Sharp.kt
+│                   └── bootstrap-icons/          # Bootstrap Icons (example)
+│                       ├── __Icons.kt            # Bootstrap Icons accessor
+│                       └── icons/
+│                           ├── BellBootstrapicons.kt
+│                           └── HouseBootstrapicons.kt
 └── build/
-    └── material-symbols-cache/         # Cache directory (in build folder by default)
-        ├── temp-svgs/                  # SVG temporary files
-        └── svg-cache/                  # Cached SVG files with metadata
+    └── symbolcraft-cache/                        # Cache directory (in build folder by default)
+        ├── temp-svgs/                            # SVG temporary files (organized by library)
+        │   ├── material-symbols/
+        │   └── external-bootstrap-icons/
+        └── svg-cache/                            # Cached SVG files with metadata
 ```
 
 ## 📁 Git Configuration Recommendations
