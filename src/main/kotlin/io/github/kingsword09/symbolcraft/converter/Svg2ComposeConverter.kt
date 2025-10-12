@@ -14,12 +14,14 @@ class Svg2ComposeConverter {
     
     /**
      * Convert SVG files from a directory to Compose code
-     * 
+     *
      * @param inputDirectory Directory containing SVG files
      * @param outputDirectory Directory where generated Kotlin files will be saved
      * @param packageName Package name for generated files
+     * @param generatePreview Whether to generate Compose preview functions
      * @param accessorName Name of the object that will contain all icons
      * @param allAssetsPropertyName Name of the property that contains all icons
+     * @param librarySubdir Optional subdirectory name for organizing icons by library (e.g., "materialsymbols", "bootstrap-icons")
      */
     fun convertDirectory(
         inputDirectory: File,
@@ -27,18 +29,26 @@ class Svg2ComposeConverter {
         packageName: String,
         generatePreview: Boolean = true,
         accessorName: String = "GeneratedIcons",
-        allAssetsPropertyName: String = "AllIcons"
+        allAssetsPropertyName: String = "AllIcons",
+        librarySubdir: String? = null
     ) {
         if (!inputDirectory.exists() || !inputDirectory.isDirectory) {
             throw IllegalArgumentException("Input directory does not exist or is not a directory: ${inputDirectory.absolutePath}")
         }
-        
+
         // Create output directory if it doesn't exist
         outputDirectory.mkdirs()
-        
+
+        // Adjust package name to include library subdirectory if specified
+        val effectivePackage = if (librarySubdir != null) {
+            "$packageName.icons.$librarySubdir"
+        } else {
+            packageName
+        }
+
         // Use Svg2Compose to convert all SVG files
         Svg2Compose.parse(
-            applicationIconPackage = packageName,
+            applicationIconPackage = effectivePackage,
             accessorName = accessorName,
             outputSourceDirectory = outputDirectory,
             vectorsDirectory = inputDirectory,
@@ -53,7 +63,7 @@ class Svg2ComposeConverter {
         )
 
         // Post-process generated files to ensure deterministic output
-        makeOutputDeterministic(outputDirectory, packageName)
+        makeOutputDeterministic(outputDirectory, packageName, librarySubdir)
     }
     
     /**
@@ -164,14 +174,25 @@ class Svg2ComposeConverter {
     /**
      * Post-process generated files to ensure deterministic output
      * This removes timestamps and other non-deterministic content
+     *
+     * @param outputDirectory Base output directory
+     * @param packageName Package name for generated files
+     * @param librarySubdir Optional subdirectory for library-specific icons
      */
-    private fun makeOutputDeterministic(outputDirectory: File, packageName: String) {
+    private fun makeOutputDeterministic(outputDirectory: File, packageName: String, librarySubdir: String? = null) {
         val packagePath = packageName.replace('.', '/')
-        val generatedDir = File(outputDirectory, packagePath)
+        val baseDir = File(outputDirectory, packagePath)
 
-        if (!generatedDir.exists()) return
+        // If librarySubdir is specified, process that directory; otherwise process the base directory
+        val targetDir = if (librarySubdir != null) {
+            File(baseDir, "icons/$librarySubdir")
+        } else {
+            baseDir
+        }
 
-        generatedDir.walkTopDown()
+        if (!targetDir.exists()) return
+
+        targetDir.walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
             .forEach { file ->
                 val content = file.readText()

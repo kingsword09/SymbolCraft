@@ -1,4 +1,4 @@
-package io.github.kingsword09.example.materialsymbols
+package io.github.kingsword09.example.icons.materialsymbols.icons
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,10 +14,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import io.github.kingsword09.example.MaterialSymbols
+import io.github.kingsword09.example.icons.materialsymbols.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val MaterialSymbols.SearchW500Outlined: ImageVector
+public val Icons.SearchW500Outlined: ImageVector
     get() {
         if (_searchW500Outlined != null) {
             return _searchW500Outlined!!
@@ -61,6 +61,6 @@ private var _searchW500Outlined: ImageVector? = null
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = MaterialSymbols.SearchW500Outlined, contentDescription = "")
+        Image(imageVector = Icons.SearchW500Outlined, contentDescription = "")
     }
 }

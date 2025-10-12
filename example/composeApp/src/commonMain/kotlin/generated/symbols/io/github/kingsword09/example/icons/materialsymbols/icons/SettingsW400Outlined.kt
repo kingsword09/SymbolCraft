@@ -1,4 +1,4 @@
-package io.github.kingsword09.example.materialsymbols
+package io.github.kingsword09.example.icons.materialsymbols.icons
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -14,10 +14,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
-import io.github.kingsword09.example.MaterialSymbols
+import io.github.kingsword09.example.icons.materialsymbols.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val MaterialSymbols.SettingsW400Outlined: ImageVector
+public val Icons.SettingsW400Outlined: ImageVector
     get() {
         if (_settingsW400Outlined != null) {
             return _settingsW400Outlined!!
@@ -120,6 +120,6 @@ private var _settingsW400Outlined: ImageVector? = null
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = MaterialSymbols.SettingsW400Outlined, contentDescription = "")
+        Image(imageVector = Icons.SettingsW400Outlined, contentDescription = "")
     }
 }

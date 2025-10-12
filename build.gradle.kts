@@ -58,12 +58,12 @@ gradlePlugin {
     vcsUrl = "https://github.com/kingsword09/SymbolCraft"
 
     plugins {
-        create("materialSymbols") {
+        create("symbolcraft") {
             id = "io.github.kingsword09.symbolcraft"
-            implementationClass = "io.github.kingsword09.symbolcraft.plugin.MaterialSymbolsPlugin"
-            displayName = "SymbolCraft - Material Symbols Generator"
-            description = "Generate Material Symbols icons on-demand with caching support for Compose Multiplatform."
-            tags = listOf("KMP", "Compose-Multiplatform", "material", "icons", "symbols")
+            implementationClass = "io.github.kingsword09.symbolcraft.plugin.SymbolCraftPlugin"
+            displayName = "SymbolCraft - Multi-Library Icon Generator"
+            description = "Generate icons from multiple libraries (Material Symbols, Simple Icons, etc.) on-demand with caching support for Compose Multiplatform."
+            tags = listOf("KMP", "Compose-Multiplatform", "material", "icons", "symbols", "generator")
         }
     }
 }

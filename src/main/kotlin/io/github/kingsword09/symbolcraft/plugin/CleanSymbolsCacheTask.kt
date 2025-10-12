@@ -13,7 +13,7 @@ import java.io.File
  */
 abstract class CleanSymbolsCacheTask : DefaultTask() {
     @get:Internal
-    abstract val extension: Property<MaterialSymbolsExtension>
+    abstract val extension: Property<SymbolCraftExtension>
 
     @get:Internal
     abstract val projectBuildDir: Property<String>

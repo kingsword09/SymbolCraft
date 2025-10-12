@@ -82,8 +82,8 @@ jobs:
       working-directory: example
       run: |
         chmod +x ./gradlew
-        # Test material symbols generation
-        ./gradlew :composeApp:generateMaterialSymbols --stacktrace
+        # Test SymbolCraft icon generation
+        ./gradlew :composeApp:generateSymbolCraftIcons --stacktrace
         # Build the example project
         ./gradlew build --stacktrace
 
@@ -110,7 +110,7 @@ jobs:
 
     - name: Validate plugin tasks
       run: |
-        ./gradlew tasks --all | grep -i material || echo "No material tasks found yet"
+        ./gradlew tasks --all | grep -i symbolcraft || echo "No SymbolCraft tasks found yet"
         ./gradlew publishToMavenLocal --stacktrace
       env:
         ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.OSSRH_USERNAME }}

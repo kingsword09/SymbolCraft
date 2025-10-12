@@ -5,7 +5,7 @@
 
 > **语言版本**: [English](README.md) | [中文](README_ZH.md)
 
-一个强大的 Gradle 插件，用于在 Kotlin Multiplatform 项目中按需生成 Material Symbols 图标，支持智能缓存、确定性构建和高性能并行生成。
+一个强大的 Gradle 插件，用于在 Kotlin Multiplatform 项目中按需从多个图标库（Material Symbols、Bootstrap Icons、Heroicons 等）生成图标，支持智能缓存、确定性构建和高性能并行生成。
 
 ## ✨ 特性
 
@@ -15,6 +15,7 @@
 - 🎯 **确定性构建** - 保证每次生成的代码完全一致，Git 友好，缓存友好
 - 🎨 **全样式支持** - 支持 Material Symbols 所有样式（权重、变体、填充状态）
 - 🔧 **智能DSL** - 提供便捷的批量配置方法和预设样式
+- 📚 **多图标库支持** - 支持 Material Symbols、Bootstrap Icons、Heroicons、Feather Icons、Font Awesome 以及任何通过 URL 模板自定义的图标库
 - 📱 **高质量输出** - 使用 DevSrSouza/svg-to-compose 库生成真实的 SVG 路径数据
 - 🔄 **增量构建** - Gradle 任务缓存支持，只重新生成变更的图标
 - 🏗️ **配置缓存兼容** - 完全支持 Gradle 配置缓存，提升构建性能
@@ -43,7 +44,7 @@ plugins {
 ### 2. 配置插件
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // 基础配置
     packageName.set("com.app.symbols")
     outputDirectory.set("src/commonMain/kotlin")  // 支持多平台项目
@@ -53,32 +54,32 @@ materialSymbols {
     generatePreview.set(true)  // 启用预览生成
 
     // 单个图标配置（使用 Int 权重值）
-    symbol("search") {
+    materialSymbol("search") {
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
         style(weight = 500, variant = SymbolVariant.OUTLINED, fill = SymbolFill.FILLED)
     }
 
     // 或使用 SymbolWeight 枚举以获得类型安全
-    symbol("home") {
+    materialSymbol("home") {
         style(weight = SymbolWeight.W400, variant = SymbolVariant.OUTLINED)
         style(weight = SymbolWeight.W500, variant = SymbolVariant.ROUNDED)
     }
 
     // 便捷的批量配置方法
-    symbol("person") {
+    materialSymbol("person") {
         standardWeights() // 自动添加 400, 500, 700 权重
     }
 
-    symbol("settings") {
+    materialSymbol("settings") {
         allVariants(weight = 400) // 添加所有变体 (outlined, rounded, sharp)
     }
 
-    symbol("favorite") {
+    materialSymbol("favorite") {
         bothFills(weight = 500, variant = SymbolVariant.ROUNDED) // 同时添加填充和未填充
     }
 
     // 批量配置多个图标
-    symbols("star", "bookmark") {
+    materialSymbols("star", "bookmark") {
         weights(400, 500, variant = SymbolVariant.OUTLINED)
     }
 }
@@ -91,7 +92,7 @@ materialSymbols {
 运行以下命令生成配置的图标：
 
 ```bash
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 ```
 
 生成过程会显示详细进度：
@@ -117,29 +118,47 @@ materialSymbols {
 生成的图标可以直接在 Compose 代码中使用：
 
 ```kotlin
-import com.yourcompany.app.symbols.MaterialSymbols
-import com.yourcompany.app.symbols.materialsymbols.SearchW400Outlined
-import com.yourcompany.app.symbols.materialsymbols.HomeW400Rounded
+// Material Symbols 图标
+import com.yourcompany.app.symbols.icons.materialsymbols.Icons
+import com.yourcompany.app.symbols.icons.materialsymbols.icons.SearchW400Outlined
+import com.yourcompany.app.symbols.icons.materialsymbols.icons.HomeW400Rounded
+
+// 外部图标库图标（例如：Bootstrap Icons）
+import com.yourcompany.app.symbols.icons.bootstrapicons.Icons as BootstrapIcons
+import com.yourcompany.app.symbols.icons.bootstrapicons.icons.BellBootstrapicons
+
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 
 @Composable
 fun MyScreen() {
-    // 方式1：直接导入使用
+    // Material Symbols 图标 - 方式1：直接导入使用
     Icon(
         imageVector = SearchW400Outlined,
         contentDescription = "Search"
     )
 
-    // 方式2：通过 MaterialSymbols 对象使用
+    // Material Symbols 图标 - 方式2：通过 Icons 对象使用
     Icon(
-        imageVector = MaterialSymbols.SearchW400Outlined,
+        imageVector = Icons.SearchW400Outlined,
         contentDescription = "Search"
     )
 
     Icon(
-        imageVector = MaterialSymbols.HomeW400Rounded,
+        imageVector = Icons.HomeW400Rounded,
         contentDescription = "Home"
+    )
+
+    // 外部库图标
+    Icon(
+        imageVector = BellBootstrapicons,
+        contentDescription = "Notifications"
+    )
+
+    // 或通过访问器对象使用
+    Icon(
+        imageVector = BootstrapIcons.BellBootstrapicons,
+        contentDescription = "Notifications"
     )
 }
 ```
@@ -149,12 +168,12 @@ fun MyScreen() {
 ### 启用预览生成
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // 启用预览功能
     generatePreview.set(true)  // 生成 @Preview 函数
 
     // 配置图标...
-    symbol("home") {
+    materialSymbol("home") {
         standardWeights()
     }
 }
@@ -184,7 +203,7 @@ materialSymbols {
 ### 基础配置
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // 生成的 Kotlin 包名
     packageName.set("com.yourcompany.app.symbols")
 
@@ -194,6 +213,9 @@ materialSymbols {
     // 缓存配置
     cacheEnabled.set(true)
     cacheDirectory.set("material-symbols-cache")
+
+    // CDN 配置
+    cdnBaseUrl.set("https://esm.sh")  // 默认 CDN URL（可选）
 
     // 预览配置
     generatePreview.set(false)  // 是否生成 Compose @Preview 函数
@@ -223,8 +245,8 @@ materialSymbols {
 ### 便捷配置方法
 
 ```kotlin
-materialSymbols {
-    symbol("example") {
+symbolCraft {
+    materialSymbol("example") {
         // 基础方法（使用 Int）
         style(weight = 400, variant = SymbolVariant.OUTLINED, fill = SymbolFill.UNFILLED)
 
@@ -266,28 +288,28 @@ materialSymbols {
 
 | 任务 | 描述 |
 |------|------|
-| `generateMaterialSymbols` | 生成配置的 Material Symbols 图标 |
-| `cleanSymbolsCache` | 清理缓存的 SVG 文件 |
-| `cleanGeneratedSymbols` | 清理生成的 Material Symbols 文件 |
-| `validateSymbolsConfig` | 验证图标配置的有效性 |
+| `generateSymbolCraftIcons` | 生成配置的 Material Symbols 图标 |
+| `cleanSymbolCraftCache` | 清理缓存的 SVG 文件 |
+| `cleanSymbolCraftIcons` | 清理生成的 Material Symbols 文件 |
+| `validateSymbolCraftConfig` | 验证图标配置的有效性 |
 
 ### 任务示例
 
 ```bash
 # 生成图标（增量构建）
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 
 # 强制重新生成所有图标
-./gradlew generateMaterialSymbols --rerun-tasks
+./gradlew generateSymbolCraftIcons --rerun-tasks
 
 # 清理缓存
-./gradlew cleanSymbolsCache
+./gradlew cleanSymbolCraftCache
 
 # 清理生成的文件
-./gradlew cleanGeneratedSymbols
+./gradlew cleanSymbolCraftIcons
 
 # 验证配置
-./gradlew validateSymbolsConfig
+./gradlew validateSymbolCraftConfig
 ```
 
 ## 📚 文档生成（Dokka）
@@ -316,22 +338,31 @@ SymbolCraft 提供 Dokka V2 配置，可为插件及其 DSL 生成可发布的 A
 ```
 your-project/
 ├── build.gradle.kts
-├── .gitignore                          # 建议添加生成文件到忽略列表
+├── .gitignore                                    # 建议添加生成文件到忽略列表
 ├── src/
-│   └── commonMain/                     # 多平台项目支持
+│   └── commonMain/                               # 多平台项目支持
 │       └── kotlin/
 │           ├── com/app/
 │           │   └── MainActivity.kt
-│           └── com/app/symbols/        # 生成的图标包
-│               ├── __MaterialSymbols.kt          # 图标访问对象
-│               └── materialsymbols/              # 单个图标文件
-│                   ├── SearchW400Outlined.kt
-│                   ├── HomeW500RoundedFill.kt
-│                   └── PersonW700Sharp.kt
+│           └── com/app/symbols/                  # 生成的图标包
+│               └── icons/                        # 按图标库组织的图标
+│                   ├── materialsymbols/          # Material Symbols 图标
+│                   │   ├── __Icons.kt            # Material Symbols 访问器
+│                   │   └── icons/
+│                   │       ├── SearchW400Outlined.kt
+│                   │       ├── HomeW500RoundedFill.kt
+│                   │       └── PersonW700Sharp.kt
+│                   └── bootstrap-icons/          # Bootstrap Icons (示例)
+│                       ├── __Icons.kt            # Bootstrap Icons 访问器
+│                       └── icons/
+│                           ├── BellBootstrapicons.kt
+│                           └── HouseBootstrapicons.kt
 └── build/
-    └── material-symbols-cache/         # 缓存目录（默认在 build 文件夹）
-        ├── temp-svgs/                  # SVG 临时文件
-        └── svg-cache/                  # 缓存的 SVG 文件及元数据
+    └── symbolcraft-cache/                        # 缓存目录（默认在 build 文件夹）
+        ├── temp-svgs/                            # SVG 临时文件（按库组织）
+        │   ├── material-symbols/
+        │   └── external-bootstrap-icons/
+        └── svg-cache/                            # 缓存的 SVG 文件及元数据
 ```
 
 ## 📁 Git 配置建议
@@ -342,8 +373,8 @@ your-project/
 
 ```gitignore
 # SymbolCraft 生成的文件（根据你的配置调整包名）
-**/materialsymbols/
-**/__MaterialSymbols.kt
+**/icons/
+**/__Icons.kt
 
 # 或者忽略整个包
 **/com/app/symbols/
@@ -358,7 +389,7 @@ your-project/
 
 1. **忽略生成文件（推荐）**
    - 将生成目录添加到 `.gitignore`
-   - 在 CI/CD 中运行 `generateMaterialSymbols` 任务
+   - 在 CI/CD 中运行 `generateSymbolCraftIcons` 任务
    - 优点：保持仓库干净，避免合并冲突
 
 2. **提交生成文件**
@@ -386,7 +417,7 @@ your-project/
 
 **相对路径（默认）：**
 ```kotlin
-materialSymbols {
+symbolCraft {
     cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
     // 自动清理: ✅ 启用（项目私有缓存）
 }
@@ -394,7 +425,7 @@ materialSymbols {
 
 **绝对路径（用于共享/全局缓存）：**
 ```kotlin
-materialSymbols {
+symbolCraft {
     // Unix/Linux/macOS
     cacheDirectory.set("/var/tmp/symbolcraft")
 
@@ -482,28 +513,154 @@ rm -rf /var/tmp/symbolcraft
 ### 批量配置图标
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // 基础图标集
     val basicIcons = listOf("home", "search", "person", "settings")
     basicIcons.forEach { icon ->
-        symbol(icon) {
+        materialSymbol(icon) {
             standardWeights()
         }
     }
 
     // 导航图标集
     val navIcons = listOf("arrow_back", "arrow_forward", "menu", "close")
-    symbols(*navIcons.toTypedArray()) {
+    materialSymbols(*navIcons.toTypedArray()) {
         weights(400, 500)
         bothFills(weight = 400)
     }
 }
 ```
 
+### 外部图标库
+
+你可以使用 URL 模板添加其他图标库或自定义来源的图标。
+
+**理解参数：**
+
+- **`name`**: 具体的图标名称（如 "bell"、"home"）- 会替换 URL 模板中的 `{name}`
+- **`libraryName`**: 图标库标识符（如 "bootstrap-icons"）- 用于缓存隔离，避免不同库之间的冲突
+
+**单个图标配置：**
+
+```kotlin
+symbolCraft {
+    // 单个外部图标
+    externalIcon(
+        name = "bell",
+        libraryName = "bootstrap-icons"
+    ) {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+}
+```
+
+**同一库的多个图标：**
+
+```kotlin
+symbolCraft {
+    // 定义图标列表
+    val bootstrapIcons = listOf("bell", "house", "person", "gear")
+
+    // 使用 externalIcons() 批量配置
+    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+
+    // 带样式参数
+    val heroIcons = listOf("home", "search", "user", "cog")
+    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
+        styleParam("size", "24")
+    }
+}
+```
+
+**使用多个不同图标库：**
+
+```kotlin
+symbolCraft {
+    // Material Symbols 图标
+    materialSymbol("favorite") {
+        standardWeights()
+    }
+
+    // Bootstrap Icons
+    val bootstrapIcons = listOf("bell", "calendar", "envelope")
+    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+
+    // Heroicons
+    val heroIcons = listOf("home", "user", "cog")
+    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+    }
+
+    // Feather Icons
+    val featherIcons = listOf("activity", "airplay", "alert-circle")
+    externalIcons(*featherIcons.toTypedArray(), libraryName = "feather-icons") {
+        urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
+    }
+
+    // Font Awesome (如果有 CDN 支持)
+    externalIcon("github", libraryName = "font-awesome") {
+        urlTemplate = "https://example-fa-cdn.com/svgs/brands/{name}.svg"
+    }
+}
+```
+
+**使用内置 CDN（默认：https://esm.sh）：**
+
+```kotlin
+symbolCraft {
+    // 使用 {cdn} 占位符的外部图标
+    val bootstrapIcons = listOf("bell", "calendar", "clock", "envelope")
+    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
+        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    }
+}
+```
+
+**使用自定义/直接 URL：**
+
+```kotlin
+symbolCraft {
+    // 直接 URL（不使用 CDN 占位符）
+    externalIcon("my-icon", libraryName = "mylib") {
+        urlTemplate = "https://my-cdn.com/icons/{name}.svg"
+    }
+
+    // 另一个带参数的示例
+    externalIcon("feather-icon", libraryName = "feather") {
+        urlTemplate = "https://cdn.feathericons.com/{size}/{name}.svg"
+        styleParam("size", "16")
+    }
+}
+```
+
+**修改全局 CDN URL：**
+
+```kotlin
+symbolCraft {
+    // 为所有使用 {cdn} 占位符的图标库更改 CDN
+    cdnBaseUrl.set("https://my-custom-cdn.com")
+
+    // 现在所有 {cdn} 占位符都会使用这个 URL
+    externalIcon("icon", libraryName = "custom") {
+        urlTemplate = "{cdn}/icons/{name}.svg"  // → https://my-custom-cdn.com/icons/icon.svg
+    }
+}
+```
+
+**URL 模板占位符：**
+- `{cdn}` - 替换为 `cdnBaseUrl`（默认："https://esm.sh"）
+- `{name}` - 替换为图标名称
+- `{key}` - 替换为自定义样式参数值（使用 `styleParam()`）
+
 ### 自定义缓存配置
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     // 禁用缓存（不推荐）
     cacheEnabled.set(false)
 
@@ -517,7 +674,7 @@ materialSymbols {
 
 **注意**: 如需强制重新生成所有图标，请使用 Gradle 内置选项：
 ```bash
-./gradlew generateMaterialSymbols --rerun-tasks
+./gradlew generateSymbolCraftIcons --rerun-tasks
 ```
 
 ## 🔍 故障排除
@@ -533,13 +690,13 @@ materialSymbols {
 2. **缓存问题**
    ```bash
    # 清理 SymbolCraft 缓存
-   ./gradlew cleanSymbolsCache
+   ./gradlew cleanSymbolCraftCache
 
    # 或者清理整个 build 目录（包括缓存）
    ./gradlew clean
 
    # 强制重新生成所有图标
-   ./gradlew generateMaterialSymbols --rerun-tasks
+   ./gradlew generateSymbolCraftIcons --rerun-tasks
    ```
 
    注意：从 v0.1.2 版本开始，缓存文件默认存储在 `build/material-symbols-cache/` 目录，运行 `./gradlew clean` 时会自动清理。
@@ -553,32 +710,32 @@ materialSymbols {
 4. **配置缓存问题**
    如果遇到配置缓存相关错误，可以暂时禁用：
    ```bash
-   ./gradlew generateMaterialSymbols --no-configuration-cache
+   ./gradlew generateSymbolCraftIcons --no-configuration-cache
    ```
 
 5. **生成文件在 Git 中显示为新文件**
    将生成目录添加到 `.gitignore`（根据你的配置调整包名）：
    ```gitignore
-   **/materialsymbols/
-   **/__MaterialSymbols.kt
+   **/icons/
+   **/__Icons.kt
    ```
 
 ### 调试选项
 
 ```bash
 # 详细日志
-./gradlew generateMaterialSymbols --info
+./gradlew generateSymbolCraftIcons --info
 
 # 堆栈跟踪
-./gradlew generateMaterialSymbols --stacktrace
+./gradlew generateSymbolCraftIcons --stacktrace
 ```
 
 ## 🏗 架构设计
 
 ### 核心组件
 
-- **MaterialSymbolsPlugin** - 主插件类
-- **MaterialSymbolsExtension** - DSL 配置接口及 SymbolConfigBuilder
+- **SymbolCraftPlugin** - 主插件类
+- **SymbolCraftExtension** - DSL 配置接口及 SymbolConfigBuilder
 - **GenerateSymbolsTask** - 核心生成任务，支持并行下载
 - **SvgDownloader** - 智能 SVG 下载器及缓存机制
 - **Svg2ComposeConverter** - SVG 转 Compose 转换器，使用 DevSrSouza/svg-to-compose 库
@@ -608,7 +765,7 @@ materialSymbols {
 cd example
 
 # 生成 Material Symbols 图标
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 
 # 运行 Android 应用
 ./gradlew :composeApp:assembleDebug
@@ -624,27 +781,27 @@ cd example
 示例应用演示了各种配置选项：
 
 ```kotlin
-materialSymbols {
+symbolCraft {
     packageName.set("io.github.kingsword09.example")
     outputDirectory.set("src/commonMain/kotlin")
     generatePreview.set(true)
 
     // 使用便捷方法
-    symbol("search") {
+    materialSymbol("search") {
         standardWeights() // 添加 400, 500, 700 权重
     }
 
-    symbol("home") {
+    materialSymbol("home") {
         weights(400, 500, variant = SymbolVariant.ROUNDED)
         bothFills(weight = 400) // 添加填充和未填充两种
     }
 
-    symbol("person") {
+    materialSymbol("person") {
         allVariants(weight = SymbolWeight.W500) // 所有变体（outlined, rounded, sharp）
     }
 
     // 传统样式配置
-    symbol("settings") {
+    materialSymbol("settings") {
         style(weight = 400, variant = SymbolVariant.OUTLINED)
         style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
     }
@@ -676,7 +833,7 @@ cd SymbolCraft
 4. 运行示例应用：
 ```bash
 cd example
-./gradlew generateMaterialSymbols
+./gradlew generateSymbolCraftIcons
 ./gradlew :composeApp:assembleDebug
 ```
 
@@ -684,7 +841,7 @@ cd example
 
 1. 在 `src/main/kotlin/` 中修改插件源代码
 2. 构建并本地发布：`./gradlew publishToMavenLocal`
-3. 使用示例应用测试变更：`cd example && ./gradlew generateMaterialSymbols`
+3. 使用示例应用测试变更：`cd example && ./gradlew generateSymbolCraftIcons`
 4. 运行测试：`./gradlew test`
 5. 提交 pull request
 
