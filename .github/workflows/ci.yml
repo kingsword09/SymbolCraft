@@ -83,7 +83,7 @@ jobs:
       run: |
         chmod +x ./gradlew
         # Test material symbols generation
-        ./gradlew :composeApp:generateMaterialSymbols --stacktrace
+        ./gradlew :composeApp:generateSymbolCraftIcons --stacktrace
         # Build the example project
         ./gradlew build --stacktrace
 
