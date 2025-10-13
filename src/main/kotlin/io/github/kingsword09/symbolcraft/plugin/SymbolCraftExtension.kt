@@ -117,6 +117,14 @@ abstract class SymbolCraftExtension {
      *     styleParam("size", "24")
      * }
      *
+     * // Multi-value style parameters for variants
+     * externalIcon("home", libraryName = "official") {
+     *     urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+     *     styleParam("fill") {
+     *         values("", "fill1")  // unfilled, filled variants
+     *     }
+     * }
+     *
      * // Direct URL without {cdn} placeholder
      * externalIcon("my-icon", libraryName = "mylib") {
      *     urlTemplate = "https://my-cdn.com/icons/{name}.svg"
@@ -130,7 +138,10 @@ abstract class SymbolCraftExtension {
     fun externalIcon(name: String, libraryName: String, configure: ExternalIconBuilder.() -> Unit) {
         val builder = ExternalIconBuilder(libraryName)
         builder.configure()
-        iconConfig(name, builder.build())
+        val configs = builder.build()
+        configs.forEach { config ->
+            iconConfig(name, config)
+        }
     }
 
     /**
@@ -149,6 +160,14 @@ abstract class SymbolCraftExtension {
      * externalIcons("home", "search", "user", libraryName = "heroicons") {
      *     urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
      *     styleParam("size", "24")
+     * }
+     *
+     * // Multi-value style parameters for variants
+     * externalIcons("home", "search", "settings", libraryName = "official") {
+     *     urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+     *     styleParam("fill") {
+     *         values("", "fill1")  // unfilled, filled variants
+     *     }
      * }
      * ```
      *
@@ -302,26 +321,106 @@ class MaterialSymbolsBuilder {
 }
 
 /**
- * Builder for external icon configuration.
+ * Builder for external icon configuration with support for multi-value style parameters.
  */
 class ExternalIconBuilder(private val libraryName: String) {
     var urlTemplate: String = ""
-    private val styleParams = mutableMapOf<String, String>()
+    private val singleValueParams = mutableMapOf<String, String>()
+    private val multiValueParams = mutableMapOf<String, List<String>>()
 
     /**
-     * Add a style parameter for URL template replacement.
+     * Add a single-value style parameter for URL template replacement.
      *
      * @param key Parameter name (used as {key} in template)
      * @param value Parameter value
      */
     fun styleParam(key: String, value: String) {
-        styleParams[key] = value
+        singleValueParams[key] = value
     }
 
-    fun build(): ExternalIconConfig {
+    /**
+     * Add a multi-value style parameter with builder syntax.
+     *
+     * Example:
+     * ```kotlin
+     * styleParam("fill") {
+     *     values("", "fill1")  // unfilled, filled variants
+     * }
+     * ```
+     *
+     * @param key Parameter name (used as {key} in template)
+     * @param configure Configuration block for defining multiple values
+     */
+    fun styleParam(key: String, configure: StyleParamBuilder.() -> Unit) {
+        val builder = StyleParamBuilder()
+        builder.configure()
+        multiValueParams[key] = builder.valuesList
+    }
+
+    fun build(): List<ExternalIconConfig> {
         require(urlTemplate.isNotBlank()) {
             "urlTemplate must be specified for external icon"
         }
-        return ExternalIconConfig(libraryName, urlTemplate, styleParams.toMap())
+
+        // If no multi-value params, return single config (backward compatibility)
+        if (multiValueParams.isEmpty()) {
+            return listOf(ExternalIconConfig(libraryName, urlTemplate, singleValueParams.toMap()))
+        }
+
+        // Generate Cartesian product of all parameter combinations
+        return generateCartesianProduct().map { paramCombination ->
+            ExternalIconConfig(libraryName, urlTemplate, paramCombination)
+        }
+    }
+
+    private fun generateCartesianProduct(): List<Map<String, String>> {
+        // Combine single-value and multi-value parameters
+        val allParams = mutableMapOf<String, List<String>>()
+
+        // Add single-value params as single-item lists
+        singleValueParams.forEach { (key, value) ->
+            allParams[key] = listOf(value)
+        }
+
+        // Add multi-value params
+        allParams.putAll(multiValueParams)
+
+        // Generate Cartesian product
+        return cartesianProduct(allParams)
+    }
+
+    private fun cartesianProduct(params: Map<String, List<String>>): List<Map<String, String>> {
+        if (params.isEmpty()) return listOf(emptyMap())
+
+        return params.entries.fold(listOf(emptyMap())) { acc, (key, values) ->
+            acc.flatMap { map ->
+                values.map { value ->
+                    map + (key to value)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Builder for multi-value style parameters.
+ */
+class StyleParamBuilder {
+    internal val valuesList = mutableListOf<String>()
+
+    /**
+     * Define multiple values for this style parameter.
+     *
+     * Example:
+     * ```kotlin
+     * values("", "fill1")           // unfilled, filled
+     * values("outline", "solid")    // outline, solid
+     * values("24", "48")            // different sizes
+     * ```
+     *
+     * @param values The parameter values
+     */
+    fun values(vararg values: String) {
+        valuesList.addAll(values)
     }
 }

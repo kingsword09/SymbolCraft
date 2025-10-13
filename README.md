@@ -609,6 +609,43 @@ symbolCraft {
 }
 ```
 
+**Icons with multiple style variants** (e.g., outline/solid, filled/unfilled):
+
+```kotlin
+symbolCraft {
+    // Single icon with multiple fill variants
+    externalIcon("home", libraryName = "official") {
+        urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+        styleParam("fill") {
+            values("", "fill1")  // unfilled, filled variants
+        }
+    }
+    // Generates: HomeOfficial.kt, HomeFill1Official.kt
+
+    // Multiple icons with the same variants (for bottom navigation, etc.)
+    val navIcons = listOf("home", "search", "user", "settings")
+    externalIcons(*navIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/24/{style}/{name}.svg"
+        styleParam("style") {
+            values("outline", "solid")  // outline and solid variants
+        }
+    }
+    // Generates outline and solid versions for all icons
+
+    // Complex multi-parameter combinations
+    externalIcon("icon", libraryName = "custom") {
+        urlTemplate = "https://cdn.com/{size}/{weight}/{name}.svg"
+        styleParam("size") {
+            values("24", "48")  // two sizes
+        }
+        styleParam("weight") {
+            values("regular", "bold")  // two weights
+        }
+    }
+    // Generates: Icon24RegularCustom.kt, Icon24BoldCustom.kt, Icon48RegularCustom.kt, Icon48BoldCustom.kt
+}
+```
+
 **Using built-in CDN (default: https://esm.sh):**
 
 ```kotlin

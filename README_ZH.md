@@ -609,6 +609,43 @@ symbolCraft {
 }
 ```
 
+**多样式变体的图标**（如 outline/solid、filled/unfilled）：
+
+```kotlin
+symbolCraft {
+    // 单个图标的多个填充变体
+    externalIcon("home", libraryName = "official") {
+        urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+        styleParam("fill") {
+            values("", "fill1")  // unfilled, filled 变体
+        }
+    }
+    // 生成：HomeOfficial.kt, HomeFill1Official.kt
+
+    // 多个图标使用相同的变体（适用于底部导航等场景）
+    val navIcons = listOf("home", "search", "user", "settings")
+    externalIcons(*navIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/24/{style}/{name}.svg"
+        styleParam("style") {
+            values("outline", "solid")  // outline 和 solid 变体
+        }
+    }
+    // 为所有图标生成 outline 和 solid 两个版本
+
+    // 复杂的多参数组合
+    externalIcon("icon", libraryName = "custom") {
+        urlTemplate = "https://cdn.com/{size}/{weight}/{name}.svg"
+        styleParam("size") {
+            values("24", "48")  // 两种尺寸
+        }
+        styleParam("weight") {
+            values("regular", "bold")  // 两种粗细
+        }
+    }
+    // 生成：Icon24RegularCustom.kt, Icon24BoldCustom.kt, Icon48RegularCustom.kt, Icon48BoldCustom.kt
+}
+```
+
 **使用内置 CDN（默认：https://esm.sh）：**
 
 ```kotlin
