@@ -392,33 +392,13 @@ class ExternalIconBuilder(private val libraryName: String) {
     private fun cartesianProduct(params: Map<String, List<String>>): List<Map<String, String>> {
         if (params.isEmpty()) return listOf(emptyMap())
 
-        val keys = params.keys.toList()
-        val values = params.values.toList()
-
-        return cartesianProductRecursive(keys, values, 0, mutableMapOf())
-    }
-
-    private fun cartesianProductRecursive(
-        keys: List<String>,
-        values: List<List<String>>,
-        index: Int,
-        current: MutableMap<String, String>
-    ): List<Map<String, String>> {
-        if (index == keys.size) {
-            return listOf(current.toMap())
+        return params.entries.fold(listOf(emptyMap())) { acc, (key, values) ->
+            acc.flatMap { map ->
+                values.map { value ->
+                    map + (key to value)
+                }
+            }
         }
-
-        val result = mutableListOf<Map<String, String>>()
-        val currentKey = keys[index]
-        val currentValues = values[index]
-
-        for (value in currentValues) {
-            val newCurrent = current.toMutableMap()
-            newCurrent[currentKey] = value
-            result.addAll(cartesianProductRecursive(keys, values, index + 1, newCurrent))
-        }
-
-        return result
     }
 }
 

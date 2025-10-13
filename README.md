@@ -614,7 +614,7 @@ symbolCraft {
 ```kotlin
 symbolCraft {
     // Single icon with multiple fill variants
-    externalIcons("home", libraryName = "official") {
+    externalIcon("home", libraryName = "official") {
         urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
         styleParam("fill") {
             values("", "fill1")  // unfilled, filled variants
@@ -633,7 +633,7 @@ symbolCraft {
     // Generates outline and solid versions for all icons
 
     // Complex multi-parameter combinations
-    externalIcons("icon", libraryName = "custom") {
+    externalIcon("icon", libraryName = "custom") {
         urlTemplate = "https://cdn.com/{size}/{weight}/{name}.svg"
         styleParam("size") {
             values("24", "48")  // two sizes
