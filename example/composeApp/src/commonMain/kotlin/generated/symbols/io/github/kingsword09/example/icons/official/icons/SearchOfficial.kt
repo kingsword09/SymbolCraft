@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.official.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.SearchFilled: ImageVector
+public val Icons.SearchOfficial: ImageVector
     get() {
-        if (_searchFilled != null) {
-            return _searchFilled!!
+        if (_searchOfficial != null) {
+            return _searchOfficial!!
         }
-        _searchFilled = Builder(name = "SearchFilled", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _searchOfficial = Builder(name = "SearchOfficial", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(380.0f, 640.0f)
                 quadToRelative(-109.0f, 0.0f, -184.5f, -75.5f)
@@ -55,15 +55,15 @@ public val Icons.SearchFilled: ImageVector
             }
         }
         .build()
-        return _searchFilled!!
+        return _searchOfficial!!
     }
 
-private var _searchFilled: ImageVector? = null
+private var _searchOfficial: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.SearchFilled, contentDescription = "")
+        Image(imageVector = Icons.SearchOfficial, contentDescription = "")
     }
 }

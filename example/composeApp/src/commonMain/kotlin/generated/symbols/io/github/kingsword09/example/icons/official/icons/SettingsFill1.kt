@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.official.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.SettingsUnfilled: ImageVector
+public val Icons.SettingsFill1: ImageVector
     get() {
-        if (_settingsUnfilled != null) {
-            return _settingsUnfilled!!
+        if (_settingsFill1 != null) {
+            return _settingsFill1!!
         }
-        _settingsUnfilled = Builder(name = "SettingsUnfilled", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _settingsFill1 = Builder(name = "SettingsFill1", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(433.0f, 880.0f)
                 quadToRelative(-27.0f, 0.0f, -46.5f, -18.0f)
@@ -82,42 +82,6 @@ public val Icons.SettingsUnfilled: ImageVector
                 reflectiveQuadTo(527.0f, 880.0f)
                 horizontalLineToRelative(-94.0f)
                 close()
-                moveTo(440.0f, 800.0f)
-                horizontalLineToRelative(79.0f)
-                lineToRelative(14.0f, -106.0f)
-                quadToRelative(31.0f, -8.0f, 57.5f, -23.5f)
-                reflectiveQuadTo(639.0f, 633.0f)
-                lineToRelative(99.0f, 41.0f)
-                lineToRelative(39.0f, -68.0f)
-                lineToRelative(-86.0f, -65.0f)
-                quadToRelative(5.0f, -14.0f, 7.0f, -29.5f)
-                reflectiveQuadToRelative(2.0f, -31.5f)
-                quadToRelative(0.0f, -16.0f, -2.0f, -31.5f)
-                reflectiveQuadToRelative(-7.0f, -29.5f)
-                lineToRelative(86.0f, -65.0f)
-                lineToRelative(-39.0f, -68.0f)
-                lineToRelative(-99.0f, 42.0f)
-                quadToRelative(-22.0f, -23.0f, -48.5f, -38.5f)
-                reflectiveQuadTo(533.0f, 266.0f)
-                lineToRelative(-13.0f, -106.0f)
-                horizontalLineToRelative(-79.0f)
-                lineToRelative(-14.0f, 106.0f)
-                quadToRelative(-31.0f, 8.0f, -57.5f, 23.5f)
-                reflectiveQuadTo(321.0f, 327.0f)
-                lineToRelative(-99.0f, -41.0f)
-                lineToRelative(-39.0f, 68.0f)
-                lineToRelative(86.0f, 64.0f)
-                quadToRelative(-5.0f, 15.0f, -7.0f, 30.0f)
-                reflectiveQuadToRelative(-2.0f, 32.0f)
-                quadToRelative(0.0f, 16.0f, 2.0f, 31.0f)
-                reflectiveQuadToRelative(7.0f, 30.0f)
-                lineToRelative(-86.0f, 65.0f)
-                lineToRelative(39.0f, 68.0f)
-                lineToRelative(99.0f, -42.0f)
-                quadToRelative(22.0f, 23.0f, 48.5f, 38.5f)
-                reflectiveQuadTo(427.0f, 694.0f)
-                lineToRelative(13.0f, 106.0f)
-                close()
                 moveTo(482.0f, 620.0f)
                 quadToRelative(58.0f, 0.0f, 99.0f, -41.0f)
                 reflectiveQuadToRelative(41.0f, -99.0f)
@@ -128,20 +92,18 @@ public val Icons.SettingsUnfilled: ImageVector
                 quadToRelative(0.0f, 58.0f, 40.5f, 99.0f)
                 reflectiveQuadToRelative(99.5f, 41.0f)
                 close()
-                moveTo(480.0f, 480.0f)
-                close()
             }
         }
         .build()
-        return _settingsUnfilled!!
+        return _settingsFill1!!
     }
 
-private var _settingsUnfilled: ImageVector? = null
+private var _settingsFill1: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.SettingsUnfilled, contentDescription = "")
+        Image(imageVector = Icons.SettingsFill1, contentDescription = "")
     }
 }

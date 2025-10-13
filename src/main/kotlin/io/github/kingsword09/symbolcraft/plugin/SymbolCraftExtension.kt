@@ -117,6 +117,14 @@ abstract class SymbolCraftExtension {
      *     styleParam("size", "24")
      * }
      *
+     * // Multi-value style parameters for variants
+     * externalIcon("home", libraryName = "official") {
+     *     urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+     *     styleParam("fill") {
+     *         values("", "fill1")  // unfilled, filled variants
+     *     }
+     * }
+     *
      * // Direct URL without {cdn} placeholder
      * externalIcon("my-icon", libraryName = "mylib") {
      *     urlTemplate = "https://my-cdn.com/icons/{name}.svg"
@@ -130,7 +138,10 @@ abstract class SymbolCraftExtension {
     fun externalIcon(name: String, libraryName: String, configure: ExternalIconBuilder.() -> Unit) {
         val builder = ExternalIconBuilder(libraryName)
         builder.configure()
-        iconConfig(name, builder.build())
+        val configs = builder.build()
+        configs.forEach { config ->
+            iconConfig(name, config)
+        }
     }
 
     /**
@@ -150,6 +161,14 @@ abstract class SymbolCraftExtension {
      *     urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
      *     styleParam("size", "24")
      * }
+     *
+     * // Multi-value style parameters for variants
+     * externalIcons("home", "search", "settings", libraryName = "official") {
+     *     urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+     *     styleParam("fill") {
+     *         values("", "fill1")  // unfilled, filled variants
+     *     }
+     * }
      * ```
      *
      * @param names Icon names to configure
@@ -158,83 +177,6 @@ abstract class SymbolCraftExtension {
      */
     fun externalIcons(vararg names: String, libraryName: String, configure: ExternalIconBuilder.() -> Unit) {
         names.forEach { name -> externalIcon(name, libraryName, configure) }
-    }
-
-    /**
-     * Configure external icon with multiple style variants (e.g., outline/solid, filled/unfilled).
-     *
-     * This is useful when the same icon needs different visual styles that come from different URLs.
-     * Common use case: Bottom navigation bars that need both filled and unfilled versions of icons.
-     *
-     * Examples:
-     * ```kotlin
-     * // Heroicons with outline and solid variants
-     * externalIconWithVariants("home", libraryName = "heroicons") {
-     *     variant("outline") {
-     *         urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
-     *     }
-     *     variant("solid") {
-     *         urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
-     *     }
-     * }
-     *
-     * // Bootstrap Icons with different sizes
-     * externalIconWithVariants("bell", libraryName = "bootstrap-icons") {
-     *     variant("sm") {
-     *         urlTemplate = "{cdn}/bootstrap-icons/{name}-sm.svg"
-     *     }
-     *     variant("lg") {
-     *         urlTemplate = "{cdn}/bootstrap-icons/{name}-lg.svg"
-     *     }
-     * }
-     * ```
-     *
-     * This will generate separate icon files for each variant:
-     * - `HomeOutlineHeroicons.kt`
-     * - `HomeSolidHeroicons.kt`
-     *
-     * @param name Icon name (replaces {name} in URL templates)
-     * @param libraryName Library identifier (used for cache isolation)
-     * @param configure Configuration block for defining variants
-     */
-    fun externalIconWithVariants(name: String, libraryName: String, configure: ExternalIconVariantsBuilder.() -> Unit) {
-        val builder = ExternalIconVariantsBuilder(libraryName)
-        builder.configure()
-        builder.variants.forEach { (variantName, variantBuilder) ->
-            val config = variantBuilder.build()
-            iconConfig(name, config)
-        }
-    }
-
-    /**
-     * Convenience overload for configuring multiple external icons with the same style variants.
-     *
-     * All icons will share the same variant configuration.
-     *
-     * Examples:
-     * ```kotlin
-     * // Multiple Heroicons with outline and solid variants
-     * externalIconsWithVariants("home", "search", "user", libraryName = "heroicons") {
-     *     variant("outline") {
-     *         urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
-     *     }
-     *     variant("solid") {
-     *         urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
-     *     }
-     * }
-     * ```
-     *
-     * This will generate:
-     * - `HomeOutlineHeroicons.kt`, `HomeSolidHeroicons.kt`
-     * - `SearchOutlineHeroicons.kt`, `SearchSolidHeroicons.kt`
-     * - `UserOutlineHeroicons.kt`, `UserSolidHeroicons.kt`
-     *
-     * @param names Icon names to configure
-     * @param libraryName Library identifier shared by all icons
-     * @param configure Configuration block for defining variants
-     */
-    fun externalIconsWithVariants(vararg names: String, libraryName: String, configure: ExternalIconVariantsBuilder.() -> Unit) {
-        names.forEach { name -> externalIconWithVariants(name, libraryName, configure) }
     }
 
     /**
@@ -379,60 +321,126 @@ class MaterialSymbolsBuilder {
 }
 
 /**
- * Builder for external icon configuration.
+ * Builder for external icon configuration with support for multi-value style parameters.
  */
 class ExternalIconBuilder(private val libraryName: String) {
     var urlTemplate: String = ""
-    private val styleParams = mutableMapOf<String, String>()
+    private val singleValueParams = mutableMapOf<String, String>()
+    private val multiValueParams = mutableMapOf<String, List<String>>()
 
     /**
-     * Add a style parameter for URL template replacement.
+     * Add a single-value style parameter for URL template replacement.
      *
      * @param key Parameter name (used as {key} in template)
      * @param value Parameter value
      */
     fun styleParam(key: String, value: String) {
-        styleParams[key] = value
+        singleValueParams[key] = value
     }
 
-    fun build(): ExternalIconConfig {
+    /**
+     * Add a multi-value style parameter with builder syntax.
+     *
+     * Example:
+     * ```kotlin
+     * styleParam("fill") {
+     *     values("", "fill1")  // unfilled, filled variants
+     * }
+     * ```
+     *
+     * @param key Parameter name (used as {key} in template)
+     * @param configure Configuration block for defining multiple values
+     */
+    fun styleParam(key: String, configure: StyleParamBuilder.() -> Unit) {
+        val builder = StyleParamBuilder()
+        builder.configure()
+        multiValueParams[key] = builder.valuesList
+    }
+
+    fun build(): List<ExternalIconConfig> {
         require(urlTemplate.isNotBlank()) {
             "urlTemplate must be specified for external icon"
         }
-        return ExternalIconConfig(libraryName, urlTemplate, styleParams.toMap())
+
+        // If no multi-value params, return single config (backward compatibility)
+        if (multiValueParams.isEmpty()) {
+            return listOf(ExternalIconConfig(libraryName, urlTemplate, singleValueParams.toMap()))
+        }
+
+        // Generate Cartesian product of all parameter combinations
+        return generateCartesianProduct().map { paramCombination ->
+            ExternalIconConfig(libraryName, urlTemplate, paramCombination)
+        }
+    }
+
+    private fun generateCartesianProduct(): List<Map<String, String>> {
+        // Combine single-value and multi-value parameters
+        val allParams = mutableMapOf<String, List<String>>()
+
+        // Add single-value params as single-item lists
+        singleValueParams.forEach { (key, value) ->
+            allParams[key] = listOf(value)
+        }
+
+        // Add multi-value params
+        allParams.putAll(multiValueParams)
+
+        // Generate Cartesian product
+        return cartesianProduct(allParams)
+    }
+
+    private fun cartesianProduct(params: Map<String, List<String>>): List<Map<String, String>> {
+        if (params.isEmpty()) return listOf(emptyMap())
+
+        val keys = params.keys.toList()
+        val values = params.values.toList()
+
+        return cartesianProductRecursive(keys, values, 0, mutableMapOf())
+    }
+
+    private fun cartesianProductRecursive(
+        keys: List<String>,
+        values: List<List<String>>,
+        index: Int,
+        current: MutableMap<String, String>
+    ): List<Map<String, String>> {
+        if (index == keys.size) {
+            return listOf(current.toMap())
+        }
+
+        val result = mutableListOf<Map<String, String>>()
+        val currentKey = keys[index]
+        val currentValues = values[index]
+
+        for (value in currentValues) {
+            val newCurrent = current.toMutableMap()
+            newCurrent[currentKey] = value
+            result.addAll(cartesianProductRecursive(keys, values, index + 1, newCurrent))
+        }
+
+        return result
     }
 }
 
 /**
- * Builder for external icon with multiple style variants.
- *
- * This builder allows defining multiple variants of the same icon, each with its own URL template.
+ * Builder for multi-value style parameters.
  */
-class ExternalIconVariantsBuilder(private val libraryName: String) {
-    internal val variants = mutableMapOf<String, ExternalIconBuilder>()
+class StyleParamBuilder {
+    internal val valuesList = mutableListOf<String>()
 
     /**
-     * Define a style variant with its own URL template and parameters.
+     * Define multiple values for this style parameter.
      *
      * Example:
      * ```kotlin
-     * variant("outline") {
-     *     urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
-     * }
-     * variant("solid") {
-     *     urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
-     *     styleParam("weight", "bold")
-     * }
+     * values("", "fill1")           // unfilled, filled
+     * values("outline", "solid")    // outline, solid
+     * values("24", "48")            // different sizes
      * ```
      *
-     * @param name Variant name (will be included in the generated icon file name)
-     * @param configure Configuration block for this variant
+     * @param values The parameter values
      */
-    fun variant(name: String, configure: ExternalIconBuilder.() -> Unit) {
-        val builder = ExternalIconBuilder(libraryName)
-        // Add variant name as a style parameter to differentiate variants
-        builder.styleParam("variant", name)
-        builder.configure()
-        variants[name] = builder
+    fun values(vararg values: String) {
+        valuesList.addAll(values)
     }
 }

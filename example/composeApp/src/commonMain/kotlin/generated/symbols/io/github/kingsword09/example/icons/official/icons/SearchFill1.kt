@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.official.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.SearchUnfilled: ImageVector
+public val Icons.SearchFill1: ImageVector
     get() {
-        if (_searchUnfilled != null) {
-            return _searchUnfilled!!
+        if (_searchFill1 != null) {
+            return _searchFill1!!
         }
-        _searchUnfilled = Builder(name = "SearchUnfilled", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _searchFill1 = Builder(name = "SearchFill1", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(380.0f, 640.0f)
                 quadToRelative(-109.0f, 0.0f, -184.5f, -75.5f)
@@ -55,15 +55,15 @@ public val Icons.SearchUnfilled: ImageVector
             }
         }
         .build()
-        return _searchUnfilled!!
+        return _searchFill1!!
     }
 
-private var _searchUnfilled: ImageVector? = null
+private var _searchFill1: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.SearchUnfilled, contentDescription = "")
+        Image(imageVector = Icons.SearchFill1, contentDescription = "")
     }
 }

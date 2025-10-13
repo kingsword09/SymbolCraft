@@ -613,28 +613,36 @@ symbolCraft {
 
 ```kotlin
 symbolCraft {
-    // 单个图标的多个变体
-    externalIconWithVariants("home", libraryName = "heroicons") {
-        variant("outline") {
-            urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
-        }
-        variant("solid") {
-            urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+    // 单个图标的多个填充变体
+    externalIcons("home", libraryName = "official") {
+        urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+        styleParam("fill") {
+            values("", "fill1")  // unfilled, filled 变体
         }
     }
-    // 生成：HomeOutlineHeroicons.kt, HomeSolidHeroicons.kt
+    // 生成：HomeOfficial.kt, HomeFill1Official.kt
 
     // 多个图标使用相同的变体（适用于底部导航等场景）
     val navIcons = listOf("home", "search", "user", "settings")
-    externalIconsWithVariants(*navIcons.toTypedArray(), libraryName = "heroicons") {
-        variant("outline") {
-            urlTemplate = "{cdn}/heroicons/24/outline/{name}.svg"
-        }
-        variant("solid") {
-            urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+    externalIcons(*navIcons.toTypedArray(), libraryName = "heroicons") {
+        urlTemplate = "{cdn}/heroicons/24/{style}/{name}.svg"
+        styleParam("style") {
+            values("outline", "solid")  // outline 和 solid 变体
         }
     }
     // 为所有图标生成 outline 和 solid 两个版本
+
+    // 复杂的多参数组合
+    externalIcons("icon", libraryName = "custom") {
+        urlTemplate = "https://cdn.com/{size}/{weight}/{name}.svg"
+        styleParam("size") {
+            values("24", "48")  // 两种尺寸
+        }
+        styleParam("weight") {
+            values("regular", "bold")  // 两种粗细
+        }
+    }
+    // 生成：Icon24RegularCustom.kt, Icon24BoldCustom.kt, Icon48RegularCustom.kt, Icon48BoldCustom.kt
 }
 ```
 

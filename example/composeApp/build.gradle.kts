@@ -117,13 +117,11 @@ symbolCraft {
         urlTemplate = "{cdn}/@mdi/svg@latest/svg/{name}.svg"
     }
 
-    // External icons with multiple variants
-    externalIconsWithVariants(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
-        variant("unfilled") {
-            urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}_24px.svg?min=1"
-        }
-        variant("filled") {
-            urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}_fill1_24px.svg?min=1"
+    // NEW: External icons with multiple style variants using the new styleParam API
+    externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
+        urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg?min=1"
+        styleParam("fill") {
+            values("", "_fill1")  // unfilled, filled variants
         }
     }
 }

@@ -17,13 +17,28 @@ import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.official.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.HomeFilled: ImageVector
+public val Icons.HomeOfficial: ImageVector
     get() {
-        if (_homeFilled != null) {
-            return _homeFilled!!
+        if (_homeOfficial != null) {
+            return _homeOfficial!!
         }
-        _homeFilled = Builder(name = "HomeFilled", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _homeOfficial = Builder(name = "HomeOfficial", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
+                moveTo(240.0f, 760.0f)
+                horizontalLineToRelative(120.0f)
+                verticalLineToRelative(-200.0f)
+                quadToRelative(0.0f, -17.0f, 11.5f, -28.5f)
+                reflectiveQuadTo(400.0f, 520.0f)
+                horizontalLineToRelative(160.0f)
+                quadToRelative(17.0f, 0.0f, 28.5f, 11.5f)
+                reflectiveQuadTo(600.0f, 560.0f)
+                verticalLineToRelative(200.0f)
+                horizontalLineToRelative(120.0f)
+                verticalLineToRelative(-360.0f)
+                lineTo(480.0f, 220.0f)
+                lineTo(240.0f, 400.0f)
+                verticalLineToRelative(360.0f)
+                close()
                 moveTo(160.0f, 760.0f)
                 verticalLineToRelative(-360.0f)
                 quadToRelative(0.0f, -19.0f, 8.5f, -36.0f)
@@ -37,34 +52,32 @@ public val Icons.HomeFilled: ImageVector
                 verticalLineToRelative(360.0f)
                 quadToRelative(0.0f, 33.0f, -23.5f, 56.5f)
                 reflectiveQuadTo(720.0f, 840.0f)
-                lineTo(600.0f, 840.0f)
+                lineTo(560.0f, 840.0f)
                 quadToRelative(-17.0f, 0.0f, -28.5f, -11.5f)
-                reflectiveQuadTo(560.0f, 800.0f)
+                reflectiveQuadTo(520.0f, 800.0f)
                 verticalLineToRelative(-200.0f)
-                quadToRelative(0.0f, -17.0f, -11.5f, -28.5f)
-                reflectiveQuadTo(520.0f, 560.0f)
                 horizontalLineToRelative(-80.0f)
-                quadToRelative(-17.0f, 0.0f, -28.5f, 11.5f)
-                reflectiveQuadTo(400.0f, 600.0f)
                 verticalLineToRelative(200.0f)
                 quadToRelative(0.0f, 17.0f, -11.5f, 28.5f)
-                reflectiveQuadTo(360.0f, 840.0f)
+                reflectiveQuadTo(400.0f, 840.0f)
                 lineTo(240.0f, 840.0f)
                 quadToRelative(-33.0f, 0.0f, -56.5f, -23.5f)
                 reflectiveQuadTo(160.0f, 760.0f)
                 close()
+                moveTo(480.0f, 490.0f)
+                close()
             }
         }
         .build()
-        return _homeFilled!!
+        return _homeOfficial!!
     }
 
-private var _homeFilled: ImageVector? = null
+private var _homeOfficial: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.HomeFilled, contentDescription = "")
+        Image(imageVector = Icons.HomeOfficial, contentDescription = "")
     }
 }

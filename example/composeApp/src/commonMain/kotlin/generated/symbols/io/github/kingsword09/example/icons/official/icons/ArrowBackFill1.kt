@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.official.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.ArrowBackFilled: ImageVector
+public val Icons.ArrowBackFill1: ImageVector
     get() {
-        if (_arrowBackFilled != null) {
-            return _arrowBackFilled!!
+        if (_arrowBackFill1 != null) {
+            return _arrowBackFill1!!
         }
-        _arrowBackFilled = Builder(name = "ArrowBackFilled", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _arrowBackFill1 = Builder(name = "ArrowBackFill1", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveToRelative(313.0f, 520.0f)
                 lineToRelative(196.0f, 196.0f)
@@ -51,15 +51,15 @@ public val Icons.ArrowBackFilled: ImageVector
             }
         }
         .build()
-        return _arrowBackFilled!!
+        return _arrowBackFill1!!
     }
 
-private var _arrowBackFilled: ImageVector? = null
+private var _arrowBackFill1: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.ArrowBackFilled, contentDescription = "")
+        Image(imageVector = Icons.ArrowBackFill1, contentDescription = "")
     }
 }

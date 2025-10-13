@@ -36,16 +36,16 @@ import io.github.kingsword09.example.icons.mdi.Icons as MdiIcons
 import io.github.kingsword09.example.icons.mdi.icons.AbTestingMdi
 import io.github.kingsword09.example.icons.mdi.icons.AbacusMdi
 import io.github.kingsword09.example.icons.official.Icons as OfficialIcons
-import io.github.kingsword09.example.icons.official.icons.HomeFilled as HomeFilledOfficial
-import io.github.kingsword09.example.icons.official.icons.HomeUnfilled as HomeUnfilledOfficial
-import io.github.kingsword09.example.icons.official.icons.SearchFilled
-import io.github.kingsword09.example.icons.official.icons.SearchUnfilled
-import io.github.kingsword09.example.icons.official.icons.SettingsFilled
-import io.github.kingsword09.example.icons.official.icons.SettingsUnfilled
-import io.github.kingsword09.example.icons.official.icons.PersonFilled
-import io.github.kingsword09.example.icons.official.icons.PersonUnfilled
-import io.github.kingsword09.example.icons.official.icons.ArrowBackFilled
-import io.github.kingsword09.example.icons.official.icons.ArrowBackUnfilled
+import io.github.kingsword09.example.icons.official.icons.HomeFill1
+import io.github.kingsword09.example.icons.official.icons.HomeOfficial
+import io.github.kingsword09.example.icons.official.icons.SearchFill1
+import io.github.kingsword09.example.icons.official.icons.SearchOfficial
+import io.github.kingsword09.example.icons.official.icons.SettingsFill1
+import io.github.kingsword09.example.icons.official.icons.SettingsOfficial
+import io.github.kingsword09.example.icons.official.icons.PersonFill1
+import io.github.kingsword09.example.icons.official.icons.PersonOfficial
+import io.github.kingsword09.example.icons.official.icons.ArrowBackFill1
+import io.github.kingsword09.example.icons.official.icons.ArrowBackOfficial
 
 @Composable
 @Preview
@@ -254,7 +254,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.HomeUnfilledOfficial,
+                    imageVector = OfficialIcons.HomeOfficial,
                     contentDescription = "Home",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -266,7 +266,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.HomeFilledOfficial,
+                    imageVector = OfficialIcons.HomeFill1,
                     contentDescription = "Home",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -278,7 +278,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.SearchUnfilled,
+                    imageVector = OfficialIcons.SearchOfficial,
                     contentDescription = "Search",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -290,7 +290,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.SearchFilled,
+                    imageVector = OfficialIcons.SearchFill1,
                     contentDescription = "Search",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -302,7 +302,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.SettingsUnfilled,
+                    imageVector = OfficialIcons.SettingsOfficial,
                     contentDescription = "Settings",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -314,7 +314,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.SettingsFilled,
+                    imageVector = OfficialIcons.SettingsFill1,
                     contentDescription = "Settings",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -326,7 +326,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.PersonUnfilled,
+                    imageVector = OfficialIcons.PersonOfficial,
                     contentDescription = "Person",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -338,7 +338,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.PersonFilled,
+                    imageVector = OfficialIcons.PersonFill1,
                     contentDescription = "Person",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -350,7 +350,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.ArrowBackUnfilled,
+                    imageVector = OfficialIcons.ArrowBackOfficial,
                     contentDescription = "Arrow Back",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -362,7 +362,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.ArrowBackFilled,
+                    imageVector = OfficialIcons.ArrowBackFill1,
                     contentDescription = "Arrow Back",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
