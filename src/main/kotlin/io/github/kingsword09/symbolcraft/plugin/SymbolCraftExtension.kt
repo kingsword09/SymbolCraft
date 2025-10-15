@@ -14,6 +14,8 @@ import org.gradle.api.provider.Property
  * @property packageName root package used for generated Kotlin types.
  * @property generatePreview toggles Compose preview function generation for each icon.
  * @property cdnBaseUrl base URL for the CDN serving icons (default: https://esm.sh).
+ * @property maxRetries maximum number of retry attempts for failed downloads (default: 3).
+ * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
  */
 abstract class SymbolCraftExtension {
     abstract val cacheEnabled: Property<Boolean>
@@ -22,6 +24,8 @@ abstract class SymbolCraftExtension {
     abstract val packageName: Property<String>
     abstract val generatePreview: Property<Boolean>
     abstract val cdnBaseUrl: Property<String>
+    abstract val maxRetries: Property<Int>
+    abstract val retryDelayMs: Property<Long>
 
     private val iconsConfig = mutableMapOf<String, MutableList<IconConfig>>()
 
@@ -32,6 +36,8 @@ abstract class SymbolCraftExtension {
         packageName.convention("io.github.kingsword09.symbolcraft.symbols")
         generatePreview.convention(false)
         cdnBaseUrl.convention("https://esm.sh")
+        maxRetries.convention(3)
+        retryDelayMs.convention(1000L)
     }
 
     /**
