@@ -15,6 +15,7 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -91,15 +92,15 @@ class SvgDownloader(
     private fun log(message: String) {
         logger?.invoke(message) ?: println(message)
     }
-    
+
     private val cachePath = Path(cacheDirectory)
-    
+
     init {
         if (cacheEnabled) {
             cachePath.createDirectories()
         }
     }
-    
+
     /**
      * Download an SVG file for the given icon and configuration with automatic retry logic.
      *
@@ -151,8 +152,6 @@ class SvgDownloader(
                     log("⚠️ Attempt ${attemptNumber + 1} failed for $url: ${e.message}")
                     log("   Retrying in ${delayMs}ms... ($remainingRetries retries remaining)")
                     delay(delayMs)
-                } else {
-                    log("❌ All $maxRetries attempts failed for $url: ${e.message}")
                 }
             }
         }
@@ -216,21 +215,20 @@ class SvgDownloader(
 
             return svgContent
         } else {
-            log("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
-            return null
+            throw IOException("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
         }
     }
-    
+
     private fun getCachedSvg(cacheKey: String): String? {
         val cacheFile = cachePath / "$cacheKey.svg"
         val metaFile = cachePath / "$cacheKey.meta"
-        
+
         if (cacheFile.exists() && metaFile.exists()) {
             try {
                 val meta = metaFile.readLines()
                 if (meta.size >= 2) {
                     val timestamp = meta[0].toLong()
-                    
+
                     // Check if cache is still valid (7 days)
                     val maxAge = CACHE_MAX_AGE_MS // 7 days
                     if (System.currentTimeMillis() - timestamp < maxAge) {
@@ -241,10 +239,10 @@ class SvgDownloader(
                 // Cache corrupted, will re-download
             }
         }
-        
+
         return null
     }
-    
+
     /**
      * Cache SVG content with metadata for future use.
      *
@@ -263,11 +261,11 @@ class SvgDownloader(
             log("Failed to cache SVG for key $cacheKey: ${e.message}")
         }
     }
-    
+
     fun cleanup() {
         httpClient.close()
     }
-    
+
     /**
      * Check if an SVG is cached and valid
      */
@@ -309,7 +307,7 @@ class SvgDownloader(
 
         return CacheStats(svgFiles.size, totalSize)
     }
-    
+
     data class CacheStats(
         val fileCount: Int,
         val totalSizeBytes: Long
