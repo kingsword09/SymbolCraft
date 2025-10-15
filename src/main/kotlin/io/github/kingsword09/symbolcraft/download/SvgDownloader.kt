@@ -13,7 +13,9 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -25,7 +27,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 /**
- * Downloads icon SVG files from CDN with local caching and validation.
+ * Downloads icon SVG files from CDN with local caching, validation, and retry logic.
  *
  * Supports multiple icon libraries through the IconConfig interface.
  *
@@ -34,16 +36,21 @@ import kotlin.io.path.writeText
  * - Content validation (type, size, structure)
  * - 7-day cache with metadata tracking
  * - HTTPS enforcement for security
+ * - Automatic retry with exponential backoff
  *
  * @property cacheDirectory Directory path for storing cached SVG files
  * @property cacheEnabled Whether to enable caching (default: true)
  * @property cdnBaseUrl Base URL for the CDN serving icons (default: esm.sh)
+ * @property maxRetries Maximum number of retry attempts (default: 3)
+ * @property retryDelayMs Initial delay between retries in milliseconds (default: 1000ms)
  * @property logger Optional logger for status messages, if not provided uses println
  */
 class SvgDownloader(
     private val cacheDirectory: String,
     private val cacheEnabled: Boolean = true,
     private val cdnBaseUrl: String = DEFAULT_CDN_BASE_URL,
+    private val maxRetries: Int = 3,
+    private val retryDelayMs: Long = 1000L,
     private val logger: ((String) -> Unit)? = null
 ) {
     companion object {
@@ -85,27 +92,32 @@ class SvgDownloader(
     private fun log(message: String) {
         logger?.invoke(message) ?: println(message)
     }
-    
+
     private val cachePath = Path(cacheDirectory)
-    
+
     init {
         if (cacheEnabled) {
             cachePath.createDirectories()
         }
     }
-    
+
     /**
-     * Download an SVG file for the given icon and configuration.
+     * Download an SVG file for the given icon and configuration with automatic retry logic.
      *
      * This method:
      * 1. Checks the local cache first
-     * 2. Downloads from CDN if not cached
+     * 2. Downloads from CDN if not cached (with retries on failure)
      * 3. Validates content type, size, and structure
      * 4. Caches valid content for future use
      *
+     * Retry Strategy:
+     * - Exponential backoff: delay doubles after each retry
+     * - Configurable max retries (default: 3)
+     * - Configurable initial delay (default: 1000ms)
+     *
      * @param iconName Name of the icon
      * @param config Icon library configuration
-     * @return SVG content as string, or null if download fails
+     * @return SVG content as string, or null if download fails after all retries
      */
     suspend fun downloadSvg(iconName: String, config: IconConfig): String? = withContext(Dispatchers.IO) {
         val url = config.buildUrl(iconName, cdnBaseUrl)
@@ -119,78 +131,104 @@ class SvgDownloader(
             }
         }
 
-        // Download from CDN
-        try {
-            log("Downloading SVG from $url")
-
-            // Validate HTTPS is used
-            if (!url.startsWith("https://")) {
-                throw IllegalStateException("Only HTTPS URLs are allowed for security. Got: $url")
-            }
-
-            val response = httpClient.get(url)
-
-            if (response.status.isSuccess()) {
-                // Validate content type
-                val contentType = response.contentType()
-                if (contentType?.match(ContentType.Text.Xml) != true &&
-                    contentType?.match(ContentType.Image.SVG) != true) {
-                    throw IllegalStateException("Invalid content type: $contentType for URL: $url")
-                }
-
-                // Validate content size to prevent DoS
-                val contentLength = response.contentLength()
-                if (contentLength != null && contentLength > MAX_SVG_SIZE) {
-                    throw IllegalStateException("SVG too large: $contentLength bytes (max: $MAX_SVG_SIZE) from URL: $url")
-                }
-
-                val svgContent = if (contentLength == null) {
-                    // Stream read with a limit if content length is unknown
-                    val channel = response.body<ByteReadChannel>()
-                    val packet = channel.readRemaining(MAX_SVG_SIZE.toLong() + 1)
-                    try {
-                        if (packet.remaining > MAX_SVG_SIZE || !channel.isClosedForRead) {
-                            throw IllegalStateException("SVG response exceeds max size of $MAX_SVG_SIZE bytes from URL: $url")
-                        }
-                        packet.readText()
-                    } finally {
-                        packet.release()
+        // Download from CDN with retry logic
+        var lastException: Exception? = null
+        repeat(maxRetries) { attemptNumber ->
+            try {
+                val svgContent = downloadSvgInternal(url, cacheKey)
+                if (svgContent != null) {
+                    if (attemptNumber > 0) {
+                        log("✅ Successfully downloaded after ${attemptNumber + 1} attempt(s): $url")
                     }
-                } else {
-                    response.bodyAsText()
+                    return@withContext svgContent
                 }
+            } catch (e: Exception) {
+                lastException = e
+                val remainingRetries = maxRetries - attemptNumber - 1
 
-                // Validate basic SVG structure
-                if (!svgContent.contains("<svg") || !svgContent.contains("</svg>")) {
-                    throw IllegalStateException("Invalid SVG structure (missing svg tags) from URL: $url")
+                if (remainingRetries > 0) {
+                    // Exponential backoff: delay = retryDelayMs * 2^attemptNumber
+                    val delayMs = retryDelayMs * (1 shl attemptNumber)
+                    log("⚠️ Attempt ${attemptNumber + 1} failed for $url: ${e.message}")
+                    log("   Retrying in ${delayMs}ms... ($remainingRetries retries remaining)")
+                    delay(delayMs)
                 }
-
-                // Cache the validated content
-                if (cacheEnabled && svgContent.isNotBlank()) {
-                    cacheSvg(cacheKey, svgContent, url)
-                }
-
-                return@withContext svgContent
-            } else {
-                log("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
-                return@withContext null
             }
-        } catch (e: Exception) {
-            log("Error downloading SVG from $url: ${e.message}")
-            return@withContext null
+        }
+
+        log("Error downloading SVG from $url after $maxRetries attempts: ${lastException?.message}")
+        return@withContext null
+    }
+
+    /**
+     * Internal method to perform a single download attempt.
+     */
+    private suspend fun downloadSvgInternal(url: String, cacheKey: String): String? {
+        log("Downloading SVG from $url")
+
+        // Validate HTTPS is used
+        if (!url.startsWith("https://")) {
+            throw IllegalStateException("Only HTTPS URLs are allowed for security. Got: $url")
+        }
+
+        val response = httpClient.get(url)
+
+        if (response.status.isSuccess()) {
+            // Validate content type
+            val contentType = response.contentType()
+            if (contentType?.match(ContentType.Text.Xml) != true &&
+                contentType?.match(ContentType.Image.SVG) != true) {
+                throw IllegalStateException("Invalid content type: $contentType for URL: $url")
+            }
+
+            // Validate content size to prevent DoS
+            val contentLength = response.contentLength()
+            if (contentLength != null && contentLength > MAX_SVG_SIZE) {
+                throw IllegalStateException("SVG too large: $contentLength bytes (max: $MAX_SVG_SIZE) from URL: $url")
+            }
+
+            val svgContent = if (contentLength == null) {
+                // Stream read with a limit if content length is unknown
+                val channel = response.body<ByteReadChannel>()
+                val packet = channel.readRemaining(MAX_SVG_SIZE.toLong() + 1)
+                try {
+                    if (packet.remaining > MAX_SVG_SIZE || !channel.isClosedForRead) {
+                        throw IllegalStateException("SVG response exceeds max size of $MAX_SVG_SIZE bytes from URL: $url")
+                    }
+                    packet.readText()
+                } finally {
+                    packet.release()
+                }
+            } else {
+                response.bodyAsText()
+            }
+
+            // Validate basic SVG structure
+            if (!svgContent.contains("<svg") || !svgContent.contains("</svg>")) {
+                throw IllegalStateException("Invalid SVG structure (missing svg tags) from URL: $url")
+            }
+
+            // Cache the validated content
+            if (cacheEnabled && svgContent.isNotBlank()) {
+                cacheSvg(cacheKey, svgContent, url)
+            }
+
+            return svgContent
+        } else {
+            throw IOException("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
         }
     }
-    
+
     private fun getCachedSvg(cacheKey: String): String? {
         val cacheFile = cachePath / "$cacheKey.svg"
         val metaFile = cachePath / "$cacheKey.meta"
-        
+
         if (cacheFile.exists() && metaFile.exists()) {
             try {
                 val meta = metaFile.readLines()
                 if (meta.size >= 2) {
                     val timestamp = meta[0].toLong()
-                    
+
                     // Check if cache is still valid (7 days)
                     val maxAge = CACHE_MAX_AGE_MS // 7 days
                     if (System.currentTimeMillis() - timestamp < maxAge) {
@@ -201,10 +239,10 @@ class SvgDownloader(
                 // Cache corrupted, will re-download
             }
         }
-        
+
         return null
     }
-    
+
     /**
      * Cache SVG content with metadata for future use.
      *
@@ -223,11 +261,11 @@ class SvgDownloader(
             log("Failed to cache SVG for key $cacheKey: ${e.message}")
         }
     }
-    
+
     fun cleanup() {
         httpClient.close()
     }
-    
+
     /**
      * Check if an SVG is cached and valid
      */
@@ -269,7 +307,7 @@ class SvgDownloader(
 
         return CacheStats(svgFiles.size, totalSize)
     }
-    
+
     data class CacheStats(
         val fileCount: Int,
         val totalSizeBytes: Long
