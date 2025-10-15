@@ -1,4 +1,4 @@
-package io.github.kingsword09.symbolcraft.plugin
+package io.github.kingsword09.symbolcraft.utils
 
 import java.io.File
 
@@ -28,7 +28,7 @@ internal object PathUtils {
             cacheFile
         } else {
             // Relative path: resolve relative to project build directory
-            File(projectBuildDir, cacheDirPath)
+          File(projectBuildDir, cacheDirPath)
         }
     }
 

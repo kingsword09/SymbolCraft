@@ -1,5 +1,6 @@
-package io.github.kingsword09.symbolcraft.plugin
+package io.github.kingsword09.symbolcraft.tasks
 
+import io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal

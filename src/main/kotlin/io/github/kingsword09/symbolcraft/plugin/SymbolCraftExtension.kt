@@ -6,7 +6,7 @@ import org.gradle.api.provider.Property
 /**
  * DSL entry point exposed as `symbolCraft { ... }` in a consuming build script.
  *
- * The extension collects icon requests from multiple icon libraries and paths that drive [GenerateSymbolsTask].
+ * The extension collects icon requests from multiple icon libraries and paths that drive [io.github.kingsword09.symbolcraft.tasks.GenerateSymbolsTask].
  *
  * @property cacheEnabled enables reuse of downloaded SVG assets between builds.
  * @property cacheDirectory directory that hosts cached SVG payloads (relative to `build/` by default).

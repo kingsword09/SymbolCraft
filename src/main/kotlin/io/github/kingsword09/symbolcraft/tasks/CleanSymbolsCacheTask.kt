@@ -1,21 +1,24 @@
-package io.github.kingsword09.symbolcraft.plugin
+package io.github.kingsword09.symbolcraft.tasks
 
+import io.github.kingsword09.symbolcraft.utils.PathUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 /**
  * Task that deletes cached SVG assets created by [GenerateSymbolsTask].
  *
- * Exposed to consumers as `cleanSymbolsCache`.
+ * Exposed to consumers as `cleanSymbolCraftCache`.
+ *
+ * This task is fully compatible with Gradle Configuration Cache.
  */
 abstract class CleanSymbolsCacheTask : DefaultTask() {
-    @get:Internal
-    abstract val extension: Property<SymbolCraftExtension>
+    @get:Input
+    abstract val cacheDirectory: Property<String>
 
-    @get:Internal
+    @get:Input
     abstract val projectBuildDir: Property<String>
 
     /**
@@ -23,7 +26,7 @@ abstract class CleanSymbolsCacheTask : DefaultTask() {
      */
     @TaskAction
     fun clean() {
-        val cacheDirPath = extension.get().cacheDirectory.get()
+        val cacheDirPath = cacheDirectory.get()
         val projectBuildDirPath = projectBuildDir.get()
 
         // Resolve cache directory: support both absolute and relative paths
