@@ -1,8 +1,11 @@
 package io.github.kingsword09.symbolcraft.plugin
 
+import io.github.kingsword09.symbolcraft.tasks.CleanSymbolsCacheTask
+import io.github.kingsword09.symbolcraft.tasks.CleanSymbolsIconsTask
+import io.github.kingsword09.symbolcraft.tasks.GenerateSymbolsTask
+import io.github.kingsword09.symbolcraft.tasks.ValidateSymbolsConfigTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import java.io.File
 
 /**
  * Gradle plugin entry point registered as `io.github.kingsword09.symbolcraft`.

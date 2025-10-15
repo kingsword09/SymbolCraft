@@ -1,7 +1,10 @@
-package io.github.kingsword09.symbolcraft.plugin
+package io.github.kingsword09.symbolcraft.tasks
 
 import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
+import io.github.kingsword09.symbolcraft.model.IconConfig
+import io.github.kingsword09.symbolcraft.utils.PathUtils
+import io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -21,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Gradle task responsible for downloading icons from multiple libraries and converting them into Compose APIs.
  *
- * The task is cacheable and honours [SymbolCraftExtension] settings supplied via the plugin DSL.
+ * The task is cacheable and honours [io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension] settings supplied via the plugin DSL.
  *
  * @property extension lazily provides the extension backing the current project configuration.
  * @property outputDir destination directory for the generated Kotlin sources.
@@ -204,7 +207,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     /**
      * Clean unused SVG cache files that are no longer in the configuration
      */
-    private fun cleanUnusedCache(cacheDir: File, config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>) {
+    private fun cleanUnusedCache(cacheDir: File, config: Map<String, List<IconConfig>>) {
         if (!cacheDir.exists()) return
 
         // Build set of required cache keys
@@ -237,7 +240,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     /**
      * Group icons by their library ID for organized output
      */
-    private fun groupIconsByLibrary(config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>): Map<String, Set<String>> {
+    private fun groupIconsByLibrary(config: Map<String, List<IconConfig>>): Map<String, Set<String>> {
         val libraryMap = mutableMapOf<String, MutableSet<String>>()
 
         config.forEach { (iconName, iconConfigs) ->
@@ -251,7 +254,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
     private suspend fun downloadSvgsParallel(
         downloader: SvgDownloader,
-        config: Map<String, List<io.github.kingsword09.symbolcraft.model.IconConfig>>,
+        config: Map<String, List<IconConfig>>,
         tempDir: File
     ): DownloadStats = coroutineScope {
         val totalIcons = config.values.sumOf { it.size }
@@ -414,13 +417,13 @@ data class DownloadStats(
 sealed class DownloadResult {
     data class Success(
         val iconName: String,
-        val config: io.github.kingsword09.symbolcraft.model.IconConfig,
+        val config: IconConfig,
         val fileName: String
     ) : DownloadResult()
 
     data class Failed(
         val iconName: String,
-        val config: io.github.kingsword09.symbolcraft.model.IconConfig,
+        val config: IconConfig,
         val error: String
     ) : DownloadResult()
 }

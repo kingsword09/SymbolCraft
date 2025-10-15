@@ -1,4 +1,4 @@
-package io.github.kingsword09.symbolcraft.plugin
+package io.github.kingsword09.symbolcraft.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -30,6 +30,10 @@ abstract class CleanSymbolsIconsTask : DefaultTask() {
      */
     @TaskAction
     fun clean() {
+        if (!outputDirectory.isPresent) {
+            logger.lifecycle("ℹ️ Output directory not configured, skipping clean.")
+            return
+        }
         val pkgName = packageName.get()
         val outputDir = outputDirectory.get().asFile
         val packagePath = pkgName.replace('.', '/')
