@@ -35,40 +35,15 @@ class SymbolCraftPlugin : Plugin<Project> {
         project.tasks.register("cleanSymbolCraftCache", CleanSymbolsCacheTask::class.java) { task ->
             task.group = "symbolcraft"
             task.description = "Clean SymbolCraft icon cache"
-            task.extension.set(extension)
+            task.cacheDirectory.set(extension.cacheDirectory)
             task.projectBuildDir.set(project.layout.buildDirectory.get().asFile.absolutePath)
         }
 
-        project.tasks.register("cleanSymbolCraftIcons") { task ->
+        project.tasks.register("cleanSymbolCraftIcons", CleanSymbolsIconsTask::class.java) { task ->
             task.group = "symbolcraft"
             task.description = "Clean generated SymbolCraft icon files"
-            task.doLast {
-                val packageName = extension.packageName.get()
-                val outputDir = project.layout.projectDirectory.dir(extension.outputDirectory).get().asFile
-                val packagePath = packageName.replace('.', '/')
-                val symbolsDir = File(outputDir, "$packagePath/icons")
-                val mainSymbolsFile = File(outputDir, "$packagePath/__Icons.kt")
-
-                var deletedCount = 0
-                if (symbolsDir.exists()) {
-                    symbolsDir.listFiles()?.forEach { file ->
-                        if (file.isFile && file.extension == "kt") {
-                            file.delete()
-                            deletedCount++
-                        }
-                    }
-                    if (symbolsDir.listFiles()?.isEmpty() == true) {
-                        symbolsDir.delete()
-                    }
-                }
-
-                if (mainSymbolsFile.exists()) {
-                    mainSymbolsFile.delete()
-                    deletedCount++
-                }
-
-                project.logger.lifecycle("🧹 Cleaned $deletedCount generated icon files")
-            }
+            task.packageName.set(extension.packageName)
+            task.outputDirectory.set(project.layout.projectDirectory.dir(extension.outputDirectory))
         }
 
         project.tasks.register("validateSymbolCraftConfig", ValidateSymbolsConfigTask::class.java) { task ->
