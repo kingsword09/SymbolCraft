@@ -77,6 +77,7 @@ interface IconConfig {
  * @property fill Fill mode (filled or unfilled)
  * @property grade Fine-tuning parameter for weight adjustment
  * @property opticalSize Optical size optimization parameter
+ * @property customFallbackUrls User-provided fallback URL templates (prioritized over defaults)
  */
 @Serializable
 data class MaterialSymbolsConfig(
@@ -84,17 +85,23 @@ data class MaterialSymbolsConfig(
     val variant: SymbolVariant = SymbolVariant.OUTLINED,
     val fill: SymbolFill = SymbolFill.UNFILLED,
     val grade: Int = 0,
-    val opticalSize: Int = 24
+    val opticalSize: Int = 24,
+    val customFallbackUrls: List<String> = emptyList()
 ) : IconConfig {
     override val libraryId = "material-symbols"
 
     override fun buildUrl(iconName: String, cdnBaseUrl: String): String {
-        val suffix = if (fill == SymbolFill.FILLED) "-fill" else ""
-        return "$cdnBaseUrl/@material-symbols/svg-${weight.value}/${variant.pathName}/$iconName$suffix.svg"
+        // Use first URL from all available URLs
+        return getAllFallbackUrls().first().replaceTemplateVariables(iconName)
     }
 
     override fun getCacheKey(iconName: String): String {
-        return "${iconName}_${libraryId}_${weight.value}_${variant.pathName}_${fill.name.lowercase()}"
+        val urlsHash = if (customFallbackUrls.isNotEmpty()) {
+            customFallbackUrls.joinToString("|").hashCode().toString()
+        } else {
+            "default"
+        }
+        return "${iconName}_${libraryId}_${weight.value}_${variant.pathName}_${fill.name.lowercase()}_${urlsHash}"
     }
 
     override fun getSignature(): String = buildString {
@@ -102,6 +109,54 @@ data class MaterialSymbolsConfig(
         append(variant.shortName)
         append(fill.shortName)
         if (grade != 0) append("G").append(grade)
+        // Include custom URLs in signature for cache busting
+        if (customFallbackUrls.isNotEmpty()) {
+            append("|urls=${customFallbackUrls.size}")
+        }
+    }
+
+    /**
+     * Get all available fallback URLs in priority order:
+     * 1. User-provided custom URLs (if any)
+     * 2. Built-in default CDN URLs (3 providers)
+     */
+    fun getAllFallbackUrls(): List<String> {
+        return customFallbackUrls + getDefaultFallbackUrls()
+    }
+
+    /**
+     * Replace template variables in URL template.
+     *
+     * Supported variables:
+     * - {name}: Icon name (e.g., "home")
+     * - {variant}: Variant path name (e.g., "outlined", "rounded", "sharp")
+     * - {weight}: Weight value (e.g., "400", "700")
+     * - {fill}: Fill suffix ("" for unfilled, "fill1" for filled)
+     * - {grade}: Grade value (e.g., "0", "-25", "200")
+     * - {optical_size}: Optical size value (e.g., "24", "48")
+     */
+    private fun String.replaceTemplateVariables(iconName: String): String {
+        return this
+            .replace("{name}", iconName)
+            .replace("{variant}", variant.pathName)
+            .replace("{weight}", weight.value.toString())
+            .replace("{fill}", fill.shortName)
+            .replace("{grade}", grade.toString())
+            .replace("{optical_size}", opticalSize.toString())
+    }
+
+    companion object {
+        /**
+         * Built-in default CDN URLs for Material Symbols.
+         * These are used as fallbacks when user doesn't provide custom URLs.
+         *
+         * Priority order:
+         * 1. Google Fonts CDN (official source)
+         */
+        fun getDefaultFallbackUrls(): List<String> = listOf(
+            // Google Fonts official CDN
+            "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols{variant}/{name}/wght{weight}{fill}/{optical_size}px.svg"
+        )
     }
 }
 
@@ -111,7 +166,6 @@ data class MaterialSymbolsConfig(
  * Supports flexible URL patterns with placeholder replacement.
  *
  * Available placeholders:
- * - {cdn}: CDN base URL
  * - {name}: Icon name
  * - {key}: Any custom style parameter key
  *
@@ -119,13 +173,13 @@ data class MaterialSymbolsConfig(
  * ```kotlin
  * ExternalIconConfig(
  *     libraryName = "bootstrap-icons",
- *     urlTemplate = "{cdn}/bootstrap/{style}/{name}.svg",
+ *     urlTemplate = "https://esm.sh/bootstrap-icons/{style}/{name}.svg",
  *     styleParams = mapOf("style" to "fill")
  * )
  * ```
  *
  * @property libraryName Name of the external library (will be prefixed with "external-")
- * @property urlTemplate URL pattern with placeholders
+ * @property urlTemplate URL pattern with placeholders (must be full URL)
  * @property styleParams Map of style parameters for placeholder replacement
  */
 @Serializable
@@ -137,9 +191,7 @@ data class ExternalIconConfig(
     override val libraryId = "external-$libraryName"
 
     override fun buildUrl(iconName: String, cdnBaseUrl: String): String {
-        var url = urlTemplate
-            .replace("{cdn}", cdnBaseUrl)
-            .replace("{name}", iconName)
+        var url = urlTemplate.replace("{name}", iconName)
 
         styleParams.forEach { (key, value) ->
             url = url.replace("{$key}", value)
@@ -173,7 +225,7 @@ enum class SymbolVariant(val shortName: String, val pathName: String) {
 @Serializable
 enum class SymbolFill(val shortName: String) {
     UNFILLED(""),
-    FILLED("Fill")
+    FILLED("fill1")
 }
 
 @Serializable

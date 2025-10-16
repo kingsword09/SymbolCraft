@@ -90,7 +90,6 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val downloader = SvgDownloader(
             cacheDirectory = svgCacheDir.absolutePath,
             cacheEnabled = ext.cacheEnabled.get(),
-            cdnBaseUrl = ext.cdnBaseUrl.get(),
             maxRetries = ext.maxRetries.get(),
             retryDelayMs = ext.retryDelayMs.get(),
             logger = { message -> logger.debug(message) }
