@@ -22,6 +22,7 @@ class Svg2ComposeConverter {
      * @param accessorName Name of the object that will contain all icons
      * @param allAssetsPropertyName Name of the property that contains all icons
      * @param librarySubdir Optional subdirectory name for organizing icons by library (e.g., "materialsymbols", "bootstrap-icons")
+     * @param nameTransformer Custom naming transformer for icon class names. If null, uses Material Symbols transformer.
      */
     fun convertDirectory(
         inputDirectory: File,
@@ -30,7 +31,8 @@ class Svg2ComposeConverter {
         generatePreview: Boolean = true,
         accessorName: String = "GeneratedIcons",
         allAssetsPropertyName: String = "AllIcons",
-        librarySubdir: String? = null
+        librarySubdir: String? = null,
+        nameTransformer: IconNameTransformer? = null
     ) {
         if (!inputDirectory.exists() || !inputDirectory.isDirectory) {
             throw IllegalArgumentException("Input directory does not exist or is not a directory: ${inputDirectory.absolutePath}")
@@ -47,6 +49,8 @@ class Svg2ComposeConverter {
         }
 
         // Use Svg2Compose to convert all SVG files
+        val transformer = nameTransformer ?: NameTransformerFactory.pascalCase()
+        
         Svg2Compose.parse(
             applicationIconPackage = effectivePackage,
             accessorName = accessorName,
@@ -55,9 +59,8 @@ class Svg2ComposeConverter {
             type = VectorType.SVG,
             allAssetsPropertyName = allAssetsPropertyName,
             iconNameTransformer = { name, _ ->
-                // Transform icon names to match our naming convention
-                // e.g., "home_400_rounded_unfilled.svg" -> "HomeW400Rounded"
-                transformIconName(name)
+                // Use the provided or default name transformer
+                transformer.transform(name)
             },
             generatePreview = generatePreview
         )
@@ -115,52 +118,6 @@ class Svg2ComposeConverter {
             // Clean up temp directory
             tempDir.deleteRecursively()
         }
-    }
-    
-    /**
-     * Transform icon file names to match our naming convention
-     * 
-     * Examples:
-     * - "home_400_rounded_unfilled" -> "HomeW400Rounded"
-     * - "search_500_outlined_filled" -> "SearchW500OutlinedFill"
-     * - "person_400_outlined_unfilled" -> "PersonW400Outlined"
-     */
-    fun transformIconName(fileName: String): String {
-        // Remove .svg extension if present
-        val nameWithoutExt = fileName.removeSuffix(".svg")
-        
-        // Parse the file name format: {icon}_{weight}_{variant}_{fill}
-        val parts = nameWithoutExt.split("_")
-        if (parts.size < 4) {
-            // If the format doesn't match, just capitalize the name
-            return nameWithoutExt.split("_", "-")
-                .joinToString("") { it.replaceFirstChar { char -> char.titlecase() } }
-        }
-        
-        val iconName = parts[0]
-        val weight = parts[1]
-        val variant = parts[2]
-        val fill = parts[3]
-        
-        // Build the transformed name
-        val transformedName = buildString {
-            // Capitalize icon name
-            append(iconName.replaceFirstChar { it.titlecase() })
-            
-            // Add weight with W prefix
-            append("W")
-            append(weight)
-            
-            // Capitalize variant
-            append(variant.replaceFirstChar { it.titlecase() })
-            
-            // Add Fill suffix only if filled
-            if (fill == "filled") {
-                append("Fill")
-            }
-        }
-        
-        return transformedName
     }
     
     /**

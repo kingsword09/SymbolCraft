@@ -1,6 +1,8 @@
 package io.github.kingsword09.symbolcraft.tasks
 
 import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
+import io.github.kingsword09.symbolcraft.converter.IconNameTransformer
+import io.github.kingsword09.symbolcraft.converter.NameTransformerFactory
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
 import io.github.kingsword09.symbolcraft.model.IconConfig
 import io.github.kingsword09.symbolcraft.utils.PathUtils
@@ -110,7 +112,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             logDownloadStats(downloadStats)
 
             // Convert SVGs to Compose code, organized by library
-            convertSvgsToComposeByLibrary(tempDir, outputDirFile, packageName, iconsByLibrary, ext.generatePreview.get())
+            convertSvgsToComposeByLibrary(tempDir, outputDirFile, packageName, iconsByLibrary, ext)
 
             // Log cache statistics
             val cacheStats = downloader.getCacheStats()
@@ -345,7 +347,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         outputDir: File,
         packageName: String,
         iconsByLibrary: Map<String, Set<String>>,
-        generatePreview: Boolean = true,
+        ext: SymbolCraftExtension
     ) {
         logger.lifecycle("🔄 Converting SVGs to Compose ImageVectors...")
 
@@ -365,17 +367,28 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 else -> libraryId.removePrefix("external-") // e.g., "bootstrap-icons", "heroicons"
             }
 
+            // Create name transformer from extension configuration
+            val nameTransformer = NameTransformerFactory.fromConvention(
+                convention = ext.namingConvention.get(),
+                suffix = ext.namingSuffix.get(),
+                prefix = ext.namingPrefix.get(),
+                removePrefix = ext.namingRemovePrefix.get(),
+                removeSuffix = ext.namingRemoveSuffix.get()
+            )
+
             logger.lifecycle("   📚 Converting library: $libraryId → icons/$librarySubdir/")
+            logger.debug("   🔄 Using transformer: ${ext.namingConvention.get()} (suffix='${ext.namingSuffix.get()}', prefix='${ext.namingPrefix.get()}')")
 
             try {
                 converter.convertDirectory(
                     inputDirectory = libraryTempDir,
                     outputDirectory = outputDir,
                     packageName = packageName,
-                    generatePreview = generatePreview,
+                    generatePreview = ext.generatePreview.get(),
                     accessorName = "Icons",
                     allAssetsPropertyName = "AllIcons",
-                    librarySubdir = librarySubdir
+                    librarySubdir = librarySubdir,
+                    nameTransformer = nameTransformer
                 )
                 val iconCount = libraryTempDir.listFiles()?.size ?: 0
                 totalConverted += iconCount

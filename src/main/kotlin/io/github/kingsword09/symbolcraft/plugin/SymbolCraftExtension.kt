@@ -1,6 +1,7 @@
 package io.github.kingsword09.symbolcraft.plugin
 
 import io.github.kingsword09.symbolcraft.model.*
+import io.github.kingsword09.symbolcraft.converter.NamingConvention
 import org.gradle.api.provider.Property
 
 /**
@@ -16,6 +17,11 @@ import org.gradle.api.provider.Property
  * @property cdnBaseUrl base URL for the CDN serving icons (default: https://esm.sh).
  * @property maxRetries maximum number of retry attempts for failed downloads (default: 3).
  * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
+ * @property namingConvention naming convention for generated class names (default: PASCAL_CASE).
+ * @property namingSuffix suffix to append to generated class names (e.g., "Icon").
+ * @property namingPrefix prefix to prepend to generated class names (e.g., "Ic").
+ * @property namingRemovePrefix prefix to remove from input file names (e.g., "ic_").
+ * @property namingRemoveSuffix suffix to remove from input file names (e.g., "_24dp").
  */
 abstract class SymbolCraftExtension {
     abstract val cacheEnabled: Property<Boolean>
@@ -26,6 +32,13 @@ abstract class SymbolCraftExtension {
     abstract val cdnBaseUrl: Property<String>
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
+    
+    // Naming transformer configuration
+    abstract val namingConvention: Property<NamingConvention>
+    abstract val namingSuffix: Property<String>
+    abstract val namingPrefix: Property<String>
+    abstract val namingRemovePrefix: Property<String>
+    abstract val namingRemoveSuffix: Property<String>
 
     private val iconsConfig = mutableMapOf<String, MutableList<IconConfig>>()
 
@@ -38,6 +51,13 @@ abstract class SymbolCraftExtension {
         cdnBaseUrl.convention("https://esm.sh")
         maxRetries.convention(3)
         retryDelayMs.convention(1000L)
+        
+        // Naming transformer defaults
+        namingConvention.convention(NamingConvention.PASCAL_CASE)
+        namingSuffix.convention("")
+        namingPrefix.convention("")
+        namingRemovePrefix.convention("")
+        namingRemoveSuffix.convention("")
     }
 
     /**
