@@ -142,30 +142,56 @@ class IconNameTransformerTest {
         assertEquals("HOME", transformer.transform("home"))
     }
 
-    // ========== LambdaNameTransformer ==========
+    // ========== Custom Transformer (Anonymous Object) ==========
 
     @Test
-    fun `LambdaNameTransformer - custom logic`() {
-        val transformer = LambdaNameTransformer { fileName ->
-            when {
-                fileName.startsWith("ic_") -> fileName.removePrefix("ic_")
-                    .split("_")
-                    .joinToString("") { it.replaceFirstChar { c -> c.titlecase() } }
-                else -> fileName.replaceFirstChar { it.titlecase() }
+    fun `Custom transformer - custom logic`() {
+        val transformer = object : IconNameTransformer() {
+            override fun transform(fileName: String): String {
+                return when {
+                    fileName.startsWith("ic_") -> fileName.removePrefix("ic_")
+                        .split("_")
+                        .joinToString("") { it.replaceFirstChar { c -> c.titlecase() } }
+                    else -> fileName.replaceFirstChar { it.titlecase() }
+                }
             }
         }
-        
+
         assertEquals("Home", transformer.transform("ic_home"))
         assertEquals("UserCircle", transformer.transform("ic_user_circle"))
         assertEquals("CustomIcon", transformer.transform("customIcon"))
     }
 
     @Test
-    fun `LambdaNameTransformer - uppercase`() {
-        val transformer = LambdaNameTransformer { it.uppercase() }
-        
+    fun `Custom transformer - uppercase`() {
+        val transformer = object : IconNameTransformer() {
+            override fun transform(fileName: String): String {
+                return fileName.uppercase()
+            }
+        }
+
         assertEquals("HOME", transformer.transform("home"))
         assertEquals("ARROW-LEFT", transformer.transform("arrow-left"))
+    }
+
+    @Test
+    fun `Custom transformer - getSignature default`() {
+        val transformer = object : IconNameTransformer() {
+            override fun transform(fileName: String): String = fileName.uppercase()
+        }
+
+        // Default signature should use class name
+        assertTrue(transformer.getSignature().contains("IconNameTransformerTest"))
+    }
+
+    @Test
+    fun `Custom transformer - getSignature override`() {
+        val transformer = object : IconNameTransformer() {
+            override fun transform(fileName: String): String = fileName.uppercase()
+            override fun getSignature(): String = "MyCustomUppercaseTransformer"
+        }
+
+        assertEquals("MyCustomUppercaseTransformer", transformer.getSignature())
     }
 
     // ========== NameTransformerFactory ==========
@@ -238,15 +264,8 @@ class IconNameTransformerTest {
             suffix = "Icon",
             removePrefix = "ic_"
         )
-        
-        assertEquals("HomeIcon", transformer.transform("ic_home"))
-    }
 
-    @Test
-    fun `NameTransformerFactory - custom`() {
-        val transformer = NameTransformerFactory.custom { it.uppercase() }
-        assertTrue(transformer is LambdaNameTransformer)
-        assertEquals("TEST", transformer.transform("test"))
+        assertEquals("HomeIcon", transformer.transform("ic_home"))
     }
 
     // ========== Edge Cases ==========

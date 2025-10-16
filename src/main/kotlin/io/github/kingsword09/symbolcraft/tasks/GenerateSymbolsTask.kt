@@ -367,8 +367,8 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
             // Create name transformer from extension configuration
             val nameTransformer = if (ext.namingConfig.transformer.isPresent) {
-                // Use custom transformer
-                LambdaNameTransformer(ext.namingConfig.transformer.get())
+                // Use custom transformer directly
+                ext.namingConfig.transformer.get()
             } else {
                 // Use convention-based transformer
                 NameTransformerFactory.fromConvention(

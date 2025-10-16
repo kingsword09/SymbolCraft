@@ -1,5 +1,6 @@
 package io.github.kingsword09.symbolcraft.plugin
 
+import io.github.kingsword09.symbolcraft.converter.IconNameTransformer
 import io.github.kingsword09.symbolcraft.converter.NamingConvention
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -18,6 +19,12 @@ import javax.inject.Inject
  *         // Or customize:
  *         namingConvention.set(NamingConvention.PASCAL_CASE)
  *         suffix.set("Icon")
+ *         // Or use custom transformer:
+ *         customTransformer(object : IconNameTransformer() {
+ *             override fun transform(fileName: String): String {
+ *                 return fileName.uppercase() + "Icon"
+ *             }
+ *         })
  *     }
  * }
  * ```
@@ -29,32 +36,32 @@ abstract class NamingConfig @Inject constructor(
      * Naming convention to apply (e.g., PASCAL_CASE, CAMEL_CASE).
      */
     abstract val namingConvention: Property<NamingConvention>
-    
+
     /**
      * Suffix to append to generated class names (e.g., "Icon" → HomeIcon).
      */
     abstract val suffix: Property<String>
-    
+
     /**
      * Prefix to prepend to generated class names (e.g., "Ic" → IcHome).
      */
     abstract val prefix: Property<String>
-    
+
     /**
      * Prefix to remove from input file names before transformation (e.g., "ic_").
      */
     abstract val removePrefix: Property<String>
-    
+
     /**
      * Suffix to remove from input file names before transformation (e.g., "_24dp").
      */
     abstract val removeSuffix: Property<String>
-    
+
     /**
-     * Custom transformer function that takes full control of naming.
+     * Custom transformer that takes full control of naming.
      * When set, this overrides convention-based transformation.
      */
-    abstract val transformer: Property<(String) -> String>
+    abstract val transformer: Property<IconNameTransformer>
     
     init {
         namingConvention.convention(NamingConvention.PASCAL_CASE)
@@ -138,7 +145,7 @@ abstract class NamingConfig @Inject constructor(
     }
     
     /**
-     * Provide a custom transformation function.
+     * Provide a custom transformer.
      *
      * This gives you full control over the naming logic and overrides
      * convention-based transformation.
@@ -146,20 +153,23 @@ abstract class NamingConfig @Inject constructor(
      * Example:
      * ```kotlin
      * naming {
-     *     custom { fileName ->
-     *         fileName.removePrefix("ic_").capitalize() + "Icon"
-     *     }
+     *     customTransformer(object : IconNameTransformer() {
+     *         override fun transform(fileName: String): String {
+     *             return fileName.removePrefix("ic_").capitalize() + "Icon"
+     *         }
+     *     })
      * }
      * ```
      *
-     * @param transform Lambda function that transforms a file name to a class name
+     * @param transformer Custom IconNameTransformer instance
      */
-    fun custom(transform: (String) -> String) {
-        transformer.set(transform)
+    fun customTransformer(transformer: IconNameTransformer) {
+        this.transformer.set(transformer)
     }
 
     /**
      * Produce a stable snapshot representation of the naming configuration.
+     * Uses IconNameTransformer.getSignature() for stable build caching.
      */
     internal fun snapshotSignature(): String {
         val builder = StringBuilder()
@@ -173,12 +183,11 @@ abstract class NamingConfig @Inject constructor(
         builder.append(removePrefix.orNull)
         builder.append("|removeSuffix=")
         builder.append(removeSuffix.orNull)
-        val transformerLambda = transformer.orNull
+        val customTransformer = transformer.orNull
         builder.append("|transformer=")
-        if (transformerLambda != null) {
-            builder.append(transformerLambda::class.java.name)
-            builder.append('@')
-            builder.append(System.identityHashCode(transformerLambda))
+        if (customTransformer != null) {
+            // Use the transformer's stable signature instead of identity hash
+            builder.append(customTransformer.getSignature())
         } else {
             builder.append("null")
         }

@@ -38,16 +38,9 @@ abstract class SymbolCraftExtension {
      *
      * Use the [naming] method to configure naming transformation.
      */
-    private var namingConfigInstance: NamingConfig? = null
-
-    internal val namingConfig: NamingConfig
-        get() {
-            val existing = namingConfigInstance
-            if (existing != null) return existing
-            val created = objects.newInstance(NamingConfig::class.java)
-            namingConfigInstance = created
-            return created
-        }
+    internal val namingConfig: NamingConfig by lazy {
+        objects.newInstance(NamingConfig::class.java)
+    }
 
     private val iconsConfig = mutableMapOf<String, MutableList<IconConfig>>()
 

@@ -1,19 +1,50 @@
 package io.github.kingsword09.symbolcraft.converter
 
+import java.io.Serializable
+
 /**
- * Strategy interface for transforming icon file names into Kotlin class names.
+ * Abstract base class for transforming icon file names into Kotlin class names.
  *
  * Different icon libraries may have different naming conventions.
- * This interface allows users to implement custom naming transformers for their specific libraries.
+ * This class allows users to implement custom naming transformers for their specific libraries.
+ *
+ * Implementations must be Serializable to support Gradle's configuration cache.
+ *
+ * Example:
+ * ```kotlin
+ * class MyTransformer : IconNameTransformer() {
+ *     override fun transform(fileName: String): String {
+ *         return fileName.uppercase() + "Icon"
+ *     }
+ * }
+ * ```
  */
-interface IconNameTransformer {
+abstract class IconNameTransformer : Serializable {
     /**
      * Transform an icon file name into a valid Kotlin class name.
      *
      * @param fileName The file name (with or without .svg extension)
      * @return Transformed Kotlin class name
      */
-    fun transform(fileName: String): String
+    abstract fun transform(fileName: String): String
+
+    /**
+     * Provide a stable signature for this transformer.
+     * This signature is used for Gradle's build cache.
+     *
+     * Default implementation uses the fully qualified class name,
+     * which is stable across builds as long as the class definition doesn't change.
+     *
+     * Override this method if you need custom signature logic
+     * (e.g., including constructor parameters in the signature).
+     *
+     * @return Stable signature string for build caching
+     */
+    open fun getSignature(): String = this::class.java.name
+
+    companion object {
+        private const val serialVersionUID = 1L
+    }
 }
 
 /**
@@ -82,7 +113,7 @@ class ConventionNameTransformer(
     private val prefix: String = "",
     private val removePrefix: String = "",
     private val removeSuffix: String = ""
-) : IconNameTransformer {
+) : IconNameTransformer() {
 
     override fun transform(fileName: String): String {
         // Clean the file name
@@ -107,7 +138,7 @@ class ConventionNameTransformer(
 
     private fun toPascalCase(input: String): String {
         return splitWords(input).joinToString("") {
-            it.replaceFirstChar { char -> char.titlecase() }
+            it.replaceFirstChar { it.titlecase() }
         }
     }
 
@@ -115,7 +146,7 @@ class ConventionNameTransformer(
         val words = splitWords(input)
         if (words.isEmpty()) return ""
         return words.first().lowercase() + words.drop(1).joinToString("") {
-            it.replaceFirstChar { char -> char.titlecase() }
+            it.replaceFirstChar { it.titlecase() }
         }
     }
 
@@ -135,37 +166,33 @@ class ConventionNameTransformer(
     private fun splitWords(input: String): List<String> {
         // Split by common delimiters: -, _, space, and detect camelCase/PascalCase boundaries
         return input
-            .replace(Regex("([a-z])([A-Z])"), "$1_$2") // camelCase → camel_Case
+            .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1_$2")
+            .replace(Regex("([a-z\\d])([A-Z])"), "$1_$2")
             .split(Regex("[\\s\\-_]+")) // Split by -, _, space
             .filter { it.isNotBlank() }
     }
-}
 
-/**
- * Naming transformer that applies custom logic via a lambda.
- *
- * Provides maximum flexibility for complex naming requirements.
- *
- * Example:
- * ```kotlin
- * val transformer = LambdaNameTransformer { fileName ->
- *     when {
- *         fileName.startsWith("ic_") -> fileName.removePrefix("ic_").capitalize()
- *         fileName.endsWith("_24dp") -> fileName.removeSuffix("_24dp").capitalize()
- *         else -> fileName.capitalize()
- *     }
- * }
- * ```
- *
- * @property transformFn Lambda function that performs the transformation
- */
-class LambdaNameTransformer(
-    private val transformFn: (String) -> String
-) : IconNameTransformer {
-    override fun transform(fileName: String): String {
-        return transformFn(fileName)
+    /**
+     * Override getSignature to include constructor parameters in the signature.
+     * This ensures that changes to the transformer configuration are detected by Gradle's cache.
+     */
+    override fun getSignature(): String {
+        return buildString {
+            append("ConventionNameTransformer(")
+            append("convention=$convention,")
+            append("suffix='$suffix',")
+            append("prefix='$prefix',")
+            append("removePrefix='$removePrefix',")
+            append("removeSuffix='$removeSuffix'")
+            append(")")
+        }
+    }
+
+    companion object {
+        private const val serialVersionUID = 1L
     }
 }
+
 
 /**
  * Factory for creating common name transformers.
@@ -178,10 +205,8 @@ object NameTransformerFactory {
      * @return Appropriate name transformer instance
      */
     fun create(libraryId: String): IconNameTransformer {
-        return when (libraryId) {
-            "material-symbols" -> pascalCase()
-            else -> pascalCase()
-        }
+        // This can be expanded with more cases for specific libraries in the future.
+        return pascalCase()
     }
 
     /**
@@ -267,11 +292,4 @@ object NameTransformerFactory {
         removeSuffix = removeSuffix
     )
 
-    /**
-     * Create a custom transformer using a lambda.
-     *
-     * @param transformFn Lambda function for transformation
-     */
-    fun custom(transformFn: (String) -> String): IconNameTransformer =
-        LambdaNameTransformer(transformFn)
 }
