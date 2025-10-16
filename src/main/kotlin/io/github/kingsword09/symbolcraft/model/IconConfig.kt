@@ -69,14 +69,14 @@ interface IconConfig {
 /**
  * Configuration for Material Symbols icon library.
  *
- * Supports the @material-symbols/svg-* packages with full style customization.
+ * Uses Google Fonts CDN as the source for Material Symbols icons.
+ * For custom CDN or backup URLs, use `externalIcon` instead.
  *
  * @property weight Stroke weight (100-700)
  * @property variant Visual variant (outlined, rounded, sharp)
  * @property fill Fill mode (filled or unfilled)
  * @property grade Fine-tuning parameter for weight adjustment
  * @property opticalSize Optical size optimization parameter
- * @property customFallbackUrls User-provided fallback URL templates (prioritized over defaults)
  */
 @Serializable
 data class MaterialSymbolsConfig(
@@ -84,23 +84,23 @@ data class MaterialSymbolsConfig(
     val variant: SymbolVariant = SymbolVariant.OUTLINED,
     val fill: SymbolFill = SymbolFill.UNFILLED,
     val grade: Int = 0,
-    val opticalSize: Int = 24,
-    val customFallbackUrls: List<String> = emptyList()
+    val opticalSize: Int = 24
 ) : IconConfig {
     override val libraryId = "material-symbols"
 
     override fun buildUrl(iconName: String): String {
-        // Use first URL from all available URLs
-        return getAllFallbackUrls().first().replaceTemplateVariables(iconName)
+        val weightValue = when {
+            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) && fill == SymbolFill.FILLED -> ""
+            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) -> "default"
+            else -> "wght${weight.value}"
+        }
+
+        // Google Fonts official CDN
+        return "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols${variant.pathName}/$iconName/$weightValue${fill.shortName}/${opticalSize}px.svg"
     }
 
     override fun getCacheKey(iconName: String): String {
-        val urlsHash = if (customFallbackUrls.isNotEmpty()) {
-            customFallbackUrls.joinToString("|").hashCode().toString()
-        } else {
-            "default"
-        }
-        return "${iconName}_${libraryId}_${weight.value}_${variant.pathName}_${fill.name.lowercase()}_${urlsHash}"
+        return "${iconName}_${libraryId}_${weight.value}_${variant.pathName}_${fill.name.lowercase()}"
     }
 
     override fun getSignature(): String = buildString {
@@ -108,58 +108,6 @@ data class MaterialSymbolsConfig(
         append(variant.shortName)
         append(fill.shortName)
         if (grade != 0) append("G").append(grade)
-        // Include custom URLs in signature for cache busting
-        if (customFallbackUrls.isNotEmpty()) {
-            append("|urls=${customFallbackUrls.size}")
-        }
-    }
-
-    /**
-     * Get all available fallback URLs in priority order:
-     * 1. User-provided custom URLs (if any)
-     */
-    fun getAllFallbackUrls(): List<String> {
-        return customFallbackUrls + getDefaultFallbackUrls()
-    }
-
-    /**
-     * Replace template variables in URL template.
-     *
-     * Supported variables:
-     * - {name}: Icon name (e.g., "home")
-     * - {variant}: Variant path name (e.g., "outlined", "rounded", "sharp")
-     * - {weight}: Weight value (e.g., "400", "700")
-     * - {fill}: Fill suffix ("" for unfilled, "fill1" for filled)
-     * - {grade}: Grade value (e.g., "0", "-25", "200")
-     * - {optical_size}: Optical size value (e.g., "24", "48")
-     */
-    private fun String.replaceTemplateVariables(iconName: String): String {
-        val weightValue = when {
-            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) && fill == SymbolFill.FILLED -> ""
-            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) -> "default"
-            else -> "wght${weight.value}"
-        }
-        return this
-            .replace("{name}", iconName)
-            .replace("{variant}", variant.pathName)
-            .replace("{weight}", weightValue)
-            .replace("{fill}", fill.shortName)
-            .replace("{grade}", grade.toString())
-            .replace("{optical_size}", opticalSize.toString())
-    }
-
-    companion object {
-        /**
-         * Built-in default CDN URLs for Material Symbols.
-         * These are used as fallbacks when user doesn't provide custom URLs.
-         *
-         * Priority order:
-         * 1. Google Fonts CDN (official source)
-         */
-        fun getDefaultFallbackUrls(): List<String> = listOf(
-            // Google Fonts official CDN
-            "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols{variant}/{name}/{weight}{fill}/{optical_size}px.svg"
-        )
     }
 }
 

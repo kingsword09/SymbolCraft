@@ -255,36 +255,6 @@ abstract class SymbolCraftExtension {
 class MaterialSymbolsBuilder {
     val configs = mutableListOf<MaterialSymbolsConfig>()
 
-    // User-provided fallback URLs (shared across all styles)
-    private val customFallbackUrlsList = mutableListOf<String>()
-
-    /**
-     * Configure custom fallback URLs for Material Symbols.
-     * User-provided URLs will be tried first before falling back to built-in CDNs.
-     *
-     * Template variables:
-     * - {name}: Icon name (e.g., "home")
-     * - {variant}: Variant path name (e.g., "outlined", "rounded", "sharp")
-     * - {weight}: Weight value (e.g., "400", "700")
-     * - {fill}: Fill suffix ("" for unfilled, "fill1" for filled)
-     * - {grade}: Grade value (e.g., "0", "-25", "200")
-     * - {optical_size}: Optical size value (e.g., "24", "48")
-     *
-     * Example:
-     * ```kotlin
-     * materialSymbol("home") {
-     *     fallbackUrls(
-     *         "https://my-cdn.com/symbols/{name}_{weight}.svg",
-     *         "https://backup-cdn.com/symbols/{name}.svg"
-     *     )
-     *     weights(400, 500)
-     * }
-     * ```
-     */
-    fun fallbackUrls(vararg urls: String) {
-        customFallbackUrlsList.addAll(urls)
-    }
-
     /**
      * Add a single style configuration using SymbolWeight enum.
      */
@@ -295,12 +265,7 @@ class MaterialSymbolsBuilder {
         grade: Int = 0,
         opticalSize: Int = 24
     ) {
-        configs.add(
-            MaterialSymbolsConfig(
-                weight, variant, fill, grade, opticalSize,
-                customFallbackUrls = customFallbackUrlsList.toList()
-            )
-        )
+        configs.add(MaterialSymbolsConfig(weight, variant, fill, grade, opticalSize))
     }
 
     /**
@@ -314,12 +279,7 @@ class MaterialSymbolsBuilder {
         opticalSize: Int = 24
     ) {
         val symbolWeight = SymbolWeight.fromValue(weight)
-        configs.add(
-            MaterialSymbolsConfig(
-                symbolWeight, variant, fill, grade, opticalSize,
-                customFallbackUrls = customFallbackUrlsList.toList()
-            )
-        )
+        configs.add(MaterialSymbolsConfig(symbolWeight, variant, fill, grade, opticalSize))
     }
 
     /**
