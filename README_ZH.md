@@ -11,16 +11,17 @@
 
 - 🚀 **按需生成** - 仅生成你实际使用的图标，相比 Material Icons Extended (11.3MB) 减少 99%+ 体积
 - 💾 **智能缓存** - 7天有效期的 SVG 文件缓存，避免重复网络请求
-- ⚡ **并行下载** - 使用 Kotlin 协程并行下载 SVG 文件，大幅提升生成速度
+- ⚡ **并行下载** - 使用 Kotlin 协程并行下载 SVG 文件，支持配置重试逻辑
 - 🎯 **确定性构建** - 保证每次生成的代码完全一致，Git 友好，缓存友好
 - 🎨 **全样式支持** - 支持 Material Symbols 所有样式（权重、变体、填充状态）
 - 🔧 **智能DSL** - 提供便捷的批量配置方法和预设样式
-- 📚 **多图标库支持** - 支持 Material Symbols、Bootstrap Icons、Heroicons、Feather Icons、Font Awesome 以及任何通过 URL 模板自定义的图标库
-- 📱 **高质量输出** - 使用 DevSrSouza/svg-to-compose 库生成真实的 SVG 路径数据
+- 📚 **多图标库支持** - 支持 Material Symbols、Bootstrap Icons、Heroicons、Feather Icons 以及任何通过 URL 模板自定义的图标库
+- 📱 **高质量输出** - 使用 svg-to-compose 库生成真实的 SVG 路径数据
 - 🔄 **增量构建** - Gradle 任务缓存支持，只重新生成变更的图标
 - 🏗️ **配置缓存兼容** - 完全支持 Gradle 配置缓存，提升构建性能
 - 🔗 **多平台支持** - 支持 Android、Kotlin Multiplatform、JVM 等项目
-- 👀 **Compose 预览** - 自动生成 Compose Preview 函数，支持 androidx 和 jetpack compose
+- 👀 **Compose 预览** - 自动生成 Compose Preview 函数
+- 🏷️ **灵活命名** - 自定义图标类名命名规则（PascalCase、camelCase、snake_case 等）
 
 ## 📦 安装
 
@@ -52,6 +53,12 @@ symbolCraft {
 
     // 预览生成配置（可选）
     generatePreview.set(true)  // 启用预览生成
+
+    // 图标命名配置（可选）
+    naming {
+        pascalCase()  // 使用 PascalCase 命名规则（默认）
+        // 或：camelCase()、snakeCase()、kebabCase() 等
+    }
 
     // 单个图标配置（使用 Int 权重值）
     materialSymbol("search") {
@@ -97,8 +104,8 @@ symbolCraft {
 
 生成过程会显示详细进度：
 ```
-🎨 Generating Material Symbols...
-📊 Symbols to generate: 12 icons
+🎨 Generating icons...
+📊 Icons to generate: 12
 ⬇️ Downloading SVG files...
    Progress: 5/12
    Progress: 10/12
@@ -204,21 +211,28 @@ symbolCraft {
 
 ```kotlin
 symbolCraft {
-    // 生成的 Kotlin 包名
+    // 生成的 Kotlin 包名（必需）
     packageName.set("com.yourcompany.app.symbols")
 
     // 输出目录（支持多平台项目）
     outputDirectory.set("src/commonMain/kotlin")
 
     // 缓存配置
-    cacheEnabled.set(true)
-    cacheDirectory.set("material-symbols-cache")
-
-    // CDN 配置
-    cdnBaseUrl.set("https://esm.sh")  // 默认 CDN URL（可选）
+    cacheEnabled.set(true)  // 默认：true
+    cacheDirectory.set("symbolcraft-cache")  // 默认："symbolcraft-cache"（相对于 build/）
 
     // 预览配置
-    generatePreview.set(false)  // 是否生成 Compose @Preview 函数
+    generatePreview.set(false)  // 默认：false - 是否生成 Compose @Preview 函数
+
+    // 下载重试配置
+    maxRetries.set(3)  // 默认：3 - 下载失败时的最大重试次数
+    retryDelayMs.set(1000)  // 默认：1000ms - 重试之间的初始延迟
+
+    // 图标命名配置（可选）
+    naming {
+        pascalCase()  // 默认命名规则
+        // 可用选项：pascalCase()、camelCase()、snakeCase()、kebabCase() 等
+    }
 }
 ```
 
@@ -273,6 +287,40 @@ symbolCraft {
 }
 ```
 
+### 命名配置
+
+控制生成的图标类名的转换方式：
+
+```kotlin
+symbolCraft {
+    naming {
+        // 预设命名规则
+        pascalCase()              // HomeIcon（默认）
+        pascalCase(suffix = "Icon")  // HomeIconIcon
+        camelCase()               // homeIcon
+        snakeCase()               // home_icon
+        snakeCase(uppercase = true)  // HOME_ICON
+        kebabCase()               // home-icon
+        lowerCase()               // homeicon
+        upperCase()               // HOMEICON
+
+        // 细粒度控制
+        namingConvention.set(NamingConvention.PASCAL_CASE)
+        prefix.set("Ic")          // 前缀 → IcHome
+        suffix.set("Icon")        // 后缀 → HomeIcon
+        removePrefix.set("ic_")   // 移除输入前缀 → ic_home → Home
+        removeSuffix.set("_24dp") // 移除输入后缀 → home_24dp → Home
+
+        // 自定义转换器（高级）
+        customTransformer(object : IconNameTransformer() {
+            override fun transform(fileName: String): String {
+                return fileName.uppercase() + "Icon"
+            }
+        })
+    }
+}
+```
+
 ### 生成的文件命名规则
 
 图标文件名格式：`{IconName}W{Weight}{Variant}{Fill}.kt`
@@ -288,9 +336,9 @@ symbolCraft {
 
 | 任务 | 描述 |
 |------|------|
-| `generateSymbolCraftIcons` | 生成配置的 Material Symbols 图标 |
+| `generateSymbolCraftIcons` | 生成所有配置的图标库图标 |
 | `cleanSymbolCraftCache` | 清理缓存的 SVG 文件 |
-| `cleanSymbolCraftIcons` | 清理生成的 Material Symbols 文件 |
+| `cleanSymbolCraftIcons` | 清理所有生成的图标文件 |
 | `validateSymbolCraftConfig` | 验证图标配置的有效性 |
 
 ### 任务示例
@@ -352,16 +400,16 @@ your-project/
 │                   │       ├── SearchW400Outlined.kt
 │                   │       ├── HomeW500RoundedFill.kt
 │                   │       └── PersonW700Sharp.kt
-│                   └── bootstrap-icons/          # Bootstrap Icons (示例)
+│                   └── bootstrapicons/           # Bootstrap Icons (示例)
 │                       ├── __Icons.kt            # Bootstrap Icons 访问器
 │                       └── icons/
 │                           ├── BellBootstrapicons.kt
 │                           └── HouseBootstrapicons.kt
 └── build/
-    └── symbolcraft-cache/                        # 缓存目录（默认在 build 文件夹）
+    └── symbolcraft-cache/                        # 缓存目录（默认位置）
         ├── temp-svgs/                            # SVG 临时文件（按库组织）
         │   ├── material-symbols/
-        │   └── external-bootstrap-icons/
+        │   └── external-bootstrapicons/
         └── svg-cache/                            # 缓存的 SVG 文件及元数据
 ```
 
@@ -402,7 +450,7 @@ your-project/
 ### 多层缓存架构
 
 1. **SVG 下载缓存**
-   - 默认位置：`build/material-symbols-cache/svg-cache/`
+   - 默认位置：`build/symbolcraft-cache/svg-cache/`
    - 有效期：7天
    - 包含：SVG 文件 + 元数据（时间戳、URL、哈希值）
    - 自动清理：配置变更时自动删除不再需要的缓存文件
@@ -418,7 +466,7 @@ your-project/
 **相对路径（默认）：**
 ```kotlin
 symbolCraft {
-    cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
+    cacheDirectory.set("symbolcraft-cache")  // → build/symbolcraft-cache/
     // 自动清理: ✅ 启用（项目私有缓存）
 }
 ```
@@ -646,51 +694,30 @@ symbolCraft {
 }
 ```
 
-**使用内置 CDN（默认：https://esm.sh）：**
+**使用完整 URL：**
 
 ```kotlin
 symbolCraft {
-    // 使用 {cdn} 占位符的外部图标
+    // 从 esm.sh 获取 Bootstrap Icons
     val bootstrapIcons = listOf("bell", "calendar", "clock", "envelope")
     externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+        urlTemplate = "https://esm.sh/bootstrap-icons/fill/{name}.svg"
     }
-}
-```
 
-**使用自定义/直接 URL：**
+    // 从 jsdelivr 获取 Feather Icons
+    externalIcon("activity", libraryName = "feather") {
+        urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
+    }
 
-```kotlin
-symbolCraft {
-    // 直接 URL（不使用 CDN 占位符）
+    // 自定义图标服务器
     externalIcon("my-icon", libraryName = "mylib") {
-        urlTemplate = "https://my-cdn.com/icons/{name}.svg"
-    }
-
-    // 另一个带参数的示例
-    externalIcon("feather-icon", libraryName = "feather") {
-        urlTemplate = "https://cdn.feathericons.com/{size}/{name}.svg"
-        styleParam("size", "16")
-    }
-}
-```
-
-**修改全局 CDN URL：**
-
-```kotlin
-symbolCraft {
-    // 为所有使用 {cdn} 占位符的图标库更改 CDN
-    cdnBaseUrl.set("https://my-custom-cdn.com")
-
-    // 现在所有 {cdn} 占位符都会使用这个 URL
-    externalIcon("icon", libraryName = "custom") {
-        urlTemplate = "{cdn}/icons/{name}.svg"  // → https://my-custom-cdn.com/icons/icon.svg
+        urlTemplate = "https://my-cdn.com/icons/{size}/{name}.svg"
+        styleParam("size", "24")
     }
 }
 ```
 
 **URL 模板占位符：**
-- `{cdn}` - 替换为 `cdnBaseUrl`（默认："https://esm.sh"）
 - `{name}` - 替换为图标名称
 - `{key}` - 替换为自定义样式参数值（使用 `styleParam()`）
 
@@ -706,6 +733,10 @@ symbolCraft {
 
     // 或使用绝对路径实现跨项目共享缓存
     cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
+
+    // 配置下载重试行为
+    maxRetries.set(5)       // 增加重试次数
+    retryDelayMs.set(2000)  // 更长的重试延迟
 }
 ```
 
@@ -736,7 +767,7 @@ symbolCraft {
    ./gradlew generateSymbolCraftIcons --rerun-tasks
    ```
 
-   注意：从 v0.1.2 版本开始，缓存文件默认存储在 `build/material-symbols-cache/` 目录，运行 `./gradlew clean` 时会自动清理。
+   注意：缓存文件默认存储在 `build/symbolcraft-cache/` 目录，运行 `./gradlew clean` 时会自动清理。
 
 3. **图标未找到**
    ```
@@ -771,17 +802,21 @@ symbolCraft {
 
 ### 核心组件
 
-- **SymbolCraftPlugin** - 主插件类
-- **SymbolCraftExtension** - DSL 配置接口及 SymbolConfigBuilder
-- **GenerateSymbolsTask** - 核心生成任务，支持并行下载
-- **SvgDownloader** - 智能 SVG 下载器及缓存机制
-- **Svg2ComposeConverter** - SVG 转 Compose 转换器，使用 DevSrSouza/svg-to-compose 库
-- **SymbolStyle** - 图标样式模型，包含 SymbolWeight、SymbolVariant 和 SymbolFill 枚举
+- **SymbolCraftPlugin** - 主插件类，注册任务并连接扩展
+- **SymbolCraftExtension** - DSL 配置接口，包含 MaterialSymbolsBuilder 和 ExternalIconBuilder
+- **GenerateSymbolsTask** - 核心生成任务，支持并行下载和配置重试逻辑
+- **NamingConfig** - 图标命名转换配置
+- **IconNameTransformer** - 灵活的命名规则转换器
+- **SvgDownloader** - 智能 SVG 下载器，支持 7 天缓存和重试机制
+- **Svg2ComposeConverter** - SVG 转 Compose 转换器，使用 svg-to-compose 库
+- **IconConfig** - 图标库配置基类（MaterialSymbolsConfig、ExternalIconConfig）
+- **SymbolWeight/SymbolVariant/SymbolFill** - Material Symbols 样式枚举
 
 ### 数据流
 
 ```
-配置 → 样式解析 → 并行下载 → SVG 转换 → 确定性处理 → 生成代码 → 预览生成
+配置 → 图标解析 → 样式解析 → 并行下载和重试 → SVG 转换 → 
+命名转换 → 确定性处理 → 生成代码 → 可选预览生成
 ```
 
 ## 🎮 示例应用
@@ -820,10 +855,15 @@ cd example
 ```kotlin
 symbolCraft {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin")
+    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
     generatePreview.set(true)
 
-    // 使用便捷方法
+    // 图标命名配置
+    naming {
+        pascalCase()  // 使用 PascalCase 命名规则
+    }
+
+    // Material Symbols 图标 - 使用便捷方法
     materialSymbol("search") {
         standardWeights() // 添加 400, 500, 700 权重
     }
@@ -841,6 +881,19 @@ symbolCraft {
     materialSymbol("settings") {
         style(weight = 400, variant = SymbolVariant.OUTLINED)
         style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
+    }
+
+    // 来自 MDI 的外部图标
+    externalIcons(*listOf("abacus", "ab-testing").toTypedArray(), libraryName = "mdi") {
+        urlTemplate = "https://esm.sh/@mdi/svg@latest/svg/{name}.svg"
+    }
+
+    // 带样式变体的外部图标
+    externalIcons(*listOf("home", "search", "person").toTypedArray(), libraryName = "official") {
+        urlTemplate = "https://example.com/{name}{fill}_24px.svg"
+        styleParam("fill") {
+            values("", "_fill1")  // unfilled, filled 变体
+        }
     }
 }
 ```
@@ -884,12 +937,11 @@ cd example
 
 ## 🙏 致谢
 
-- [Material Symbols](https://fonts.google.com/icons) - Google 提供的图标资源
-- [marella/material-symbols](https://github.com/marella/material-symbols) - 提供便捷的图标浏览和搜索功能
-- [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) - 图标查找和预览工具
-- [DevSrSouza/svg-to-compose](https://github.com/DevSrSouza/svg-to-compose) - 优秀的 SVG 转 Compose 库
-- [esm.sh](https://esm.sh) - 提供 CDN 服务的 Material Symbols SVG 文件
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android 现代 UI 工具包
+- [Material Symbols](https://fonts.google.com/icons) - Google 图标库
+- [marella/material-symbols](https://github.com/marella/material-symbols) - 便捷的图标浏览和搜索工具
+- [DevSrSouza/svg-to-compose](https://github.com/DevSrSouza/svg-to-compose) - 优秀的 SVG 转 Compose 转换库
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android 和多平台现代 UI 工具包
+- 图标库提供商：Bootstrap Icons、Heroicons、Feather Icons、Material Design Icons 等
 
 ## 📄 许可证
 

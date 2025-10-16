@@ -2,13 +2,22 @@
 
 ## 项目概述
 
-**SymbolCraft** 是一个用于 Kotlin Multiplatform 项目的 Gradle 插件，支持按需生成 Material Symbols 图标。
+**SymbolCraft** 是一个用于 Kotlin Multiplatform 项目的 Gradle 插件，支持从多个图标库（Material Symbols、Bootstrap Icons、Heroicons 等）按需生成图标。
 
-- **版本**: v0.1.2
+- **版本**: v0.2.1
 - **状态**: ✅ 已发布到 Gradle Plugin Portal 和 Maven Central
 - **语言**: Kotlin 2.0.0
 - **最低 Gradle 版本**: 8.0+
 - **仓库**: https://github.com/kingsword09/SymbolCraft
+
+### 核心特性
+
+- 🚀 **多图标库支持** - Material Symbols、Bootstrap Icons、Heroicons、自定义 URL 模板
+- 💾 **智能缓存** - 7天有效期的 SVG 缓存，支持相对/绝对路径
+- ⚡ **并行下载** - Kotlin 协程并行下载，支持可配置的重试机制
+- 🎯 **确定性构建** - Git 友好的确定性代码生成
+- 🏷️ **灵活命名** - 支持多种命名规则（PascalCase、camelCase、snake_case 等）
+- 👀 **Compose 预览** - 自动生成 @Preview 函数
 
 ---
 
@@ -36,21 +45,28 @@ SymbolCraft/
 │
 ├── src/main/kotlin/io/github/kingsword09/symbolcraft/
 │   ├── plugin/                         # Gradle 插件核心
-│   │   ├── MaterialSymbolsPlugin.kt    # 插件入口，注册任务
-│   │   ├── MaterialSymbolsExtension.kt # DSL 配置接口
+│   │   ├── SymbolCraftPlugin.kt        # 插件入口，注册任务
+│   │   ├── SymbolCraftExtension.kt     # DSL 配置接口
+│   │   └── NamingConfig.kt             # 命名配置
+│   │
+│   ├── tasks/                          # Gradle 任务
 │   │   ├── GenerateSymbolsTask.kt      # 核心生成任务 (@CacheableTask)
 │   │   ├── CleanSymbolsCacheTask.kt    # 清理缓存任务
-│   │   ├── ValidateSymbolsConfigTask.kt # 配置验证任务
-│   │   └── PathUtils.kt                # 路径工具类
+│   │   ├── CleanSymbolsIconsTask.kt    # 清理生成文件任务
+│   │   └── ValidateSymbolsConfigTask.kt # 配置验证任务
 │   │
 │   ├── download/                       # 下载模块
-│   │   └── SvgDownloader.kt            # 智能 SVG 下载器（协程并行）
+│   │   └── SvgDownloader.kt            # 智能 SVG 下载器（协程并行 + 重试）
 │   │
 │   ├── converter/                      # 转换模块
-│   │   └── Svg2ComposeConverter.kt     # SVG 到 Compose 转换器
+│   │   ├── Svg2ComposeConverter.kt     # SVG 到 Compose 转换器
+│   │   └── IconNameTransformer.kt      # 图标命名转换器
 │   │
-│   └── model/                          # 数据模型
-│       └── SymbolStyle.kt              # 样式模型（包含枚举定义）
+│   ├── model/                          # 数据模型
+│   │   └── IconConfig.kt               # 图标配置接口和实现
+│   │
+│   └── utils/                          # 工具类
+│       └── PathUtils.kt                # 路径工具
 │
 ├── example/                            # 示例项目（Compose Multiplatform）
 │   ├── composeApp/                     # 主应用
@@ -74,25 +90,35 @@ SymbolCraft/
 
 ## 核心组件说明
 
-### 1. **MaterialSymbolsPlugin** (插件入口)
-**位置**: `src/main/kotlin/io/github/kingsword09/symbolcraft/plugin/MaterialSymbolsPlugin.kt`
+### 1. **SymbolCraftPlugin** (插件入口)
+**位置**: `src/main/kotlin/io/github/kingsword09/symbolcraft/plugin/SymbolCraftPlugin.kt`
 
 **职责**:
-- 注册 `materialSymbols` DSL 扩展
+- 注册 `symbolCraft` DSL 扩展
 - 注册 Gradle 任务：
-  - `generateMaterialSymbols` - 生成图标
-  - `cleanSymbolsCache` - 清理缓存
-  - `cleanGeneratedSymbols` - 清理生成的文件
-  - `validateSymbolsConfig` - 验证配置
+  - `generateSymbolCraftIcons` - 生成所有配置的图标
+  - `cleanSymbolCraftCache` - 清理 SVG 缓存
+  - `cleanSymbolCraftIcons` - 清理生成的图标文件
+  - `validateSymbolCraftConfig` - 验证配置
+- 自动添加任务依赖：在 Kotlin 编译之前生成图标
 
 **关键代码**:
 ```kotlin
-class MaterialSymbolsPlugin : Plugin<Project> {
+class SymbolCraftPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        val extension = project.extensions.create("materialSymbols", MaterialSymbolsExtension::class.java)
+        val extension = project.extensions.create("symbolCraft", SymbolCraftExtension::class.java)
 
-        project.tasks.register("generateMaterialSymbols", GenerateSymbolsTask::class.java) {
+        val generateTask = project.tasks.register("generateSymbolCraftIcons", GenerateSymbolsTask::class.java) {
             // 配置任务...
+        }
+        
+        // 自动添加到 Kotlin 编译任务的依赖
+        project.afterEvaluate {
+            project.tasks.configureEach { task ->
+                if (task.name.contains("compileKotlin", ignoreCase = true)) {
+                    task.dependsOn(generateTask)
+                }
+            }
         }
     }
 }
@@ -100,49 +126,62 @@ class MaterialSymbolsPlugin : Plugin<Project> {
 
 ---
 
-### 2. **MaterialSymbolsExtension** (DSL 配置)
-**位置**: `src/main/kotlin/.../plugin/MaterialSymbolsExtension.kt`
+### 2. **SymbolCraftExtension** (DSL 配置)
+**位置**: `src/main/kotlin/.../plugin/SymbolCraftExtension.kt`
 
 **职责**:
 - 提供用户友好的 DSL API
-- 管理符号配置（symbols）
+- 管理多图标库的配置（Material Symbols、外部图标库）
 - 提供便捷配置方法：
-  - `symbol()` / `symbols()` - 配置单个/多个图标
+  - `materialSymbol()` / `materialSymbols()` - 配置 Material Symbols 图标
+  - `externalIcon()` / `externalIcons()` - 配置外部图标库图标
   - `standardWeights()` - 标准权重（400, 500, 700）
   - `allVariants()` - 所有变体（outlined, rounded, sharp）
   - `bothFills()` - 填充和未填充
+  - `naming {}` - 配置命名规则
 
 **配置选项**:
 ```kotlin
-abstract class MaterialSymbolsExtension {
+abstract class SymbolCraftExtension {
     abstract val packageName: Property<String>              // 包名
     abstract val outputDirectory: Property<String>          // 输出目录
     abstract val cacheEnabled: Property<Boolean>            // 缓存开关
     abstract val cacheDirectory: Property<String>           // 缓存目录
     abstract val generatePreview: Property<Boolean>         // 生成预览
+    abstract val maxRetries: Property<Int>                  // 最大重试次数
+    abstract val retryDelayMs: Property<Long>               // 重试延迟
+    
+    val namingConfig: NamingConfig                          // 命名配置
+    
+    // Builder 类
+    // MaterialSymbolsBuilder - Material Symbols 配置
+    // ExternalIconBuilder - 外部图标配置
 }
 ```
 
 ---
 
 ### 3. **GenerateSymbolsTask** (核心生成任务)
-**位置**: `src/main/kotlin/.../plugin/GenerateSymbolsTask.kt`
+**位置**: `src/main/kotlin/.../tasks/GenerateSymbolsTask.kt`
 
 **职责**:
-- 解析用户配置
+- 解析用户配置（Material Symbols + 外部图标库）
 - 并行下载 SVG 文件（使用 Kotlin 协程）
-- 调用转换器生成 Compose 代码
+- 应用命名转换规则
+- 调用转换器生成 Compose ImageVector 代码
 - 管理缓存和增量构建
-- 清理未使用的缓存文件
+- 清理未使用的缓存文件（相对路径缓存）
 
 **特性**:
 - `@CacheableTask` - 支持 Gradle 任务缓存
-- 配置缓存兼容 - 避免访问 Project 对象
-- 智能缓存清理 - 避免冲突（共享缓存时跳过）
+- 配置缓存兼容 - 使用 Provider API，避免访问 Project 对象
+- 智能缓存清理 - 相对路径启用，绝对路径跳过
+- 可配置重试 - maxRetries 和 retryDelayMs
 
 **关键流程**:
 ```
-配置解析 → 清理旧文件 → 并行下载 SVG → 转换为 Compose → 清理未使用缓存 → 生成统计
+配置解析 → 清理旧文件 → 并行下载 SVG → 命名转换 → 转换为 Compose → 
+清理未使用缓存 → 生成统计
 ```
 
 ---
@@ -151,16 +190,17 @@ abstract class MaterialSymbolsExtension {
 **位置**: `src/main/kotlin/.../download/SvgDownloader.kt`
 
 **职责**:
-- 从 esm.sh CDN 下载 SVG 文件
+- 从多个源下载 SVG 文件（Material Symbols、外部 URL）
 - 管理 7 天有效期的缓存
 - 支持并行下载（Kotlin 协程）
 - 缓存元数据管理（时间戳、URL、哈希）
+- 配置化重试机制
 
 **特性**:
 - 缓存命中检测
 - 自动过期清理
 - 进度跟踪
-- 错误重试
+- 可配置的错误重试（指数退缩）
 
 ---
 
@@ -185,23 +225,76 @@ abstract class MaterialSymbolsExtension {
 
 ---
 
-### 6. **SymbolStyle** (数据模型)
-**位置**: `src/main/kotlin/.../model/SymbolStyle.kt`
+### 6. **IconConfig** (图标配置接口)
+**位置**: `src/main/kotlin/.../model/IconConfig.kt`
 
-**包含枚举**:
-- `SymbolWeight` - 图标权重（W100-W700，THIN-BOLD）
-- `SymbolVariant` - 图标变体（OUTLINED, ROUNDED, SHARP）
-- `SymbolFill` - 填充状态（FILLED, UNFILLED）
+**职责**:
+- 定义图标库配置的通用接口
+- 支持多图标库扩展
 
-**数据类**:
+**主要实现**:
+- `MaterialSymbolsConfig` - Material Symbols 配置
+  - 包含: SymbolWeight、SymbolVariant、SymbolFill 枚举
+  - 使用 Google Fonts 官方 CDN
+- `ExternalIconConfig` - 外部图标配置
+  - 支持 URL 模板 + 样式参数
+  - 支持多值参数（笛卡尔积）
+
+**接口方法**:
 ```kotlin
-data class SymbolStyle(
-    val weight: Int,
-    val variant: SymbolVariant,
-    val fill: SymbolFill,
-    val opticalSize: Int = 24,
-    val grade: Int = 0
-)
+interface IconConfig {
+    val libraryId: String
+    fun buildUrl(iconName: String): String
+    fun getCacheKey(iconName: String): String
+    fun getSignature(): String
+}
+```
+
+---
+
+### 7. **NamingConfig** (命名配置)
+**位置**: `src/main/kotlin/.../plugin/NamingConfig.kt`
+
+**职责**:
+- 提供图标类名命名转换配置
+- 支持预设和自定义转换器
+
+**预设命名规则**:
+- `pascalCase()` - PascalCase (默认)
+- `camelCase()` - camelCase
+- `snakeCase()` - snake_case / SCREAMING_SNAKE
+- `kebabCase()` - kebab-case
+- `lowerCase()` / `upperCase()` - 全小/大写
+- `customTransformer()` - 自定义逻辑
+
+**配置选项**:
+```kotlin
+abstract class NamingConfig {
+    abstract val namingConvention: Property<NamingConvention>
+    abstract val suffix: Property<String>
+    abstract val prefix: Property<String>
+    abstract val removePrefix: Property<String>
+    abstract val removeSuffix: Property<String>
+    abstract val transformer: Property<IconNameTransformer>
+}
+```
+
+---
+
+### 8. **IconNameTransformer** (命名转换器)
+**位置**: `src/main/kotlin/.../converter/IconNameTransformer.kt`
+
+**职责**:
+- 执行具体的命名转换逻辑
+- 支持多种命名约定
+- 提供扩展点供用户自定义
+
+**核心方法**:
+```kotlin
+abstract class IconNameTransformer {
+    abstract fun transform(fileName: String): String
+    open fun getSignature(): String  // 用于缓存签名
+}
 ```
 
 ---
@@ -224,7 +317,7 @@ data class SymbolStyle(
 3. **在示例项目中测试**
    ```bash
    cd example
-   ./gradlew generateMaterialSymbols --info
+   ./gradlew generateSymbolCraftIcons --info
    ./gradlew :composeApp:run  # Desktop
    ```
 
@@ -267,10 +360,11 @@ data class SymbolStyle(
 
 ### 缓存架构
 
-1. **SVG 下载缓存** (`build/material-symbols-cache/svg-cache/`)
+1. **SVG 下载缓存** (`build/symbolcraft-cache/svg-cache/`)
    - 有效期：7 天
    - 包含：SVG 文件 + JSON 元数据
    - 元数据字段：`timestamp`, `url`, `hash`
+   - 支持多图标库缓存隔离（通过 libraryId）
 
 2. **Gradle 任务缓存**
    - 基于配置哈希值检测变更
@@ -284,10 +378,11 @@ data class SymbolStyle(
 
 **相对路径（默认）**:
 ```kotlin
-cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
+cacheDirectory.set("symbolcraft-cache")  // → build/symbolcraft-cache/
 ```
 - ✅ 自动清理未使用的缓存
 - ✅ 项目隔离
+- ✅ `./gradlew clean` 自动清理
 
 **绝对路径（共享缓存）**:
 ```kotlin
@@ -314,12 +409,13 @@ cacheDirectory.set("""C:\Temp\SymbolCraft""")
 
 1. **添加单元测试**
    - [ ] 创建 `src/test/kotlin` 目录
-   - [ ] 编写核心组件测试
+   - [ ] 编写核心组件测试（IconNameTransformer、IconConfig 等）
    - [ ] 配置 CI/CD 测试流水线
+   - ✅ 已完成：IconNameTransformerTest
 
 2. **改进错误处理**
-   - [ ] 更详细的错误消息
-   - [ ] 网络失败自动重试机制增强
+   - ✅ 已完成：可配置的重试机制（maxRetries、retryDelayMs）
+   - [ ] 更详细的错误消息和分类
    - [ ] 配置验证前置（避免运行时错误）
 
 3. **性能监控**
@@ -330,18 +426,20 @@ cacheDirectory.set("""C:\Temp\SymbolCraft""")
 ### 🟡 中优先级
 
 4. **功能增强**
+   - ✅ 已完成：多图标库支持（Material Symbols + 外部图标库）
+   - ✅ 已完成：灵活命名配置（NamingConfig）
    - [ ] 图标搜索功能（CLI）
    - [ ] 图标使用分析报告
-   - [ ] 支持自定义图标源
 
 5. **开发者体验**
-   - [ ] 生成 KDoc API 文档
+   - ✅ 已完成：Dokka V2 文档配置
+   - [ ] 添加更多 KDoc 注释
    - [ ] 添加视频教程/GIF 演示
    - [ ] 创建项目模板
 
 6. **示例扩展**
+   - ✅ 已完成：Compose Multiplatform 示例（Android + iOS + Desktop）
    - [ ] 纯 Android 示例
-   - [ ] 纯 Desktop 示例
    - [ ] 最佳实践指南
 
 ### 🟢 低优先级
@@ -382,15 +480,24 @@ dependencies {
 
 ### 添加新的 Gradle 任务
 
-1. 在 `MaterialSymbolsPlugin.kt` 中注册任务
-2. 创建任务类继承 `DefaultTask`
+1. 在 `SymbolCraftPlugin.kt` 中注册任务
+2. 在 `tasks/` 目录创建任务类继承 `DefaultTask`
 3. 使用 `@TaskAction` 注解标记执行方法
+4. 配置任务的输入/输出以支持增量构建
 
 ### 添加新的配置选项
 
-1. 在 `MaterialSymbolsExtension.kt` 中添加 `Property<T>`
+1. 在 `SymbolCraftExtension.kt` 中添加 `Property<T>`
 2. 在 `GenerateSymbolsTask.kt` 中读取配置
-3. 更新文档（README.md 和 README_ZH.md）
+3. 更新配置哈希（`getConfigHash()`）
+4. 更新所有文档（README.md、README_ZH.md、AGENTS.md）
+
+### 添加新的图标库支持
+
+1. 在 `model/IconConfig.kt` 中创建新的 `IconConfig` 实现
+2. 实现必需的方法：`buildUrl()`、`getCacheKey()`、`getSignature()`
+3. 在 `SymbolCraftExtension.kt` 中添加相应的 DSL 方法
+4. 更新文档和示例
 
 ### 修改 SVG 下载逻辑
 
@@ -412,24 +519,33 @@ dependencies {
 
 ### 启用详细日志
 ```bash
-./gradlew generateMaterialSymbols --info       # 信息级别
-./gradlew generateMaterialSymbols --debug      # 调试级别
-./gradlew generateMaterialSymbols --stacktrace # 堆栈跟踪
+./gradlew generateSymbolCraftIcons --info       # 信息级别
+./gradlew generateSymbolCraftIcons --debug      # 调试级别
+./gradlew generateSymbolCraftIcons --stacktrace # 堆栈跟踪
 ```
 
 ### 禁用配置缓存（调试用）
 ```bash
-./gradlew generateMaterialSymbols --no-configuration-cache
+./gradlew generateSymbolCraftIcons --no-configuration-cache
 ```
 
 ### 强制重新运行任务
 ```bash
-./gradlew generateMaterialSymbols --rerun-tasks
+./gradlew generateSymbolCraftIcons --rerun-tasks
 ```
 
 ### 查看任务依赖
 ```bash
-./gradlew generateMaterialSymbols --dry-run
+./gradlew generateSymbolCraftIcons --dry-run
+```
+
+### 查看生成的文件
+```bash
+# 查看生成的 Kotlin 文件
+find . -path "*/generated/symbols/*" -name "*.kt"
+
+# 查看缓存状态
+du -sh build/symbolcraft-cache/
 ```
 
 ---
@@ -490,7 +606,7 @@ docs(readme): update installation guide
    ```bash
    ./gradlew build
    ./gradlew publishToMavenLocal
-   cd example && ./gradlew generateMaterialSymbols
+   cd example && ./gradlew generateSymbolCraftIcons
    ```
 
 3. 提交更改
@@ -544,7 +660,17 @@ docs(readme): update installation guide
 
 ## 更新日志
 
-### v0.1.2 (最新)
+### v0.2.1 (最新)
+- 🔥 **重大重构**: 插件重命名为 SymbolCraft（从 MaterialSymbolsPlugin）
+- 🎉 **多图标库支持**: Material Symbols + Bootstrap Icons + Heroicons + 自定义 URL
+- 🏷️ **灵活命名**: 支持 PascalCase、camelCase、snake_case 等多种命名规则
+- ⚡ **配置重试**: 添加 maxRetries 和 retryDelayMs 配置
+- 📚 **Dokka V2**: 完整的 API 文档生成支持
+- 📦 **新的 DSL**: externalIcon/externalIcons 方法
+- 🧹 **更新缓存**: symbolcraft-cache 目录（从 material-symbols-cache）
+- 📝 **文档改进**: 更新所有 README 和开发指南
+
+### v0.1.2
 - 🎉 支持绝对路径缓存配置
 - 🧹 智能缓存清理（跳过共享缓存）
 - 📝 更新文档
@@ -562,5 +688,5 @@ docs(readme): update installation guide
 
 ---
 
-**最后更新**: 2025-10-06
-**文档版本**: 1.0.0
+**最后更新**: 2025-10-17
+**文档版本**: 2.0.0
