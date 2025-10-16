@@ -1,8 +1,6 @@
 package io.github.kingsword09.symbolcraft.tasks
 
-import io.github.kingsword09.symbolcraft.converter.Svg2ComposeConverter
-import io.github.kingsword09.symbolcraft.converter.IconNameTransformer
-import io.github.kingsword09.symbolcraft.converter.NameTransformerFactory
+import io.github.kingsword09.symbolcraft.converter.*
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
 import io.github.kingsword09.symbolcraft.model.IconConfig
 import io.github.kingsword09.symbolcraft.utils.PathUtils
@@ -368,16 +366,26 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             }
 
             // Create name transformer from extension configuration
-            val nameTransformer = NameTransformerFactory.fromConvention(
-                convention = ext.namingConvention.get(),
-                suffix = ext.namingSuffix.get(),
-                prefix = ext.namingPrefix.get(),
-                removePrefix = ext.namingRemovePrefix.get(),
-                removeSuffix = ext.namingRemoveSuffix.get()
-            )
+            val nameTransformer = if (ext.namingConfig.transformer.isPresent) {
+                // Use custom transformer
+                LambdaNameTransformer(ext.namingConfig.transformer.get())
+            } else {
+                // Use convention-based transformer
+                NameTransformerFactory.fromConvention(
+                    convention = ext.namingConfig.namingConvention.get(),
+                    suffix = ext.namingConfig.suffix.get(),
+                    prefix = ext.namingConfig.prefix.get(),
+                    removePrefix = ext.namingConfig.removePrefix.get(),
+                    removeSuffix = ext.namingConfig.removeSuffix.get()
+                )
+            }
 
             logger.lifecycle("   📚 Converting library: $libraryId → icons/$librarySubdir/")
-            logger.debug("   🔄 Using transformer: ${ext.namingConvention.get()} (suffix='${ext.namingSuffix.get()}', prefix='${ext.namingPrefix.get()}')")
+            if (ext.namingConfig.transformer.isPresent) {
+                logger.debug("   🔄 Using custom transformer")
+            } else {
+                logger.debug("   🔄 Using transformer: ${ext.namingConfig.namingConvention.get()} (suffix='${ext.namingConfig.suffix.get()}', prefix='${ext.namingConfig.prefix.get()}')")
+            }
 
             try {
                 converter.convertDirectory(

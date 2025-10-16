@@ -1,8 +1,11 @@
 package io.github.kingsword09.symbolcraft.plugin
 
-import io.github.kingsword09.symbolcraft.model.*
 import io.github.kingsword09.symbolcraft.converter.NamingConvention
+import io.github.kingsword09.symbolcraft.model.*
+import org.gradle.api.Action
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import javax.inject.Inject
 
 /**
  * DSL entry point exposed as `symbolCraft { ... }` in a consuming build script.
@@ -17,13 +20,10 @@ import org.gradle.api.provider.Property
  * @property cdnBaseUrl base URL for the CDN serving icons (default: https://esm.sh).
  * @property maxRetries maximum number of retry attempts for failed downloads (default: 3).
  * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
- * @property namingConvention naming convention for generated class names (default: PASCAL_CASE).
- * @property namingSuffix suffix to append to generated class names (e.g., "Icon").
- * @property namingPrefix prefix to prepend to generated class names (e.g., "Ic").
- * @property namingRemovePrefix prefix to remove from input file names (e.g., "ic_").
- * @property namingRemoveSuffix suffix to remove from input file names (e.g., "_24dp").
  */
 abstract class SymbolCraftExtension {
+    @get:Inject
+    protected abstract val objects: ObjectFactory
     abstract val cacheEnabled: Property<Boolean>
     abstract val cacheDirectory: Property<String>
     abstract val outputDirectory: Property<String>
@@ -33,12 +33,21 @@ abstract class SymbolCraftExtension {
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
     
-    // Naming transformer configuration
-    abstract val namingConvention: Property<NamingConvention>
-    abstract val namingSuffix: Property<String>
-    abstract val namingPrefix: Property<String>
-    abstract val namingRemovePrefix: Property<String>
-    abstract val namingRemoveSuffix: Property<String>
+    /**
+     * Icon naming configuration。
+     *
+     * Use the [naming] method to configure naming transformation.
+     */
+    private var namingConfigInstance: NamingConfig? = null
+
+    internal val namingConfig: NamingConfig
+        get() {
+            val existing = namingConfigInstance
+            if (existing != null) return existing
+            val created = objects.newInstance(NamingConfig::class.java)
+            namingConfigInstance = created
+            return created
+        }
 
     private val iconsConfig = mutableMapOf<String, MutableList<IconConfig>>()
 
@@ -51,14 +60,29 @@ abstract class SymbolCraftExtension {
         cdnBaseUrl.convention("https://esm.sh")
         maxRetries.convention(3)
         retryDelayMs.convention(1000L)
-        
-        // Naming transformer defaults
-        namingConvention.convention(NamingConvention.PASCAL_CASE)
-        namingSuffix.convention("")
-        namingPrefix.convention("")
-        namingRemovePrefix.convention("")
-        namingRemoveSuffix.convention("")
     }
+
+    /**
+     * Configure icon naming transformation.
+     *
+     * Example:
+     * ```kotlin
+     * naming {
+     *     pascalCase(suffix = "Icon")  // Preset
+     *     // Or customize:
+     *     namingConvention.set(NamingConvention.PASCAL_CASE)
+     *     suffix.set("Icon")
+     *     removePrefix.set("ic_")
+     * }
+     * ```
+     *
+     * @param action Configuration action for [NamingConfig]
+     */
+    fun naming(action: Action<NamingConfig>) {
+        action.execute(namingConfig)
+    }
+
+    internal fun namingConfigSignature(): String = namingConfig.snapshotSignature()
 
     /**
      * Generic method to add an icon with any IconConfig implementation.
@@ -231,6 +255,7 @@ abstract class SymbolCraftExtension {
             append("|outputDir:").append(outputDirectory.orNull)
             append("|preview:").append(generatePreview.orNull)
             append("|cdnBaseUrl:").append(cdnBaseUrl.orNull)
+            append("|namingConfig:").append(namingConfig.snapshotSignature())
         }
         return configString.hashCode().toString()
     }

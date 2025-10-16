@@ -92,6 +92,11 @@ symbolCraft {
     // Enable preview generation (optional)
     generatePreview.set(true)
 
+    // Configure naming transformation
+    naming {
+        pascalCase()  // Use PascalCase convention
+    }
+
     // Material Symbols examples
     materialSymbol("search") {
         standardWeights() // Adds 400, 500, 700 weights with outlined variant
