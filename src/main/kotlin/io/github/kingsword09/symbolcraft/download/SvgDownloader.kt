@@ -2,6 +2,8 @@ package io.github.kingsword09.symbolcraft.download
 
 import io.github.kingsword09.symbolcraft.model.IconConfig
 import io.github.kingsword09.symbolcraft.model.MaterialSymbolsConfig
+import io.github.kingsword09.symbolcraft.model.SymbolFill
+import io.github.kingsword09.symbolcraft.model.SymbolWeight
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -141,7 +143,7 @@ class SvgDownloader(
             for ((urlIndex, urlTemplate) in fallbackUrls.withIndex()) {
                 val url = urlTemplate.replace("{name}", iconName)
                     .replace("{variant}", config.variant.pathName)
-                    .replace("{weight}", config.weight.value.toString())
+                    .replace("{weight}", if(config.weight == SymbolWeight.REGULAR || config.weight == SymbolWeight.W400) { if(config.fill == SymbolFill.FILLED) "" else "default" } else "wght${config.weight.value}")
                     .replace("{fill}", config.fill.shortName)
                     .replace("{grade}", config.grade.toString())
                     .replace("{optical_size}", config.opticalSize.toString())
@@ -187,7 +189,7 @@ class SvgDownloader(
         }
 
         // Regular download for other icon configs
-        val url = config.buildUrl(iconName, "")
+        val url = config.buildUrl(iconName)
         var lastException: Exception? = null
         repeat(maxRetries) { attemptNumber ->
             try {

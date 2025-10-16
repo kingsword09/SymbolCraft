@@ -40,10 +40,9 @@ interface IconConfig {
      * Build the CDN URL for downloading the icon SVG file.
      *
      * @param iconName Name of the icon (e.g., "home", "search")
-     * @param cdnBaseUrl Base URL for the CDN (e.g., "https://esm.sh")
      * @return Full URL to the SVG file
      */
-    fun buildUrl(iconName: String, cdnBaseUrl: String): String
+    fun buildUrl(iconName: String): String
 
     /**
      * Generate a unique cache key for this icon and configuration combination.
@@ -90,7 +89,7 @@ data class MaterialSymbolsConfig(
 ) : IconConfig {
     override val libraryId = "material-symbols"
 
-    override fun buildUrl(iconName: String, cdnBaseUrl: String): String {
+    override fun buildUrl(iconName: String): String {
         // Use first URL from all available URLs
         return getAllFallbackUrls().first().replaceTemplateVariables(iconName)
     }
@@ -139,7 +138,7 @@ data class MaterialSymbolsConfig(
         return this
             .replace("{name}", iconName)
             .replace("{variant}", variant.pathName)
-            .replace("{weight}", weight.value.toString())
+            .replace("{weight}", if(weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) { if (fill == SymbolFill.FILLED) "" else "default" } else "wght${weight.value}")
             .replace("{fill}", fill.shortName)
             .replace("{grade}", grade.toString())
             .replace("{optical_size}", opticalSize.toString())
@@ -155,7 +154,7 @@ data class MaterialSymbolsConfig(
          */
         fun getDefaultFallbackUrls(): List<String> = listOf(
             // Google Fonts official CDN
-            "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols{variant}/{name}/wght{weight}{fill}/{optical_size}px.svg"
+            "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols{variant}/{name}/{weight}{fill}/{optical_size}px.svg"
         )
     }
 }
@@ -190,7 +189,7 @@ data class ExternalIconConfig(
 ) : IconConfig {
     override val libraryId = "external-$libraryName"
 
-    override fun buildUrl(iconName: String, cdnBaseUrl: String): String {
+    override fun buildUrl(iconName: String): String {
         var url = urlTemplate.replace("{name}", iconName)
 
         styleParams.forEach { (key, value) ->

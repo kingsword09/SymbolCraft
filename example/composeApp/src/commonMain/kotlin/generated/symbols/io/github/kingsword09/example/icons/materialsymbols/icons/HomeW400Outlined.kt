@@ -22,31 +22,31 @@ public val Icons.HomeW400Outlined: ImageVector
         if (_homeW400Outlined != null) {
             return _homeW400Outlined!!
         }
-        _homeW400Outlined = Builder(name = "HomeW400Outlined", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _homeW400Outlined = Builder(name = "HomeW400Outlined", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
-                moveTo(220.0f, 780.0f)
-                horizontalLineToRelative(150.0f)
-                verticalLineToRelative(-250.0f)
-                horizontalLineToRelative(220.0f)
-                verticalLineToRelative(250.0f)
-                horizontalLineToRelative(150.0f)
-                verticalLineToRelative(-390.0f)
-                lineTo(480.0f, 195.0f)
-                lineTo(220.0f, 390.0f)
-                verticalLineToRelative(390.0f)
+                moveTo(240.0f, 760.0f)
+                horizontalLineToRelative(120.0f)
+                verticalLineToRelative(-240.0f)
+                horizontalLineToRelative(240.0f)
+                verticalLineToRelative(240.0f)
+                horizontalLineToRelative(120.0f)
+                verticalLineToRelative(-360.0f)
+                lineTo(480.0f, 220.0f)
+                lineTo(240.0f, 400.0f)
+                verticalLineToRelative(360.0f)
                 close()
                 moveTo(160.0f, 840.0f)
                 verticalLineToRelative(-480.0f)
                 lineToRelative(320.0f, -240.0f)
                 lineToRelative(320.0f, 240.0f)
                 verticalLineToRelative(480.0f)
-                lineTo(530.0f, 840.0f)
-                verticalLineToRelative(-250.0f)
-                lineTo(430.0f, 590.0f)
-                verticalLineToRelative(250.0f)
+                lineTo(520.0f, 840.0f)
+                verticalLineToRelative(-240.0f)
+                horizontalLineToRelative(-80.0f)
+                verticalLineToRelative(240.0f)
                 lineTo(160.0f, 840.0f)
                 close()
-                moveTo(480.0f, 487.0f)
+                moveTo(480.0f, 490.0f)
                 close()
             }
         }

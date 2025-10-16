@@ -119,7 +119,7 @@ symbolCraft {
 
     // External icons with URL template
     externalIcons(*listOf("abacus", "ab-testing").toTypedArray(), libraryName = "mdi") {
-        urlTemplate = "{cdn}/@mdi/svg@latest/svg/{name}.svg"
+        urlTemplate = "https://esm.sh/@mdi/svg@latest/svg/{name}.svg"
     }
 
     // NEW: External icons with multiple style variants using the new styleParam API
