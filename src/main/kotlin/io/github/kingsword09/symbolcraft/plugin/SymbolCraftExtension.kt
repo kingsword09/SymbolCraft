@@ -1,7 +1,11 @@
 package io.github.kingsword09.symbolcraft.plugin
 
+import io.github.kingsword09.symbolcraft.converter.NamingConvention
 import io.github.kingsword09.symbolcraft.model.*
+import org.gradle.api.Action
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import javax.inject.Inject
 
 /**
  * DSL entry point exposed as `symbolCraft { ... }` in a consuming build script.
@@ -18,6 +22,8 @@ import org.gradle.api.provider.Property
  * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
  */
 abstract class SymbolCraftExtension {
+    @get:Inject
+    protected abstract val objects: ObjectFactory
     abstract val cacheEnabled: Property<Boolean>
     abstract val cacheDirectory: Property<String>
     abstract val outputDirectory: Property<String>
@@ -26,6 +32,15 @@ abstract class SymbolCraftExtension {
     abstract val cdnBaseUrl: Property<String>
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
+    
+    /**
+     * Icon naming configuration。
+     *
+     * Use the [naming] method to configure naming transformation.
+     */
+    internal val namingConfig: NamingConfig by lazy {
+        objects.newInstance(NamingConfig::class.java)
+    }
 
     private val iconsConfig = mutableMapOf<String, MutableList<IconConfig>>()
 
@@ -39,6 +54,28 @@ abstract class SymbolCraftExtension {
         maxRetries.convention(3)
         retryDelayMs.convention(1000L)
     }
+
+    /**
+     * Configure icon naming transformation.
+     *
+     * Example:
+     * ```kotlin
+     * naming {
+     *     pascalCase(suffix = "Icon")  // Preset
+     *     // Or customize:
+     *     namingConvention.set(NamingConvention.PASCAL_CASE)
+     *     suffix.set("Icon")
+     *     removePrefix.set("ic_")
+     * }
+     * ```
+     *
+     * @param action Configuration action for [NamingConfig]
+     */
+    fun naming(action: Action<NamingConfig>) {
+        action.execute(namingConfig)
+    }
+
+    internal fun namingConfigSignature(): String = namingConfig.snapshotSignature()
 
     /**
      * Generic method to add an icon with any IconConfig implementation.
@@ -211,6 +248,7 @@ abstract class SymbolCraftExtension {
             append("|outputDir:").append(outputDirectory.orNull)
             append("|preview:").append(generatePreview.orNull)
             append("|cdnBaseUrl:").append(cdnBaseUrl.orNull)
+            append("|namingConfig:").append(namingConfig.snapshotSignature())
         }
         return configString.hashCode().toString()
     }

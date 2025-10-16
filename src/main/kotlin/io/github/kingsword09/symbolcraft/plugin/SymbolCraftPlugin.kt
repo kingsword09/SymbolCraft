@@ -33,6 +33,7 @@ class SymbolCraftPlugin : Plugin<Project> {
             task.projectBuildDir.set(project.layout.buildDirectory.get().asFile.absolutePath)
             task.inputs.property("symbolsConfig", extension.getConfigHash())
             task.inputs.property("generatePreview", extension.generatePreview)
+            task.inputs.property("namingConfigSignature", extension.namingConfigSignature())
         }
 
         project.tasks.register("cleanSymbolCraftCache", CleanSymbolsCacheTask::class.java) { task ->
