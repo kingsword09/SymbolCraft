@@ -117,7 +117,6 @@ data class MaterialSymbolsConfig(
     /**
      * Get all available fallback URLs in priority order:
      * 1. User-provided custom URLs (if any)
-     * 2. Built-in default CDN URLs (3 providers)
      */
     fun getAllFallbackUrls(): List<String> {
         return customFallbackUrls + getDefaultFallbackUrls()
@@ -135,10 +134,15 @@ data class MaterialSymbolsConfig(
      * - {optical_size}: Optical size value (e.g., "24", "48")
      */
     private fun String.replaceTemplateVariables(iconName: String): String {
+        val weightValue = when {
+            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) && fill == SymbolFill.FILLED -> ""
+            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) -> "default"
+            else -> "wght${weight.value}"
+        }
         return this
             .replace("{name}", iconName)
             .replace("{variant}", variant.pathName)
-            .replace("{weight}", if(weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) { if (fill == SymbolFill.FILLED) "" else "default" } else "wght${weight.value}")
+            .replace("{weight}", weightValue)
             .replace("{fill}", fill.shortName)
             .replace("{grade}", grade.toString())
             .replace("{optical_size}", opticalSize.toString())

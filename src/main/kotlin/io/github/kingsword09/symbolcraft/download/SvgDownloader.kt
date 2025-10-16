@@ -141,9 +141,14 @@ class SvgDownloader(
             log("📦 MaterialSymbols: $iconName - Trying ${fallbackUrls.size} URL(s)")
 
             for ((urlIndex, urlTemplate) in fallbackUrls.withIndex()) {
+                val weightValue = when {
+                    (config.weight == SymbolWeight.REGULAR || config.weight == SymbolWeight.W400) && config.fill == SymbolFill.FILLED -> ""
+                    (config.weight == SymbolWeight.REGULAR || config.weight == SymbolWeight.W400) -> "default"
+                    else -> "wght${config.weight.value}"
+                }
                 val url = urlTemplate.replace("{name}", iconName)
                     .replace("{variant}", config.variant.pathName)
-                    .replace("{weight}", if(config.weight == SymbolWeight.REGULAR || config.weight == SymbolWeight.W400) { if(config.fill == SymbolFill.FILLED) "" else "default" } else "wght${config.weight.value}")
+                    .replace("{weight}", weightValue)
                     .replace("{fill}", config.fill.shortName)
                     .replace("{grade}", config.grade.toString())
                     .replace("{optical_size}", config.opticalSize.toString())
