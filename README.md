@@ -2,7 +2,6 @@
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.kingsword09/symbolcraft)
 
-
 > **Language**: [English](README.md) | [中文](README_ZH.md)
 
 A powerful Gradle plugin for generating icons on-demand from multiple icon libraries (Material Symbols, Bootstrap Icons, Heroicons, etc.) in Kotlin Multiplatform projects, featuring intelligent caching, deterministic builds, and high-performance parallel generation.
@@ -11,16 +10,17 @@ A powerful Gradle plugin for generating icons on-demand from multiple icon libra
 
 - 🚀 **On-demand generation** - Generate only the icons you actually use, reducing 99%+ bundle size compared to Material Icons Extended (11.3MB)
 - 💾 **Smart caching** - 7-day SVG file cache with intelligent invalidation to avoid redundant network requests
-- ⚡ **Parallel downloads** - Use Kotlin coroutines for parallel SVG downloads, dramatically improving generation speed
+- ⚡ **Parallel downloads** - Use Kotlin coroutines for parallel SVG downloads with configurable retry logic
 - 🎯 **Deterministic builds** - Ensure completely consistent code generation every time, Git-friendly and cache-friendly
 - 🎨 **Full style support** - Support all Material Symbols styles (weight, variant, fill state)
 - 🔧 **Smart DSL** - Convenient batch configuration methods and preset styles
-- 📚 **Multi-library support** - Use icons from Material Symbols, Bootstrap Icons, Heroicons, Feather Icons, Font Awesome, and any custom icon library via URL templates
-- 📱 **High-quality output** - Use DevSrSouza/svg-to-compose library to generate authentic SVG path data
+- 📚 **Multi-library support** - Use icons from Material Symbols, Bootstrap Icons, Heroicons, Feather Icons, and any custom icon library via URL templates
+- 📱 **High-quality output** - Use svg-to-compose library to generate authentic SVG path data
 - 🔄 **Incremental builds** - Gradle task caching support, only regenerate changed icons
 - 🏗️ **Configuration cache compatible** - Fully supports Gradle configuration cache for improved build performance
 - 🔗 **Multi-platform support** - Support Android, Kotlin Multiplatform, JVM projects
-- 👀 **Compose Preview** - Auto-generate Compose Preview functions, support both androidx and jetpack compose
+- 👀 **Compose Preview** - Auto-generate Compose Preview functions
+- 🏷️ **Flexible naming** - Customize icon class naming conventions (PascalCase, camelCase, snake_case, etc.)
 
 ## 📦 Installation
 
@@ -52,6 +52,12 @@ symbolCraft {
 
     // Preview generation configuration (optional)
     generatePreview.set(true)  // Enable preview generation
+
+    // Icon naming configuration (optional)
+    naming {
+        pascalCase()  // Use PascalCase convention (default)
+        // Or: camelCase(), snakeCase(), kebabCase(), etc.
+    }
 
     // Individual icon configuration (using Int weight values)
     materialSymbol("search") {
@@ -97,8 +103,8 @@ Run the following command to generate configured icons:
 
 The generation process will show detailed progress:
 ```
-🎨 Generating Material Symbols...
-📊 Symbols to generate: 12 icons
+🎨 Generating icons...
+📊 Icons to generate: 12
 ⬇️ Downloading SVG files...
    Progress: 5/12
    Progress: 10/12
@@ -204,21 +210,28 @@ The preview generation is handled by the underlying `svg-to-compose` library and
 
 ```kotlin
 symbolCraft {
-    // Generated Kotlin package name
+    // Generated Kotlin package name (required)
     packageName.set("com.yourcompany.app.symbols")
 
     // Output directory (supports multiplatform projects)
     outputDirectory.set("src/commonMain/kotlin")
 
     // Cache configuration
-    cacheEnabled.set(true)
-    cacheDirectory.set("material-symbols-cache")
-
-    // CDN configuration
-    cdnBaseUrl.set("https://esm.sh")  // Default CDN URL (optional)
+    cacheEnabled.set(true)  // Default: true
+    cacheDirectory.set("symbolcraft-cache")  // Default: "symbolcraft-cache" (relative to build/)
 
     // Preview configuration
-    generatePreview.set(false)  // Whether to generate Compose @Preview functions
+    generatePreview.set(false)  // Default: false - Whether to generate Compose @Preview functions
+
+    // Download retry configuration
+    maxRetries.set(3)  // Default: 3 - Maximum number of retry attempts for failed downloads
+    retryDelayMs.set(1000)  // Default: 1000ms - Initial delay between retries
+
+    // Icon naming configuration (optional)
+    naming {
+        pascalCase()  // Default naming convention
+        // Available options: pascalCase(), camelCase(), snakeCase(), kebabCase(), etc.
+    }
 }
 ```
 
@@ -273,6 +286,40 @@ symbolCraft {
 }
 ```
 
+### Naming configuration
+
+Control how generated icon class names are transformed:
+
+```kotlin
+symbolCraft {
+    naming {
+        // Preset conventions
+        pascalCase()              // HomeIcon (default)
+        pascalCase(suffix = "Icon")  // HomeIconIcon
+        camelCase()               // homeIcon
+        snakeCase()               // home_icon
+        snakeCase(uppercase = true)  // HOME_ICON
+        kebabCase()               // home-icon
+        lowerCase()               // homeicon
+        upperCase()               // HOMEICON
+
+        // Fine-grained control
+        namingConvention.set(NamingConvention.PASCAL_CASE)
+        prefix.set("Ic")          // Prepend to all names → IcHome
+        suffix.set("Icon")        // Append to all names → HomeIcon
+        removePrefix.set("ic_")   // Strip from input → ic_home → Home
+        removeSuffix.set("_24dp") // Strip from input → home_24dp → Home
+
+        // Custom transformer (advanced)
+        customTransformer(object : IconNameTransformer() {
+            override fun transform(fileName: String): String {
+                return fileName.uppercase() + "Icon"
+            }
+        })
+    }
+}
+```
+
 ### Generated file naming convention
 
 Icon file name format: `{IconName}W{Weight}{Variant}{Fill}.kt`
@@ -288,9 +335,9 @@ The plugin provides the following Gradle tasks:
 
 | Task | Description |
 |------|-------------|
-| `generateSymbolCraftIcons` | Generate configured Material Symbols icons |
+| `generateSymbolCraftIcons` | Generate configured icons from all libraries |
 | `cleanSymbolCraftCache` | Clean cached SVG files |
-| `cleanSymbolCraftIcons` | Clean generated Material Symbols files |
+| `cleanSymbolCraftIcons` | Clean all generated icon files |
 | `validateSymbolCraftConfig` | Validate icon configuration validity |
 
 ### Task examples
@@ -352,16 +399,16 @@ your-project/
 │                   │       ├── SearchW400Outlined.kt
 │                   │       ├── HomeW500RoundedFill.kt
 │                   │       └── PersonW700Sharp.kt
-│                   └── bootstrap-icons/          # Bootstrap Icons (example)
+│                   └── bootstrapicons/           # Bootstrap Icons (example)
 │                       ├── __Icons.kt            # Bootstrap Icons accessor
 │                       └── icons/
 │                           ├── BellBootstrapicons.kt
 │                           └── HouseBootstrapicons.kt
 └── build/
-    └── symbolcraft-cache/                        # Cache directory (in build folder by default)
+    └── symbolcraft-cache/                        # Cache directory (default location)
         ├── temp-svgs/                            # SVG temporary files (organized by library)
         │   ├── material-symbols/
-        │   └── external-bootstrap-icons/
+        │   └── external-bootstrapicons/
         └── svg-cache/                            # Cached SVG files with metadata
 ```
 
@@ -402,7 +449,7 @@ There are two strategies for handling generated files:
 ### Multi-layer cache architecture
 
 1. **SVG download cache**
-   - Default location: `build/material-symbols-cache/svg-cache/`
+   - Default location: `build/symbolcraft-cache/svg-cache/`
    - Validity: 7 days
    - Contains: SVG files + metadata (timestamp, URL, hash)
    - Auto-cleanup: Unused cache files are automatically removed when configuration changes
@@ -418,7 +465,7 @@ There are two strategies for handling generated files:
 **Relative path (default):**
 ```kotlin
 symbolCraft {
-    cacheDirectory.set("material-symbols-cache")  // → build/material-symbols-cache/
+    cacheDirectory.set("symbolcraft-cache")  // → build/symbolcraft-cache/
     // Auto-cleanup: ✅ Enabled (project-local cache)
 }
 ```
@@ -646,51 +693,30 @@ symbolCraft {
 }
 ```
 
-**Using built-in CDN (default: https://esm.sh):**
+**Using full URLs:**
 
 ```kotlin
 symbolCraft {
-    // External icons with {cdn} placeholder
+    // Bootstrap Icons from esm.sh
     val bootstrapIcons = listOf("bell", "calendar", "clock", "envelope")
     externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+        urlTemplate = "https://esm.sh/bootstrap-icons/fill/{name}.svg"
     }
-}
-```
 
-**Using custom/direct URLs:**
+    // Feather Icons from jsdelivr
+    externalIcon("activity", libraryName = "feather") {
+        urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
+    }
 
-```kotlin
-symbolCraft {
-    // Direct URL (no CDN placeholder)
+    // Custom icon server
     externalIcon("my-icon", libraryName = "mylib") {
-        urlTemplate = "https://my-cdn.com/icons/{name}.svg"
-    }
-
-    // Another example with parameters
-    externalIcon("feather-icon", libraryName = "feather") {
-        urlTemplate = "https://cdn.feathericons.com/{size}/{name}.svg"
-        styleParam("size", "16")
-    }
-}
-```
-
-**Changing the global CDN URL:**
-
-```kotlin
-symbolCraft {
-    // Change CDN for all icon libraries using {cdn} placeholder
-    cdnBaseUrl.set("https://my-custom-cdn.com")
-
-    // Now all {cdn} placeholders will use this URL
-    externalIcon("icon", libraryName = "custom") {
-        urlTemplate = "{cdn}/icons/{name}.svg"  // → https://my-custom-cdn.com/icons/icon.svg
+        urlTemplate = "https://my-cdn.com/icons/{size}/{name}.svg"
+        styleParam("size", "24")
     }
 }
 ```
 
 **URL Template Placeholders:**
-- `{cdn}` - Replaced with `cdnBaseUrl` (default: "https://esm.sh")
 - `{name}` - Replaced with the icon name
 - `{key}` - Replaced with custom style parameter values (using `styleParam()`)
 
@@ -706,6 +732,10 @@ symbolCraft {
 
     // Or use absolute path for shared cache across projects
     cacheDirectory.set("/var/tmp/symbolcraft")  // → /var/tmp/symbolcraft/
+
+    // Configure download retry behavior
+    maxRetries.set(5)       // Increase retry attempts
+    retryDelayMs.set(2000)  // Longer delay between retries
 }
 ```
 
@@ -736,7 +766,7 @@ symbolCraft {
    ./gradlew generateSymbolCraftIcons --rerun-tasks
    ```
 
-   Note: Starting from v0.1.2, cache files are stored in `build/material-symbols-cache/` by default and are automatically cleaned when running `./gradlew clean`.
+   Note: Cache files are stored in `build/symbolcraft-cache/` by default and are automatically cleaned when running `./gradlew clean`.
 
 3. **Icon not found**
    ```
@@ -771,17 +801,21 @@ symbolCraft {
 
 ### Core components
 
-- **SymbolCraftPlugin** - Main plugin class
-- **SymbolCraftExtension** - DSL configuration interface with SymbolConfigBuilder
-- **GenerateSymbolsTask** - Core generation task with parallel downloads
-- **SvgDownloader** - Smart SVG downloader with caching
-- **Svg2ComposeConverter** - SVG to Compose converter using DevSrSouza/svg-to-compose library
-- **SymbolStyle** - Icon style model with SymbolWeight, SymbolVariant, and SymbolFill enums
+- **SymbolCraftPlugin** - Main plugin class that registers tasks and wires the extension
+- **SymbolCraftExtension** - DSL configuration interface with MaterialSymbolsBuilder and ExternalIconBuilder
+- **GenerateSymbolsTask** - Core generation task with parallel downloads and configurable retry logic
+- **NamingConfig** - Icon naming transformation configuration
+- **IconNameTransformer** - Flexible naming convention transformer
+- **SvgDownloader** - Smart SVG downloader with 7-day caching and retry mechanism
+- **Svg2ComposeConverter** - SVG to Compose converter using svg-to-compose library
+- **IconConfig** - Base interface for icon library configurations (MaterialSymbolsConfig, ExternalIconConfig)
+- **SymbolWeight/SymbolVariant/SymbolFill** - Material Symbols style enums
 
 ### Data flow
 
 ```
-Configuration → Style parsing → Parallel download → SVG conversion → Deterministic processing → Generate code → Preview generation
+Configuration → Icon resolution → Style parsing → Parallel download with retry → SVG conversion → 
+Naming transformation → Deterministic processing → Generate code → Optional preview generation
 ```
 
 ## 🎮 Example Application
@@ -820,10 +854,15 @@ The example app demonstrates various configuration options:
 ```kotlin
 symbolCraft {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin")
+    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
     generatePreview.set(true)
 
-    // Using convenient methods
+    // Icon naming configuration
+    naming {
+        pascalCase()  // Use PascalCase convention
+    }
+
+    // Material Symbols icons - Using convenient methods
     materialSymbol("search") {
         standardWeights() // Adds 400, 500, 700 weights
     }
@@ -841,6 +880,19 @@ symbolCraft {
     materialSymbol("settings") {
         style(weight = 400, variant = SymbolVariant.OUTLINED)
         style(weight = 500, variant = SymbolVariant.ROUNDED, fill = SymbolFill.FILLED)
+    }
+
+    // External icons from MDI
+    externalIcons(*listOf("abacus", "ab-testing").toTypedArray(), libraryName = "mdi") {
+        urlTemplate = "https://esm.sh/@mdi/svg@latest/svg/{name}.svg"
+    }
+
+    // External icons with style variants
+    externalIcons(*listOf("home", "search", "person").toTypedArray(), libraryName = "official") {
+        urlTemplate = "https://example.com/{name}{fill}_24px.svg"
+        styleParam("fill") {
+            values("", "_fill1")  // unfilled, filled variants
+        }
     }
 }
 ```
@@ -884,12 +936,11 @@ cd example
 
 ## 🙏 Acknowledgments
 
-- [Material Symbols](https://fonts.google.com/icons) - Icon resources provided by Google
-- [marella/material-symbols](https://github.com/marella/material-symbols) - Convenient icon browsing and search functionality
-- [Material Symbols Demo](https://marella.github.io/material-symbols/demo/) - Icon search and preview tool
-- [DevSrSouza/svg-to-compose](https://github.com/DevSrSouza/svg-to-compose) - Excellent SVG to Compose library
-- [esm.sh](https://esm.sh) - CDN service for Material Symbols SVG files
-- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android modern UI toolkit
+- [Material Symbols](https://fonts.google.com/icons) - Icon library by Google
+- [marella/material-symbols](https://github.com/marella/material-symbols) - Convenient icon browsing and search tools
+- [DevSrSouza/svg-to-compose](https://github.com/DevSrSouza/svg-to-compose) - Excellent SVG to Compose conversion library
+- [Jetpack Compose](https://developer.android.com/jetpack/compose) - Modern UI toolkit for Android and multiplatform
+- Icon library providers: Bootstrap Icons, Heroicons, Feather Icons, Material Design Icons, and more
 
 ## 📄 License
 
