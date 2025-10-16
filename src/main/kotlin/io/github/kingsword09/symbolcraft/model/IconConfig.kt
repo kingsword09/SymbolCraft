@@ -40,10 +40,9 @@ interface IconConfig {
      * Build the CDN URL for downloading the icon SVG file.
      *
      * @param iconName Name of the icon (e.g., "home", "search")
-     * @param cdnBaseUrl Base URL for the CDN (e.g., "https://esm.sh")
      * @return Full URL to the SVG file
      */
-    fun buildUrl(iconName: String, cdnBaseUrl: String): String
+    fun buildUrl(iconName: String): String
 
     /**
      * Generate a unique cache key for this icon and configuration combination.
@@ -70,7 +69,8 @@ interface IconConfig {
 /**
  * Configuration for Material Symbols icon library.
  *
- * Supports the @material-symbols/svg-* packages with full style customization.
+ * Uses Google Fonts CDN as the source for Material Symbols icons.
+ * For custom CDN or backup URLs, use `externalIcon` instead.
  *
  * @property weight Stroke weight (100-700)
  * @property variant Visual variant (outlined, rounded, sharp)
@@ -88,9 +88,15 @@ data class MaterialSymbolsConfig(
 ) : IconConfig {
     override val libraryId = "material-symbols"
 
-    override fun buildUrl(iconName: String, cdnBaseUrl: String): String {
-        val suffix = if (fill == SymbolFill.FILLED) "-fill" else ""
-        return "$cdnBaseUrl/@material-symbols/svg-${weight.value}/${variant.pathName}/$iconName$suffix.svg"
+    override fun buildUrl(iconName: String): String {
+        val weightValue = when {
+            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) && fill == SymbolFill.FILLED -> ""
+            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) -> "default"
+            else -> "wght${weight.value}"
+        }
+
+        // Google Fonts official CDN
+        return "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols${variant.pathName}/$iconName/$weightValue${fill.shortName}/${opticalSize}px.svg"
     }
 
     override fun getCacheKey(iconName: String): String {
@@ -111,7 +117,6 @@ data class MaterialSymbolsConfig(
  * Supports flexible URL patterns with placeholder replacement.
  *
  * Available placeholders:
- * - {cdn}: CDN base URL
  * - {name}: Icon name
  * - {key}: Any custom style parameter key
  *
@@ -119,13 +124,13 @@ data class MaterialSymbolsConfig(
  * ```kotlin
  * ExternalIconConfig(
  *     libraryName = "bootstrap-icons",
- *     urlTemplate = "{cdn}/bootstrap/{style}/{name}.svg",
+ *     urlTemplate = "https://esm.sh/bootstrap-icons/{style}/{name}.svg",
  *     styleParams = mapOf("style" to "fill")
  * )
  * ```
  *
  * @property libraryName Name of the external library (will be prefixed with "external-")
- * @property urlTemplate URL pattern with placeholders
+ * @property urlTemplate URL pattern with placeholders (must be full URL)
  * @property styleParams Map of style parameters for placeholder replacement
  */
 @Serializable
@@ -136,10 +141,8 @@ data class ExternalIconConfig(
 ) : IconConfig {
     override val libraryId = "external-$libraryName"
 
-    override fun buildUrl(iconName: String, cdnBaseUrl: String): String {
-        var url = urlTemplate
-            .replace("{cdn}", cdnBaseUrl)
-            .replace("{name}", iconName)
+    override fun buildUrl(iconName: String): String {
+        var url = urlTemplate.replace("{name}", iconName)
 
         styleParams.forEach { (key, value) ->
             url = url.replace("{$key}", value)
@@ -173,7 +176,7 @@ enum class SymbolVariant(val shortName: String, val pathName: String) {
 @Serializable
 enum class SymbolFill(val shortName: String) {
     UNFILLED(""),
-    FILLED("Fill")
+    FILLED("fill1")
 }
 
 @Serializable

@@ -17,12 +17,12 @@ import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.materialsymbols.Icons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-public val Icons.HomeW400OutlinedFill: ImageVector
+public val Icons.HomeW400Outlinedfill1: ImageVector
     get() {
-        if (_homeW400OutlinedFill != null) {
-            return _homeW400OutlinedFill!!
+        if (_homeW400Outlinedfill1 != null) {
+            return _homeW400Outlinedfill1!!
         }
-        _homeW400OutlinedFill = Builder(name = "HomeW400OutlinedFill", defaultWidth = 48.0.dp, defaultHeight = 48.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _homeW400Outlinedfill1 = Builder(name = "HomeW400Outlinedfill1", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(160.0f, 840.0f)
                 verticalLineToRelative(-480.0f)
@@ -38,15 +38,15 @@ public val Icons.HomeW400OutlinedFill: ImageVector
             }
         }
         .build()
-        return _homeW400OutlinedFill!!
+        return _homeW400Outlinedfill1!!
     }
 
-private var _homeW400OutlinedFill: ImageVector? = null
+private var _homeW400Outlinedfill1: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.HomeW400OutlinedFill, contentDescription = "")
+        Image(imageVector = Icons.HomeW400Outlinedfill1, contentDescription = "")
     }
 }

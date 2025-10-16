@@ -17,7 +17,6 @@ import javax.inject.Inject
  * @property outputDirectory Kotlin source folder where generated code will be written.
  * @property packageName root package used for generated Kotlin types.
  * @property generatePreview toggles Compose preview function generation for each icon.
- * @property cdnBaseUrl base URL for the CDN serving icons (default: https://esm.sh).
  * @property maxRetries maximum number of retry attempts for failed downloads (default: 3).
  * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
  */
@@ -29,7 +28,6 @@ abstract class SymbolCraftExtension {
     abstract val outputDirectory: Property<String>
     abstract val packageName: Property<String>
     abstract val generatePreview: Property<Boolean>
-    abstract val cdnBaseUrl: Property<String>
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
     
@@ -50,7 +48,6 @@ abstract class SymbolCraftExtension {
         outputDirectory.convention("src/main/kotlin")
         packageName.convention("io.github.kingsword09.symbolcraft.symbols")
         generatePreview.convention(false)
-        cdnBaseUrl.convention("https://esm.sh")
         maxRetries.convention(3)
         retryDelayMs.convention(1000L)
     }
@@ -143,20 +140,19 @@ abstract class SymbolCraftExtension {
      * Configure external icon from other icon libraries with URL template.
      *
      * The URL template supports the following placeholders:
-     * - `{cdn}`: Replaced with cdnBaseUrl (default: "https://esm.sh")
      * - `{name}`: Replaced with the icon name
      * - `{key}`: Replaced with custom style parameter values
      *
      * Examples:
      * ```kotlin
-     * // Using {cdn} placeholder (will use configured CDN URL)
+     * // Simple icon URL
      * externalIcon("bell", libraryName = "bootstrap-icons") {
-     *     urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+     *     urlTemplate = "https://esm.sh/bootstrap-icons/fill/{name}.svg"
      * }
      *
      * // With custom style parameters
      * externalIcon("home", libraryName = "heroicons") {
-     *     urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
+     *     urlTemplate = "https://cdn.jsdelivr.net/npm/heroicons/{size}/{name}.svg"
      *     styleParam("size", "24")
      * }
      *
@@ -168,7 +164,7 @@ abstract class SymbolCraftExtension {
      *     }
      * }
      *
-     * // Direct URL without {cdn} placeholder
+     * // Custom CDN
      * externalIcon("my-icon", libraryName = "mylib") {
      *     urlTemplate = "https://my-cdn.com/icons/{name}.svg"
      * }
@@ -196,12 +192,12 @@ abstract class SymbolCraftExtension {
      * ```kotlin
      * // Multiple icons from Bootstrap Icons
      * externalIcons("bell", "house", "person", libraryName = "bootstrap-icons") {
-     *     urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+     *     urlTemplate = "https://esm.sh/bootstrap-icons/fill/{name}.svg"
      * }
      *
      * // Multiple icons with style parameters
      * externalIcons("home", "search", "user", libraryName = "heroicons") {
-     *     urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
+     *     urlTemplate = "https://cdn.jsdelivr.net/npm/heroicons/{size}/{name}.svg"
      *     styleParam("size", "24")
      * }
      *
@@ -247,7 +243,6 @@ abstract class SymbolCraftExtension {
             append("|package:").append(packageName.orNull)
             append("|outputDir:").append(outputDirectory.orNull)
             append("|preview:").append(generatePreview.orNull)
-            append("|cdnBaseUrl:").append(cdnBaseUrl.orNull)
             append("|namingConfig:").append(namingConfig.snapshotSignature())
         }
         return configString.hashCode().toString()

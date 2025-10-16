@@ -32,7 +32,6 @@ import kotlin.io.path.writeText
  * Supports multiple icon libraries through the IconConfig interface.
  *
  * Features:
- * - Configurable CDN base URL with fallback support
  * - Content validation (type, size, structure)
  * - 7-day cache with metadata tracking
  * - HTTPS enforcement for security
@@ -40,7 +39,6 @@ import kotlin.io.path.writeText
  *
  * @property cacheDirectory Directory path for storing cached SVG files
  * @property cacheEnabled Whether to enable caching (default: true)
- * @property cdnBaseUrl Base URL for the CDN serving icons (default: esm.sh)
  * @property maxRetries Maximum number of retry attempts (default: 3)
  * @property retryDelayMs Initial delay between retries in milliseconds (default: 1000ms)
  * @property logger Optional logger for status messages, if not provided uses println
@@ -48,7 +46,6 @@ import kotlin.io.path.writeText
 class SvgDownloader(
     private val cacheDirectory: String,
     private val cacheEnabled: Boolean = true,
-    private val cdnBaseUrl: String = DEFAULT_CDN_BASE_URL,
     private val maxRetries: Int = 3,
     private val retryDelayMs: Long = 1000L,
     private val logger: ((String) -> Unit)? = null
@@ -65,9 +62,6 @@ class SvgDownloader(
 
         /** Maximum allowed SVG file size (10MB) to prevent DoS attacks */
         private const val MAX_SVG_SIZE = 10 * 1024 * 1024
-
-        /** Default CDN base URL for Material Symbols */
-        const val DEFAULT_CDN_BASE_URL = "https://esm.sh"
 
         /** Maximum number of concurrent downloads */
         const val MAX_CONNECTIONS_COUNT = 50
@@ -120,7 +114,6 @@ class SvgDownloader(
      * @return SVG content as string, or null if download fails after all retries
      */
     suspend fun downloadSvg(iconName: String, config: IconConfig): String? = withContext(Dispatchers.IO) {
-        val url = config.buildUrl(iconName, cdnBaseUrl)
         val cacheKey = config.getCacheKey(iconName)
 
         // Check cache first
@@ -131,7 +124,8 @@ class SvgDownloader(
             }
         }
 
-        // Download from CDN with retry logic
+        // Download from URL with retry logic
+        val url = config.buildUrl(iconName)
         var lastException: Exception? = null
         repeat(maxRetries) { attemptNumber ->
             try {
@@ -147,7 +141,6 @@ class SvgDownloader(
                 val remainingRetries = maxRetries - attemptNumber - 1
 
                 if (remainingRetries > 0) {
-                    // Exponential backoff: delay = retryDelayMs * 2^attemptNumber
                     val delayMs = retryDelayMs * (1 shl attemptNumber)
                     log("⚠️ Attempt ${attemptNumber + 1} failed for $url: ${e.message}")
                     log("   Retrying in ${delayMs}ms... ($remainingRetries retries remaining)")
