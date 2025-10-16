@@ -23,12 +23,12 @@ import io.github.kingsword09.example.icons.materialsymbols.Icons as MaterialSymb
 import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400Rounded
 import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400Outlined
 import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW500Rounded
-import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400OutlinedFill
+import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400Outlinedfill1
 import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW400Outlined
 import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW500Outlined
 import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW700Outlined
 import io.github.kingsword09.example.icons.materialsymbols.icons.SettingsW400Outlined
-import io.github.kingsword09.example.icons.materialsymbols.icons.SettingsW500RoundedFill
+import io.github.kingsword09.example.icons.materialsymbols.icons.SettingsW500Roundedfill1
 import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Outlined
 import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Sharp
 import io.github.kingsword09.example.icons.materialsymbols.icons.PersonW500Rounded
@@ -89,7 +89,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = MaterialSymbols.HomeW400OutlinedFill,
+                    imageVector = MaterialSymbols.HomeW400Outlinedfill1,
                     contentDescription = "Home",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -210,7 +210,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = MaterialSymbols.SettingsW500RoundedFill,
+                    imageVector = MaterialSymbols.SettingsW500Roundedfill1,
                     contentDescription = "Settings",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
