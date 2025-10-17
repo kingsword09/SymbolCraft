@@ -62,86 +62,156 @@ abstract class GenerateSymbolsTask : DefaultTask() {
      */
     @TaskAction
     fun generate() = runBlocking {
-        val ext = extension.get()
-        val config = ext.getIconsConfig()
-        val packageName = ext.packageName.get()
-        val cacheDirPath = cacheDirectory.get()
-        val projectBuildDirPath = projectBuildDir.get()
+        val context = prepareGenerationContext()
 
-        // Resolve cache directory: support both absolute and relative paths
-        val cacheBaseDir = PathUtils.resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
-        val tempDir = File(cacheBaseDir, "temp-svgs")
-        val svgCacheDir = File(cacheBaseDir, "svg-cache")
-        val outputDirFile = outputDir.get().asFile
+        logGenerationStart(context)
+        performPreGenerationCleanup(context)
 
-        logger.lifecycle("🎨 Generating icons...")
-        logger.lifecycle("📊 Icons to generate: ${config.values.sumOf { it.size }} total")
-        logger.debug("📂 Cache directory: ${cacheBaseDir.absolutePath}")
-
-        // Clean old generated files to ensure fresh generation
-        cleanOldGeneratedFiles(outputDirFile, packageName)
-
-        // Clean unused cache files before generating
-        // Skip if using shared cache (absolute path or outside build directory) to avoid conflicts
-        if (ext.cacheEnabled.get() && shouldCleanCache(cacheBaseDir, projectBuildDirPath)) {
-            cleanUnusedCache(svgCacheDir, config)
-        }
-
-        val downloader = SvgDownloader(
-            cacheDirectory = svgCacheDir.absolutePath,
-            cacheEnabled = ext.cacheEnabled.get(),
-            maxRetries = ext.maxRetries.get(),
-            retryDelayMs = ext.retryDelayMs.get(),
-            logger = { message -> logger.debug(message) }
-        )
+        val downloader = setupDownloader(context)
 
         try {
-            // Clean and prepare temp directory
-            if (tempDir.exists()) tempDir.deleteRecursively()
-            tempDir.mkdirs()
-
-            // Group icons by library
-            val iconsByLibrary = groupIconsByLibrary(config)
-            logger.debug("📚 Libraries found: ${iconsByLibrary.keys.joinToString()}")
-
-            // Download SVGs with progress tracking (all libraries together)
-            val downloadStats = downloadSvgsParallel(downloader, config, tempDir)
-            logDownloadStats(downloadStats)
-
-            // Convert SVGs to Compose code, organized by library
-            convertSvgsToComposeByLibrary(tempDir, outputDirFile, packageName, iconsByLibrary, ext)
-
-            // Log cache statistics
-            val cacheStats = downloader.getCacheStats()
-            logger.lifecycle("📦 SVG Cache: ${cacheStats.fileCount} files, ${String.format("%.2f", cacheStats.totalSizeMB)} MB")
-
+            executeGeneration(downloader, context)
         } catch (e: Exception) {
-            logger.error("❌ Generation failed: ${e.message}")
-            logger.error("   Stack trace: ${e.stackTraceToString()}")
-
-            // Provide helpful error guidance
-            when {
-                e.message?.contains("network", ignoreCase = true) == true -> {
-                    logger.error("   💡 Network issue detected. Check internet connection and try again.")
-                }
-                e.message?.contains("cache", ignoreCase = true) == true -> {
-                    logger.error("   💡 Cache issue detected. Try running with --rerun-tasks or clearing cache.")
-                }
-                e.message?.contains("SVG", ignoreCase = true) == true -> {
-                    logger.error("   💡 SVG processing issue. Check if the requested icons exist in Material Symbols.")
-                }
-                else -> {
-                    logger.error("   💡 Unexpected error. Please check configuration and try again.")
-                }
-            }
-
-            throw e
+            handleGenerationError(e)
         } finally {
-            try {
-                downloader.cleanup()
-            } catch (cleanupException: Exception) {
-                logger.warn("⚠️ Warning: Failed to cleanup downloader: ${cleanupException.message}")
-            }
+            cleanupDownloader(downloader)
+        }
+    }
+
+    /**
+     * Prepare the generation context with all required configuration and paths.
+     */
+    private fun prepareGenerationContext(): GenerationContext {
+        val ext = extension.get()
+        val cacheDirPath = cacheDirectory.get()
+        val projectBuildDirPath = projectBuildDir.get()
+        val cacheBaseDir = PathUtils.resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
+
+        return GenerationContext(
+            extension = ext,
+            config = ext.getIconsConfig(),
+            packageName = ext.packageName.get(),
+            cacheBaseDir = cacheBaseDir,
+            tempDir = File(cacheBaseDir, "temp-svgs"),
+            svgCacheDir = File(cacheBaseDir, "svg-cache"),
+            outputDir = outputDir.get().asFile,
+            projectBuildDir = projectBuildDirPath
+        )
+    }
+
+    /**
+     * Log generation start information.
+     */
+    private fun logGenerationStart(context: GenerationContext) {
+        val totalIcons = context.config.values.sumOf { it.size }
+        logger.lifecycle("🎨 Generating icons...")
+        logger.lifecycle("📊 Icons to generate: $totalIcons total")
+        logger.debug("📂 Cache directory: ${context.cacheBaseDir.absolutePath}")
+    }
+
+    /**
+     * Perform cleanup operations before generation starts.
+     */
+    private fun performPreGenerationCleanup(context: GenerationContext) {
+        cleanOldGeneratedFiles(context.outputDir, context.packageName)
+
+        if (context.extension.cacheEnabled.get() &&
+            shouldCleanCache(context.cacheBaseDir, context.projectBuildDir)) {
+            cleanUnusedCache(context.svgCacheDir, context.config)
+        }
+    }
+
+    /**
+     * Setup and configure the SVG downloader.
+     */
+    private fun setupDownloader(context: GenerationContext): SvgDownloader {
+        return SvgDownloader(
+            cacheDirectory = context.svgCacheDir.absolutePath,
+            cacheEnabled = context.extension.cacheEnabled.get(),
+            maxRetries = context.extension.maxRetries.get(),
+            retryDelayMs = context.extension.retryDelayMs.get(),
+            logger = { message -> logger.debug(message) }
+        )
+    }
+
+    /**
+     * Execute the main generation workflow.
+     */
+    private suspend fun executeGeneration(downloader: SvgDownloader, context: GenerationContext) {
+        prepareTempDirectory(context.tempDir)
+
+        val iconsByLibrary = groupIconsByLibrary(context.config)
+        logger.debug("📚 Libraries found: ${iconsByLibrary.keys.joinToString()}")
+
+        val downloadStats = downloadSvgsParallel(downloader, context.config, context.tempDir)
+        logDownloadStats(downloadStats)
+
+        convertSvgsToComposeByLibrary(
+            context.tempDir,
+            context.outputDir,
+            context.packageName,
+            iconsByLibrary,
+            context.extension
+        )
+
+        logCacheStatistics(downloader)
+    }
+
+    /**
+     * Prepare the temporary directory for SVG downloads.
+     */
+    private fun prepareTempDirectory(tempDir: File) {
+        if (tempDir.exists()) {
+            tempDir.deleteRecursively()
+        }
+        tempDir.mkdirs()
+    }
+
+    /**
+     * Process and log download results.
+     */
+    private fun processDownloadResults(stats: DownloadStats) {
+        logDownloadStats(stats)
+    }
+
+    /**
+     * Log cache statistics after generation.
+     */
+    private fun logCacheStatistics(downloader: SvgDownloader) {
+        val cacheStats = downloader.getCacheStats()
+        logger.lifecycle("📦 SVG Cache: ${cacheStats.fileCount} files, ${String.format("%.2f", cacheStats.totalSizeMB)} MB")
+    }
+
+    /**
+     * Handle generation errors with helpful guidance.
+     */
+    private fun handleGenerationError(e: Exception): Nothing {
+        logger.error("❌ Generation failed: ${e.message}")
+        logger.error("   Stack trace: ${e.stackTraceToString()}")
+
+        val guidance = when {
+            e.message?.contains("network", ignoreCase = true) == true ->
+                "Network issue detected. Check internet connection and try again."
+            e.message?.contains("cache", ignoreCase = true) == true ->
+                "Cache issue detected. Try running with --rerun-tasks or clearing cache."
+            e.message?.contains("SVG", ignoreCase = true) == true ->
+                "SVG processing issue. Check if the requested icons exist in Material Symbols."
+            else ->
+                "Unexpected error. Please check configuration and try again."
+        }
+
+        logger.error("   💡 $guidance")
+        throw e
+    }
+
+    /**
+     * Cleanup downloader resources.
+     */
+    private fun cleanupDownloader(downloader: SvgDownloader) {
+        try {
+            downloader.cleanup()
+        } catch (cleanupException: Exception) {
+            logger.warn("⚠️ Warning: Failed to cleanup downloader: ${cleanupException.message}")
         }
     }
 
@@ -425,6 +495,32 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         logger.lifecycle("✅ Successfully converted $totalConverted icons total")
     }
 }
+
+/**
+ * Context object holding all configuration and paths needed for icon generation.
+ *
+ * This immutable data class encapsulates the generation state, making it easier to
+ * pass around and test individual steps of the generation process.
+ *
+ * @property extension The SymbolCraft extension with user configuration
+ * @property config Map of icon names to their configurations
+ * @property packageName Target package name for generated code
+ * @property cacheBaseDir Base directory for all cache operations
+ * @property tempDir Temporary directory for downloaded SVG files
+ * @property svgCacheDir Directory for persistent SVG cache
+ * @property outputDir Output directory for generated Kotlin files
+ * @property projectBuildDir Project's build directory path
+ */
+private data class GenerationContext(
+    val extension: SymbolCraftExtension,
+    val config: Map<String, List<IconConfig>>,
+    val packageName: String,
+    val cacheBaseDir: File,
+    val tempDir: File,
+    val svgCacheDir: File,
+    val outputDir: File,
+    val projectBuildDir: String
+)
 
 /** Data aggregated from the parallel download stage for logging and diagnostics. */
 data class DownloadStats(
