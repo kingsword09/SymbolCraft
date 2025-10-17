@@ -264,41 +264,45 @@ class SvgDownloader(
      */
     private fun validateSvgSecurity(svgContent: String, url: String) {
         // List of dangerous patterns that should never appear in safe SVG files
+        // Using regex to prevent whitespace-based bypass attacks (e.g., "< script" instead of "<script")
         val dangerousPatterns = mapOf(
-            "<!ENTITY" to "XML External Entity (XXE) declaration",
-            "<!DOCTYPE" to "DOCTYPE declaration (potential XXE vector)",
-            "<script" to "Embedded JavaScript",
-            "javascript:" to "JavaScript protocol handler",
-            "data:text/html" to "HTML data URL",
-            "on" + "load=" to "Event handler (onload)",
-            "on" + "error=" to "Event handler (onerror)",
-            "on" + "click=" to "Event handler (onclick)",
-            "<iframe" to "Embedded iframe",
-            "<object" to "Embedded object",
-            "<embed" to "Embedded content",
-            "xlink:href=\"javascript:" to "XLink JavaScript protocol"
+            Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE) to "XML External Entity (XXE) declaration",
+            Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE) to "DOCTYPE declaration (potential XXE vector)",
+            Regex("<\\s*script", RegexOption.IGNORE_CASE) to "Embedded JavaScript",
+            Regex("javascript:", RegexOption.IGNORE_CASE) to "JavaScript protocol handler",
+            Regex("data:text/html", RegexOption.IGNORE_CASE) to "HTML data URL",
+            Regex("on\\w+\\s*=", RegexOption.IGNORE_CASE) to "Event handler attribute",
+            Regex("<\\s*iframe", RegexOption.IGNORE_CASE) to "Embedded iframe",
+            Regex("<\\s*object", RegexOption.IGNORE_CASE) to "Embedded object",
+            Regex("<\\s*embed", RegexOption.IGNORE_CASE) to "Embedded content",
+            Regex("xlink:href\\s*=\\s*\"?javascript:", RegexOption.IGNORE_CASE) to "XLink JavaScript protocol"
         )
 
         dangerousPatterns.forEach { (pattern, description) ->
-            if (svgContent.contains(pattern, ignoreCase = true)) {
+            if (pattern.containsMatchIn(svgContent)) {
                 throw SecurityException(
-                    "SVG contains potentially dangerous content from $url: $description (pattern: '$pattern'). " +
+                    "SVG contains potentially dangerous content from $url: $description (pattern: '${pattern.pattern}'). " +
                     "This file may be malicious and has been rejected for security reasons."
                 )
             }
         }
 
         // Additional check: Ensure no SYSTEM or PUBLIC entities
-        if (svgContent.contains("SYSTEM", ignoreCase = true) &&
-            (svgContent.contains("<!ENTITY", ignoreCase = true) || svgContent.contains("<!DOCTYPE", ignoreCase = true))) {
+        val systemEntityRegex = Regex("SYSTEM", RegexOption.IGNORE_CASE)
+        val publicEntityRegex = Regex("PUBLIC", RegexOption.IGNORE_CASE)
+        val entityDeclRegex = Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE)
+        val doctypeDeclRegex = Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE)
+
+        if (systemEntityRegex.containsMatchIn(svgContent) &&
+            (entityDeclRegex.containsMatchIn(svgContent) || doctypeDeclRegex.containsMatchIn(svgContent))) {
             throw SecurityException(
                 "SVG contains SYSTEM entity declaration from $url. " +
                 "This is a critical security risk (potential file disclosure) and has been rejected."
             )
         }
 
-        if (svgContent.contains("PUBLIC", ignoreCase = true) &&
-            (svgContent.contains("<!ENTITY", ignoreCase = true) || svgContent.contains("<!DOCTYPE", ignoreCase = true))) {
+        if (publicEntityRegex.containsMatchIn(svgContent) &&
+            (entityDeclRegex.containsMatchIn(svgContent) || doctypeDeclRegex.containsMatchIn(svgContent))) {
             throw SecurityException(
                 "SVG contains PUBLIC entity declaration from $url. " +
                 "This is a security risk and has been rejected."

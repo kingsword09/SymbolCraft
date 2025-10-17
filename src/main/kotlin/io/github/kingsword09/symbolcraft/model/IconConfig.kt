@@ -19,11 +19,10 @@ import kotlinx.serialization.Serializable
  */
 private fun sanitizeIconName(iconName: String): String {
     return iconName
-        // Remove path traversal attempts
-        .replace("..", "")
+        // Remove path separators and replace with underscores
         .replace("/", "_")
         .replace("\\", "_")
-        // Remove potentially dangerous characters
+        // Remove potentially dangerous characters (this also handles ".." since dots are replaced)
         .replace(Regex("[^a-zA-Z0-9_-]"), "_")
         // Collapse multiple underscores
         .replace(Regex("_+"), "_")
@@ -191,11 +190,11 @@ data class ExternalIconConfig(
 
     override fun getCacheKey(iconName: String): String {
         val safeName = sanitizeIconName(iconName)
-        val safeLibraryName = sanitizeIconName(libraryName)
+        // libraryName is already validated in init block with [a-zA-Z0-9_-]+ regex, no need to sanitize again
         val paramsString = styleParams.entries
             .sortedBy { it.key }
             .joinToString("_") { "${it.key}=${it.value}" }
-        return "${safeName}_${safeLibraryName}_${paramsString.hashCode()}"
+        return "${safeName}_${libraryName}_${paramsString.hashCode()}"
     }
 
     override fun getSignature(): String {
