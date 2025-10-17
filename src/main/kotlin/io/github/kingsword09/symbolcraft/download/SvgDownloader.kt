@@ -25,6 +25,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.days
 
 /**
  * Downloads icon SVG files from CDN with local caching, validation, and retry logic.
@@ -72,7 +73,7 @@ class SvgDownloader(
          *
          * Calculated as: 7 days × 24 hours × 60 minutes × 60 seconds × 1000 milliseconds
          */
-        private const val CACHE_MAX_AGE_MS = CACHE_MAX_AGE_DAYS * 24L * 60L * 60L * 1000L
+        private val CACHE_MAX_AGE_MS = CACHE_MAX_AGE_DAYS.days.inWholeMilliseconds
 
         /**
          * Maximum allowed SVG file size in bytes (10 MB).
