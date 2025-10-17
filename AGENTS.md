@@ -4,7 +4,7 @@
 
 **SymbolCraft** 是一个用于 Kotlin Multiplatform 项目的 Gradle 插件，支持从多个图标库（Material Symbols、Bootstrap Icons、Heroicons 等）按需生成图标。
 
-- **版本**: v0.2.1
+- **版本**: v0.3.1
 - **状态**: ✅ 已发布到 Gradle Plugin Portal 和 Maven Central
 - **语言**: Kotlin 2.0.0
 - **最低 Gradle 版本**: 8.0+
@@ -660,7 +660,19 @@ docs(readme): update installation guide
 
 ## 更新日志
 
-### v0.2.1 (最新)
+### v0.3.1 (最新)
+- 🛡️ **安全强化**: 阻止外部 SVG 中的 XXE 与路径遍历攻击，新增内容类型与尺寸校验，并全面清理危险路径字符。
+- ♻️ **任务拆分**: `GenerateSymbolsTask` 拆分为更小的步骤，日志输出更具可读性，也为后续单元测试做好铺垫。
+- 📚 **文档增强**: 增补关键常量和默认值的设计 rationale，方便贡献者快速理解配置。
+
+### v0.3.0
+- 🔄 **多变体外部图标**: `styleParam { values(...) }` 支持笛卡尔积组合，一次声明即可生成多种外部图标变体。
+- ⚡ **指数退避重试**: SVG 下载器支持指数退避重试策略，网络波动下更稳健。
+- 🔗 **官方 CDN**: Material Symbols 默认切换到 Google Fonts 官方 CDN，保障可用性与更新速度。
+- ⚙️ **配置缓存修复**: 解决 Gradle 配置缓存序列化问题，提高增量构建兼容性。
+- 🏷️ **命名转换重构**: 重写 IconNameTransformer，命名配置更加灵活可靠。
+
+### v0.2.1
 - 🔥 **重大重构**: 插件重命名为 SymbolCraft（从 MaterialSymbolsPlugin）
 - 🎉 **多图标库支持**: Material Symbols + Bootstrap Icons + Heroicons + 自定义 URL
 - 🏷️ **灵活命名**: 支持 PascalCase、camelCase、snake_case 等多种命名规则
