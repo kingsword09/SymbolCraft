@@ -25,6 +25,7 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.time.Duration.Companion.days
 
 /**
  * Downloads icon SVG files from CDN with local caching, validation, and retry logic.
@@ -51,22 +52,55 @@ class SvgDownloader(
     private val logger: ((String) -> Unit)? = null
 ) {
     companion object {
-        /** Default timeout for HTTP requests in milliseconds */
+        /**
+         * Default timeout for HTTP requests in milliseconds (30 seconds).
+         *
+         * Rationale: Most SVG files are small (<100KB) and should download quickly.
+         * 30 seconds allows for slow networks while preventing indefinite hangs.
+         */
         private const val REQUEST_TIMEOUT_MS = 30_000L
 
-        /** Cache validity period in days */
+        /**
+         * Cache validity period in days.
+         *
+         * Rationale: Icon libraries rarely update existing icons, so 7 days provides
+         * a good balance between freshness and reducing network requests.
+         */
         private const val CACHE_MAX_AGE_DAYS = 7
 
-        /** Cache validity period in milliseconds */
-        private const val CACHE_MAX_AGE_MS = CACHE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000L
+        /**
+         * Cache validity period in milliseconds.
+         *
+         * Calculated as: 7 days × 24 hours × 60 minutes × 60 seconds × 1000 milliseconds
+         */
+        private val CACHE_MAX_AGE_MS = CACHE_MAX_AGE_DAYS.days.inWholeMilliseconds
 
-        /** Maximum allowed SVG file size (10MB) to prevent DoS attacks */
-        private const val MAX_SVG_SIZE = 10 * 1024 * 1024
+        /**
+         * Maximum allowed SVG file size in bytes (10 MB).
+         *
+         * Rationale: Typical icon SVG files are 1-50KB. Setting a 10MB limit:
+         * - Prevents DoS attacks from malicious CDNs serving huge files
+         * - Protects against memory exhaustion during parsing
+         * - Still allows for unusually large or complex SVG icons
+         *
+         * Note: Files larger than this will be rejected with an error.
+         */
+        private const val MAX_SVG_SIZE = 10 * 1024 * 1024  // 10 MB
 
-        /** Maximum number of concurrent downloads */
+        /**
+         * Maximum number of concurrent HTTP connections.
+         *
+         * Rationale: Allows parallel downloads while respecting system resources.
+         * 50 connections balances speed with memory/socket usage.
+         */
         const val MAX_CONNECTIONS_COUNT = 50
 
-        /** Maximum connections per route */
+        /**
+         * Maximum concurrent connections per route (host).
+         *
+         * Rationale: Prevents overwhelming a single CDN server while allowing
+         * reasonable parallelism. Most CDNs can handle 20+ concurrent connections.
+         */
         const val MAX_CONNECTIONS_PER_ROUTE = 20
     }
 
@@ -274,9 +308,8 @@ class SvgDownloader(
                 if (meta.size >= 2) {
                     val timestamp = meta[0].toLong()
 
-                    // Check if cache is still valid (7 days)
-                    val maxAge = 7 * 24 * 60 * 60 * 1000L // 7 days
-                    return System.currentTimeMillis() - timestamp < maxAge
+                    // Check if cache is still valid
+                    return System.currentTimeMillis() - timestamp < CACHE_MAX_AGE_MS
                 }
             } catch (e: Exception) {
                 // Cache corrupted
