@@ -144,7 +144,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         logger.debug("📚 Libraries found: ${iconsByLibrary.keys.joinToString()}")
 
         val downloadStats = downloadSvgsParallel(downloader, context.config, context.tempDir)
-        processDownloadResults(downloadStats)
+        logDownloadStats(downloadStats)
 
         convertSvgsToComposeByLibrary(
             context.tempDir,
