@@ -3,6 +3,36 @@ package io.github.kingsword09.symbolcraft.model
 import kotlinx.serialization.Serializable
 
 /**
+ * Sanitize icon name to prevent path traversal attacks.
+ *
+ * This function removes or replaces dangerous characters that could be used
+ * to access files outside the intended cache directory.
+ *
+ * Security considerations:
+ * - Removes path separators (/ and \)
+ * - Removes parent directory references (..)
+ * - Removes special characters that could cause issues
+ * - Preserves alphanumeric characters, hyphens, and underscores
+ *
+ * @param iconName The icon name to sanitize
+ * @return Sanitized icon name safe for use in file paths
+ */
+private fun sanitizeIconName(iconName: String): String {
+    return iconName
+        // Remove path separators and replace with underscores
+        .replace("/", "_")
+        .replace("\\", "_")
+        // Remove potentially dangerous characters (this also handles ".." since dots are replaced)
+        .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+        // Collapse multiple underscores
+        .replace(Regex("_+"), "_")
+        // Remove leading/trailing underscores
+        .trim('_')
+        // Ensure the name is not empty
+        .ifEmpty { "icon" }
+}
+
+/**
  * Base interface for all icon library configurations.
  *
  * Users can implement this interface to support custom icon libraries.
@@ -100,7 +130,8 @@ data class MaterialSymbolsConfig(
     }
 
     override fun getCacheKey(iconName: String): String {
-        return "${iconName}_${libraryId}_${weight.value}_${variant.pathName}_${fill.name.lowercase()}"
+        val safeName = sanitizeIconName(iconName)
+        return "${safeName}_${libraryId}_${weight.value}_${variant.pathName}_${fill.name.lowercase()}"
     }
 
     override fun getSignature(): String = buildString {
@@ -139,6 +170,12 @@ data class ExternalIconConfig(
     val urlTemplate: String,
     val styleParams: Map<String, String> = emptyMap()
 ) : IconConfig {
+    init {
+        // Validate URL template format and security
+        validateUrlTemplate(urlTemplate)
+        validateLibraryName(libraryName)
+    }
+
     override val libraryId = "external-$libraryName"
 
     override fun buildUrl(iconName: String): String {
@@ -152,15 +189,74 @@ data class ExternalIconConfig(
     }
 
     override fun getCacheKey(iconName: String): String {
+        val safeName = sanitizeIconName(iconName)
+        // libraryName is already validated in init block with [a-zA-Z0-9_-]+ regex, no need to sanitize again
         val paramsString = styleParams.entries
             .sortedBy { it.key }
             .joinToString("_") { "${it.key}=${it.value}" }
-        return "${iconName}_${libraryId}_${paramsString.hashCode()}"
+        return "${safeName}_${libraryName}_${paramsString.hashCode()}"
     }
 
     override fun getSignature(): String {
         return styleParams.values.joinToString("") { it.replaceFirstChar { c -> c.titlecase() } }
             .ifEmpty { libraryName.replaceFirstChar { it.titlecase() } }
+    }
+
+    companion object {
+        /**
+         * Validate URL template for security and correctness.
+         *
+         * @throws IllegalArgumentException if URL template is invalid or insecure
+         */
+        private fun validateUrlTemplate(urlTemplate: String) {
+            require(urlTemplate.isNotBlank()) {
+                "URL template cannot be blank"
+            }
+
+            require(urlTemplate.startsWith("https://", ignoreCase = true)) {
+                "URL template must start with 'https://' for security. Got: $urlTemplate"
+            }
+
+            require(!urlTemplate.contains(" ")) {
+                "URL template contains spaces, which is invalid"
+            }
+
+            // Prevent common injection patterns
+            val dangerousPatterns = listOf(
+                "javascript:",
+                "data:",
+                "file:",
+                "ftp:",
+                "<script",
+                "onload=",
+                "onerror="
+            )
+
+            dangerousPatterns.forEach { pattern ->
+                require(!urlTemplate.contains(pattern, ignoreCase = true)) {
+                    "URL template contains potentially dangerous pattern: '$pattern'"
+                }
+            }
+        }
+
+        /**
+         * Validate library name for security and correctness.
+         *
+         * @throws IllegalArgumentException if library name is invalid
+         */
+        private fun validateLibraryName(libraryName: String) {
+            require(libraryName.isNotBlank()) {
+                "Library name cannot be blank"
+            }
+
+            require(libraryName.matches(Regex("[a-zA-Z0-9_-]+"))) {
+                "Library name can only contain alphanumeric characters, hyphens, and underscores. Got: $libraryName"
+            }
+
+            require(libraryName.length <= 50) {
+                "Library name is too long (max 50 characters). Got: ${libraryName.length}"
+            }
+        }
     }
 }
 

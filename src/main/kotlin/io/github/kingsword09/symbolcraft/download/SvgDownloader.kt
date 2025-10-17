@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.security.MessageDigest
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -235,6 +236,9 @@ class SvgDownloader(
                 throw IllegalStateException("Invalid SVG structure (missing svg tags) from URL: $url")
             }
 
+            // Security validation: Prevent XXE and other attacks
+            validateSvgSecurity(svgContent, url)
+
             // Cache the validated content
             if (cacheEnabled && svgContent.isNotBlank()) {
                 cacheSvg(cacheKey, svgContent, url)
@@ -243,6 +247,66 @@ class SvgDownloader(
             return svgContent
         } else {
             throw IOException("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
+        }
+    }
+
+    /**
+     * Validate SVG content for security threats.
+     *
+     * This method scans for dangerous patterns that could lead to:
+     * - XXE (XML External Entity) attacks
+     * - Script injection
+     * - Data exfiltration
+     *
+     * @param svgContent The SVG content to validate
+     * @param url Source URL for error messages
+     * @throws SecurityException if dangerous content is detected
+     */
+    private fun validateSvgSecurity(svgContent: String, url: String) {
+        // List of dangerous patterns that should never appear in safe SVG files
+        // Using regex to prevent whitespace-based bypass attacks (e.g., "< script" instead of "<script")
+        val dangerousPatterns = mapOf(
+            Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE) to "XML External Entity (XXE) declaration",
+            Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE) to "DOCTYPE declaration (potential XXE vector)",
+            Regex("<\\s*script", RegexOption.IGNORE_CASE) to "Embedded JavaScript",
+            Regex("javascript:", RegexOption.IGNORE_CASE) to "JavaScript protocol handler",
+            Regex("data:text/html", RegexOption.IGNORE_CASE) to "HTML data URL",
+            Regex("on\\w+\\s*=", RegexOption.IGNORE_CASE) to "Event handler attribute",
+            Regex("<\\s*iframe", RegexOption.IGNORE_CASE) to "Embedded iframe",
+            Regex("<\\s*object", RegexOption.IGNORE_CASE) to "Embedded object",
+            Regex("<\\s*embed", RegexOption.IGNORE_CASE) to "Embedded content",
+            Regex("xlink:href\\s*=\\s*\"?javascript:", RegexOption.IGNORE_CASE) to "XLink JavaScript protocol"
+        )
+
+        dangerousPatterns.forEach { (pattern, description) ->
+            if (pattern.containsMatchIn(svgContent)) {
+                throw SecurityException(
+                    "SVG contains potentially dangerous content from $url: $description (pattern: '${pattern.pattern}'). " +
+                    "This file may be malicious and has been rejected for security reasons."
+                )
+            }
+        }
+
+        // Additional check: Ensure no SYSTEM or PUBLIC entities
+        val systemEntityRegex = Regex("SYSTEM", RegexOption.IGNORE_CASE)
+        val publicEntityRegex = Regex("PUBLIC", RegexOption.IGNORE_CASE)
+        val entityDeclRegex = Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE)
+        val doctypeDeclRegex = Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE)
+
+        if (systemEntityRegex.containsMatchIn(svgContent) &&
+            (entityDeclRegex.containsMatchIn(svgContent) || doctypeDeclRegex.containsMatchIn(svgContent))) {
+            throw SecurityException(
+                "SVG contains SYSTEM entity declaration from $url. " +
+                "This is a critical security risk (potential file disclosure) and has been rejected."
+            )
+        }
+
+        if (publicEntityRegex.containsMatchIn(svgContent) &&
+            (entityDeclRegex.containsMatchIn(svgContent) || doctypeDeclRegex.containsMatchIn(svgContent))) {
+            throw SecurityException(
+                "SVG contains PUBLIC entity declaration from $url. " +
+                "This is a security risk and has been rejected."
+            )
         }
     }
 
@@ -273,6 +337,9 @@ class SvgDownloader(
     /**
      * Cache SVG content with metadata for future use.
      *
+     * Uses SHA-256 hash for integrity verification instead of hashCode()
+     * to prevent hash collisions and provide cryptographic integrity.
+     *
      * @param cacheKey Unique identifier for this cached file
      * @param content SVG content to cache
      * @param url Source URL for tracking
@@ -282,11 +349,29 @@ class SvgDownloader(
             val cacheFile = cachePath / "$cacheKey.svg"
             val metaFile = cachePath / "$cacheKey.meta"
 
+            val contentHash = calculateSHA256(content)
             cacheFile.writeText(content)
-            metaFile.writeText("${System.currentTimeMillis()}\n$url\n${content.hashCode()}")
+            metaFile.writeText("${System.currentTimeMillis()}\n$url\n$contentHash")
         } catch (e: Exception) {
             log("Failed to cache SVG for key $cacheKey: ${e.message}")
         }
+    }
+
+    /**
+     * Calculate SHA-256 hash of content for cache integrity verification.
+     *
+     * SHA-256 provides:
+     * - Cryptographic integrity (detects tampering)
+     * - Extremely low collision probability (unlike hashCode())
+     * - Consistent hash values across JVM instances
+     *
+     * @param content Content to hash
+     * @return Hexadecimal string representation of SHA-256 hash
+     */
+    private fun calculateSHA256(content: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest(content.toByteArray())
+        return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
     fun cleanup() {
