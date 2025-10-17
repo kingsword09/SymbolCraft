@@ -16,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.security.MessageDigest
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
@@ -235,6 +236,9 @@ class SvgDownloader(
                 throw IllegalStateException("Invalid SVG structure (missing svg tags) from URL: $url")
             }
 
+            // Security validation: Prevent XXE and other attacks
+            validateSvgSecurity(svgContent, url)
+
             // Cache the validated content
             if (cacheEnabled && svgContent.isNotBlank()) {
                 cacheSvg(cacheKey, svgContent, url)
@@ -243,6 +247,62 @@ class SvgDownloader(
             return svgContent
         } else {
             throw IOException("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
+        }
+    }
+
+    /**
+     * Validate SVG content for security threats.
+     *
+     * This method scans for dangerous patterns that could lead to:
+     * - XXE (XML External Entity) attacks
+     * - Script injection
+     * - Data exfiltration
+     *
+     * @param svgContent The SVG content to validate
+     * @param url Source URL for error messages
+     * @throws SecurityException if dangerous content is detected
+     */
+    private fun validateSvgSecurity(svgContent: String, url: String) {
+        // List of dangerous patterns that should never appear in safe SVG files
+        val dangerousPatterns = mapOf(
+            "<!ENTITY" to "XML External Entity (XXE) declaration",
+            "<!DOCTYPE" to "DOCTYPE declaration (potential XXE vector)",
+            "<script" to "Embedded JavaScript",
+            "javascript:" to "JavaScript protocol handler",
+            "data:text/html" to "HTML data URL",
+            "on" + "load=" to "Event handler (onload)",
+            "on" + "error=" to "Event handler (onerror)",
+            "on" + "click=" to "Event handler (onclick)",
+            "<iframe" to "Embedded iframe",
+            "<object" to "Embedded object",
+            "<embed" to "Embedded content",
+            "xlink:href=\"javascript:" to "XLink JavaScript protocol"
+        )
+
+        dangerousPatterns.forEach { (pattern, description) ->
+            if (svgContent.contains(pattern, ignoreCase = true)) {
+                throw SecurityException(
+                    "SVG contains potentially dangerous content from $url: $description (pattern: '$pattern'). " +
+                    "This file may be malicious and has been rejected for security reasons."
+                )
+            }
+        }
+
+        // Additional check: Ensure no SYSTEM or PUBLIC entities
+        if (svgContent.contains("SYSTEM", ignoreCase = true) &&
+            (svgContent.contains("<!ENTITY", ignoreCase = true) || svgContent.contains("<!DOCTYPE", ignoreCase = true))) {
+            throw SecurityException(
+                "SVG contains SYSTEM entity declaration from $url. " +
+                "This is a critical security risk (potential file disclosure) and has been rejected."
+            )
+        }
+
+        if (svgContent.contains("PUBLIC", ignoreCase = true) &&
+            (svgContent.contains("<!ENTITY", ignoreCase = true) || svgContent.contains("<!DOCTYPE", ignoreCase = true))) {
+            throw SecurityException(
+                "SVG contains PUBLIC entity declaration from $url. " +
+                "This is a security risk and has been rejected."
+            )
         }
     }
 
@@ -273,6 +333,9 @@ class SvgDownloader(
     /**
      * Cache SVG content with metadata for future use.
      *
+     * Uses SHA-256 hash for integrity verification instead of hashCode()
+     * to prevent hash collisions and provide cryptographic integrity.
+     *
      * @param cacheKey Unique identifier for this cached file
      * @param content SVG content to cache
      * @param url Source URL for tracking
@@ -282,11 +345,29 @@ class SvgDownloader(
             val cacheFile = cachePath / "$cacheKey.svg"
             val metaFile = cachePath / "$cacheKey.meta"
 
+            val contentHash = calculateSHA256(content)
             cacheFile.writeText(content)
-            metaFile.writeText("${System.currentTimeMillis()}\n$url\n${content.hashCode()}")
+            metaFile.writeText("${System.currentTimeMillis()}\n$url\n$contentHash")
         } catch (e: Exception) {
             log("Failed to cache SVG for key $cacheKey: ${e.message}")
         }
+    }
+
+    /**
+     * Calculate SHA-256 hash of content for cache integrity verification.
+     *
+     * SHA-256 provides:
+     * - Cryptographic integrity (detects tampering)
+     * - Extremely low collision probability (unlike hashCode())
+     * - Consistent hash values across JVM instances
+     *
+     * @param content Content to hash
+     * @return Hexadecimal string representation of SHA-256 hash
+     */
+    private fun calculateSHA256(content: String): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val hashBytes = digest.digest(content.toByteArray())
+        return hashBytes.joinToString("") { "%02x".format(it) }
     }
 
     fun cleanup() {
