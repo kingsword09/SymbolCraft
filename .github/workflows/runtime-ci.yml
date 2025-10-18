@@ -1,0 +1,94 @@
+name: Runtime CI
+
+on:
+  push:
+    branches: [ "**" ]
+    paths:
+      - 'symbolcraft-runtime/**'
+      - 'gradle/libs.versions.toml'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - '.github/workflows/runtime-ci.yml'
+  pull_request:
+    branches: [ "**" ]
+    paths:
+      - 'symbolcraft-runtime/**'
+      - 'gradle/libs.versions.toml'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+
+jobs:
+  build:
+    name: Build Runtime
+    runs-on: macos-latest  # macOS for iOS builds
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build runtime (all platforms)
+      run: ./gradlew :symbolcraft-runtime:build -x test --stacktrace
+
+    - name: Run tests
+      run: ./gradlew :symbolcraft-runtime:test --stacktrace
+      continue-on-error: true
+
+    - name: Upload Android AAR
+      uses: actions/upload-artifact@v4
+      with:
+        name: runtime-aar
+        path: symbolcraft-runtime/build/outputs/aar/*.aar
+        retention-days: 7
+
+    - name: Upload iOS Framework
+      uses: actions/upload-artifact@v4
+      with:
+        name: runtime-ios-framework
+        path: symbolcraft-runtime/build/XCFrameworks/release/*.xcframework
+        retention-days: 7
+      continue-on-error: true
+
+  validate:
+    name: Validate Runtime
+    runs-on: macos-latest
+    needs: build
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Publish to local Maven
+      run: ./gradlew :symbolcraft-runtime:publishToMavenLocal --stacktrace
+
+    - name: Verify publication
+      run: |
+        if [ -d ~/.m2/repository/io/github/kingsword09/symbolcraft-runtime ]; then
+          echo "✅ Runtime published to local Maven"
+          find ~/.m2/repository/io/github/kingsword09/symbolcraft-runtime -type f | head -10
+        else
+          echo "❌ Runtime not found in local Maven"
+          exit 1
+        fi

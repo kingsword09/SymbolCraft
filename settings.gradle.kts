@@ -14,7 +14,15 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
 rootProject.name = "SymbolCraft"
+
+// Include all submodules
+include(":symbolcraft-plugin")
+include(":symbolcraft-runtime")
+include(":symbolcraft-material-symbols")
+
+// Note: example 作为独立项目，避免插件版本冲突，build it separately in example/ directory
