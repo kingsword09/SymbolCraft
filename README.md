@@ -10,6 +10,7 @@ A powerful Gradle plugin for generating icons on-demand from multiple icon libra
 
 - 🚀 **On-demand generation** - Generate only the icons you actually use, reducing 99%+ bundle size compared to Material Icons Extended (11.3MB)
 - 💾 **Smart caching** - 7-day SVG file cache with intelligent invalidation to avoid redundant network requests
+- 🗂️ **Local assets** - Convert checked-in SVG files directly from your repo with glob include/exclude patterns, no remote CDN required
 - ⚡ **Parallel downloads** - Use Kotlin coroutines for parallel SVG downloads with configurable retry logic
 - 🎯 **Deterministic builds** - Ensure completely consistent code generation every time, Git-friendly and cache-friendly
 - 🎨 **Full style support** - Support all Material Symbols styles (weight, variant, fill state)
@@ -87,6 +88,18 @@ symbolCraft {
     // Batch configure multiple icons
     materialSymbols("star", "bookmark") {
         weights(400, 500, variant = SymbolVariant.OUTLINED)
+    }
+
+    // Local SVG files stored in the repository
+    localIcons {
+        directory = "src/commonMain/resources/icons"
+        // include("**/*.svg") // optional, defaults to **/*.svg
+    }
+
+    localIcons(libraryName = "brand") {
+        directory = "design/exported"
+        include("brand/**/*.svg")
+        exclude("legacy/**")
     }
 }
 ```
