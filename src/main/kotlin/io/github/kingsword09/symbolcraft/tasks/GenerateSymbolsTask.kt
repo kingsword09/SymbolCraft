@@ -18,6 +18,7 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -55,6 +56,14 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     @get:Input
     abstract val projectBuildDir: Property<String>
 
+    @get:Input
+    @get:Optional
+    abstract val downloadOutputDirectory: Property<String>
+    
+    @get:Input
+    @get:Optional
+    abstract val downloadCacheEnabledOverride: Property<Boolean>
+
     /**
      * Downloads the requested icons and regenerates the Kotlin sources.
      *
@@ -87,6 +96,20 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val cacheDirPath = cacheDirectory.get()
         val projectBuildDirPath = projectBuildDir.get()
         val cacheBaseDir = PathUtils.resolveCacheDirectory(cacheDirPath, projectBuildDirPath)
+        val projectRoot = ext.projectDirectory.orNull?.takeIf { it.isNotBlank() }
+            ?: File(projectBuildDirPath).parentFile?.absolutePath
+        val downloadOutputPath = downloadOutputDirectory.orNull?.takeIf { it.isNotBlank() }
+        val downloadOutputDir = downloadOutputPath?.let { path ->
+            val candidate = File(path)
+            when {
+                candidate.isAbsolute -> candidate
+                projectRoot != null -> File(projectRoot, path)
+                else -> candidate
+            }
+        }
+        val downloadCacheOverride = downloadCacheEnabledOverride.orNull
+            ?: ext.downloadConfig.cacheEnabled.orNull
+        val effectiveCacheEnabled = downloadCacheOverride ?: ext.cacheEnabled.get()
 
         return GenerationContext(
             extension = ext,
@@ -96,7 +119,10 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             tempDir = File(cacheBaseDir, "temp-svgs"),
             svgCacheDir = File(cacheBaseDir, "svg-cache"),
             outputDir = outputDir.get().asFile,
-            projectBuildDir = projectBuildDirPath
+            projectBuildDir = projectBuildDirPath,
+            downloadOnly = ext.downloadConfig.enabled.get(),
+            downloadOutputDir = downloadOutputDir,
+            cacheEnabled = effectiveCacheEnabled
         )
     }
 
@@ -114,11 +140,18 @@ abstract class GenerateSymbolsTask : DefaultTask() {
      * Perform cleanup operations before generation starts.
      */
     private fun performPreGenerationCleanup(context: GenerationContext) {
-        cleanOldGeneratedFiles(context.outputDir, context.packageName)
+        if (context.downloadOnly) {
+            logger.lifecycle("ℹ️  Download-only mode: skipping cleanup of generated Kotlin sources")
+        } else {
+            cleanOldGeneratedFiles(context.outputDir, context.packageName)
+        }
 
-        if (context.extension.cacheEnabled.get() &&
-            shouldCleanCache(context.cacheBaseDir, context.projectBuildDir)) {
-            cleanUnusedCache(context.svgCacheDir, context.config)
+        if (context.cacheEnabled) {
+            if (shouldCleanCache(context.cacheBaseDir, context.projectBuildDir)) {
+                cleanUnusedCache(context.svgCacheDir, context.config)
+            }
+        } else {
+            logger.lifecycle("ℹ️  SVG cache is disabled; skipping cache reuse and cleanup")
         }
     }
 
@@ -128,7 +161,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     private fun setupDownloader(context: GenerationContext): SvgDownloader {
         return SvgDownloader(
             cacheDirectory = context.svgCacheDir.absolutePath,
-            cacheEnabled = context.extension.cacheEnabled.get(),
+            cacheEnabled = context.cacheEnabled,
             maxRetries = context.extension.maxRetries.get(),
             retryDelayMs = context.extension.retryDelayMs.get(),
             logger = { message -> logger.debug(message) }
@@ -147,6 +180,18 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val downloadStats = downloadSvgsParallel(downloader, context.config, context.tempDir)
         logDownloadStats(downloadStats)
 
+        if (context.downloadOnly) {
+            logger.lifecycle("⏭️ Download-only mode enabled: skipping SVG to Compose conversion")
+            val downloadDir = context.downloadOutputDir
+            if (downloadDir != null) {
+                persistDownloadsToOutput(context.tempDir, downloadDir, iconsByLibrary)
+            } else {
+                logger.lifecycle("ℹ️  Download-only mode: no downloadOutputDirectory configured; downloaded SVGs remain in ${context.tempDir.absolutePath}")
+            }
+            logCacheStatistics(downloader, context.cacheEnabled)
+            return
+        }
+
         convertSvgsToComposeByLibrary(
             context.tempDir,
             context.outputDir,
@@ -155,7 +200,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             context.extension
         )
 
-        logCacheStatistics(downloader)
+        logCacheStatistics(downloader, context.cacheEnabled)
     }
 
     /**
@@ -178,7 +223,11 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     /**
      * Log cache statistics after generation.
      */
-    private fun logCacheStatistics(downloader: SvgDownloader) {
+    private fun logCacheStatistics(downloader: SvgDownloader, cacheEnabled: Boolean) {
+        if (!cacheEnabled) {
+            logger.lifecycle("📦 SVG cache disabled for this run")
+            return
+        }
         val cacheStats = downloader.getCacheStats()
         logger.lifecycle("📦 SVG Cache: ${cacheStats.fileCount} files, ${String.format("%.2f", cacheStats.totalSizeMB)} MB")
     }
@@ -516,6 +565,54 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
+    private fun persistDownloadsToOutput(
+        tempDir: File,
+        downloadDir: File,
+        iconsByLibrary: Map<String, Set<String>>
+    ) {
+        logger.lifecycle("💾 Writing SVG assets to ${downloadDir.absolutePath}")
+        if (!downloadDir.exists() && !downloadDir.mkdirs()) {
+            logger.warn("⚠️ Unable to create download directory at ${downloadDir.absolutePath}")
+            return
+        }
+
+        val libraryIds = iconsByLibrary.keys
+        downloadDir.listFiles()?.forEach { existing ->
+            if (existing.isDirectory && existing.name !in libraryIds) {
+                logger.debug("🧹 Removing stale download directory: ${existing.name}")
+                existing.deleteRecursively()
+            }
+        }
+
+        var exportedCount = 0
+
+        libraryIds.forEach { libraryId ->
+            val sourceDir = File(tempDir, libraryId)
+            if (!sourceDir.exists()) {
+                logger.warn("⚠️ Temp SVG directory missing for library $libraryId; skipping export")
+                return@forEach
+            }
+
+            val targetDir = File(downloadDir, libraryId)
+            if (targetDir.exists()) {
+                targetDir.deleteRecursively()
+            }
+            targetDir.mkdirs()
+
+            sourceDir.walkTopDown().forEach { file ->
+                if (file.isFile) {
+                    val relative = file.relativeTo(sourceDir)
+                    val destination = File(targetDir, relative.path)
+                    destination.parentFile?.mkdirs()
+                    file.copyTo(destination, overwrite = true)
+                    exportedCount++
+                }
+            }
+        }
+
+        logger.lifecycle("   ✅ Exported $exportedCount SVG file(s) to ${downloadDir.absolutePath}")
+    }
+
     private fun convertSvgsToComposeByLibrary(
         tempDir: File,
         outputDir: File,
@@ -618,6 +715,8 @@ abstract class GenerateSymbolsTask : DefaultTask() {
  * @property svgCacheDir Directory for persistent SVG cache
  * @property outputDir Output directory for generated Kotlin files
  * @property projectBuildDir Project's build directory path
+ * @property downloadOnly Whether the run is in download-only mode
+ * @property downloadOutputDir Destination directory for persisted SVG assets (download-only mode)
  */
 private data class GenerationContext(
     val extension: SymbolCraftExtension,
@@ -627,7 +726,10 @@ private data class GenerationContext(
     val tempDir: File,
     val svgCacheDir: File,
     val outputDir: File,
-    val projectBuildDir: String
+    val projectBuildDir: String,
+    val downloadOnly: Boolean,
+    val downloadOutputDir: File?,
+    val cacheEnabled: Boolean
 )
 
 /** Data aggregated from the parallel download stage for logging and diagnostics. */
