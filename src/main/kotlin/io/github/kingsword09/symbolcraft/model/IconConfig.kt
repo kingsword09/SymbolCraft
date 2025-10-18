@@ -97,6 +97,69 @@ interface IconConfig {
 }
 
 /**
+ * Configuration for local SVG assets located on disk.
+ *
+ * This allows reusing checked-in SVG files without downloading them from a CDN.
+ *
+ * @property libraryName Logical grouping name used for output folder segmentation.
+ * @property absolutePath Fully resolved path to the SVG file on disk.
+ * @property relativePath Relative path (without extension) inside the configured local directory.
+ */
+@Serializable
+data class LocalIconConfig(
+    val libraryName: String,
+    val absolutePath: String,
+    val relativePath: String
+) : IconConfig {
+
+    override val libraryId: String = libraryName
+
+    override fun buildUrl(iconName: String): String = absolutePath
+
+    override fun getCacheKey(iconName: String): String {
+        val normalized = absolutePath.replace("\\", "/")
+        val hash = normalized.lowercase().hashCode().toString(16)
+        return "${libraryId}_$hash"
+    }
+
+    override fun getSignature(): String = buildSignature(relativePath)
+
+    /**
+     * Build signature from relative path for file naming.
+     *
+     * This function has its own sanitization logic that:
+     * 1. Normalizes path separators and hyphens to underscores
+     * 2. Removes dangerous/invalid characters
+     * 3. Converts to PascalCase for Kotlin naming convention
+     * 4. Returns "Local" as fallback for blank/invalid inputs
+     */
+    private fun buildSignature(relativePath: String): String {
+        // Normalize separators and hyphens first
+        val normalized = relativePath
+            .replace("/", "_")
+            .replace("\\", "_")
+            .replace("-", "_")
+
+        // Remove dangerous characters (keep only alphanumeric and underscores)
+        val cleaned = normalized.replace(Regex("[^a-zA-Z0-9_]"), "_")
+            .replace(Regex("_+"), "_")  // Collapse multiple underscores
+            .trim('_')  // Remove leading/trailing underscores
+
+        // Return "Local" if sanitization resulted in empty/blank string
+        if (cleaned.isBlank()) return "Local"
+
+        // Convert to PascalCase
+        return cleaned
+            .split('_')
+            .filter { it.isNotBlank() }
+            .joinToString(separator = "") { part ->
+                part.replaceFirstChar { ch -> ch.titlecase() }
+            }
+            .ifBlank { "Local" }  // Final safety check
+    }
+}
+
+/** 
  * Configuration for Material Symbols icon library.
  *
  * Uses Google Fonts CDN as the source for Material Symbols icons.

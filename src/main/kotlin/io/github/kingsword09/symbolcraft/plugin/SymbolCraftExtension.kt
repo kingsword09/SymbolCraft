@@ -2,10 +2,16 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import io.github.kingsword09.symbolcraft.converter.NamingConvention
 import io.github.kingsword09.symbolcraft.model.*
+import io.github.kingsword09.symbolcraft.plugin.samples.localIconsExcludeSample
+import io.github.kingsword09.symbolcraft.plugin.samples.localIconsIncludeSample
 import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import javax.inject.Inject
+import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.PathMatcher
 
 /**
  * DSL entry point exposed as `symbolCraft { ... }` in a consuming build script.
@@ -30,6 +36,7 @@ abstract class SymbolCraftExtension {
     abstract val generatePreview: Property<Boolean>
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
+    abstract val projectDirectory: Property<String>
     
     /**
      * Icon naming configuration。
@@ -50,6 +57,7 @@ abstract class SymbolCraftExtension {
         generatePreview.convention(false)
         maxRetries.convention(3)
         retryDelayMs.convention(1000L)
+        projectDirectory.convention("")
     }
 
     /**
@@ -216,6 +224,45 @@ abstract class SymbolCraftExtension {
      */
     fun externalIcons(vararg names: String, libraryName: String, configure: ExternalIconBuilder.() -> Unit) {
         names.forEach { name -> externalIcon(name, libraryName, configure) }
+    }
+
+    /**
+     * Configure local SVG icons discovered from the file system.
+     *
+     * Example:
+     * ```kotlin
+     * localIcons(libraryName = "brand") {
+     *     directory = "src/commonMain/resources/icons"
+     *     include("brand/" + "**" + "/icon.svg")
+     *     exclude("legacy/" + "**")
+     * }
+     * ```
+     *
+     * When no include pattern is specified, all SVG files under the directory are discovered recursively.
+     * Paths can be absolute or relative to the project directory. Icon names are derived from the relative file path and
+     * passed through the standard naming transformers.
+     *
+     * @param libraryName Logical grouping displayed in the generated source package (default: `local`)
+     * @param configure Configuration block describing the local icon search
+     */
+    fun localIcons(libraryName: String = "local", configure: LocalIconsBuilder.() -> Unit) {
+        val projectDir = projectDirectory.orNull
+            ?: throw IllegalStateException("Project directory is not set on SymbolCraftExtension")
+
+        validateLocalLibraryName(libraryName)
+
+        val builder = LocalIconsBuilder(projectDir)
+        builder.configure()
+        val localConfigs = builder.build(libraryName)
+        localConfigs.forEach { (iconName, config) ->
+            iconConfig(iconName, config)
+        }
+    }
+
+    private fun validateLocalLibraryName(libraryName: String) {
+        require(libraryName.matches(Regex("[a-zA-Z0-9_-]+"))) {
+            "Library name for local icons can only contain alphanumeric characters, hyphens, and underscores. Got: $libraryName"
+        }
     }
 
     /**
@@ -438,6 +485,167 @@ class ExternalIconBuilder(private val libraryName: String) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Builder for configuring local SVG icons.
+ */
+class LocalIconsBuilder internal constructor(
+    private val projectDir: String
+) {
+    /**
+     * Root directory used for scanning SVG files. Must point to an existing directory.
+     * Accepts absolute paths or paths relative to the Gradle project directory.
+     */
+    var directory: String? = null
+
+    private val includePatterns = mutableListOf<String>()
+    private val excludePatterns = mutableListOf<String>()
+
+    /**
+     * Add include glob patterns. When none are supplied, every SVG under the directory is included.
+     *
+     * Note: In Java's PathMatcher glob implementation, double-star patterns have specific behavior.
+     * For example, `brand` followed by `/` followed by `**` and then `/` and `*.svg` matches
+     * `brand/sub/icon.svg` but NOT `brand/icon.svg`. To ensure both are matched, we automatically
+     * add a variant of the pattern without the double-star prefix when detected.
+     *
+     * @sample io.github.kingsword09.symbolcraft.plugin.localIconsIncludeSample
+     */
+    fun include(vararg patterns: String) {
+        patterns.filter { it.isNotBlank() }.forEach { pattern ->
+            includePatterns.add(pattern)
+            // Handle Java glob behavior: ensure direct directory matches are also included
+            if (pattern.contains("**/")) {
+                val directMatch = pattern.replace("**/", "")
+                if (directMatch != pattern) {
+                    includePatterns.add(directMatch)
+                }
+            }
+        }
+    }
+
+    /**
+     * Add exclude glob patterns that will be filtered after includes.
+     *
+     * @sample io.github.kingsword09.symbolcraft.plugin.localIconsExcludeSample
+     */
+    fun exclude(vararg patterns: String) {
+        excludePatterns.addAll(patterns.filter { it.isNotBlank() })
+    }
+
+    internal fun build(libraryName: String): Map<String, LocalIconConfig> {
+        val dirValue = directory?.takeIf { it.isNotBlank() }
+            ?: throw IllegalStateException("directory must be specified for localIcons")
+
+        val baseDir = resolveAgainstProject(dirValue).canonicalFile
+
+        require(baseDir.exists()) {
+            "Local icons directory does not exist: ${baseDir.absolutePath}"
+        }
+        require(baseDir.isDirectory) {
+            "Local icons path must be a directory: ${baseDir.absolutePath}"
+        }
+
+        val includes = if (includePatterns.isEmpty()) listOf("**/*.svg", "*.svg") else includePatterns
+        val includeMatchers = includes.map { compileGlob(it) }
+        val excludeMatchers = excludePatterns.map { compileGlob(it) }
+
+        val iconMap = linkedMapOf<String, LocalIconConfig>()
+
+        baseDir.walkTopDown()
+            .filter { it.isFile && it.extension.equals("svg", ignoreCase = true) }
+            .forEach { file ->
+                val relativePath = baseDir.toPath().relativize(file.toPath())
+                if (!matches(relativePath, includeMatchers)) return@forEach
+                if (matches(relativePath, excludeMatchers)) return@forEach
+
+                val relativeNormalized = relativePath.toString().replace(File.separatorChar, '/')
+                val iconNameBase = buildIconName(relativeNormalized)
+                val iconName = ensureUniqueName(iconNameBase, iconMap.keys)
+
+                val relativeWithoutExt = stripSvgExtension(relativeNormalized)
+
+                iconMap[iconName] = LocalIconConfig(
+                    libraryName = libraryName,
+                    absolutePath = file.absolutePath,
+                    relativePath = relativeWithoutExt
+                )
+            }
+
+        if (iconMap.isEmpty()) {
+            throw IllegalStateException(
+                "No SVG icons found in ${baseDir.absolutePath} for includes $includes and excludes $excludePatterns"
+            )
+        }
+
+        return iconMap
+    }
+
+    private fun compileGlob(pattern: String): PathMatcher {
+        val normalized = pattern.trim().ifBlank { "**/*.svg" }
+        val systemPattern = normalized.replace("/", File.separator)
+        return FileSystems.getDefault().getPathMatcher("glob:$systemPattern")
+    }
+
+    private fun matches(relativePath: Path, matchers: List<PathMatcher>): Boolean {
+        if (matchers.isEmpty()) return false
+        return matchers.any { it.matches(relativePath) }
+    }
+
+    /**
+     * Build icon name from relative file path.
+     *
+     * Delegates all sanitization to sanitizeLocalName, which handles path separators,
+     * hyphens, and other special characters in a single pass.
+     */
+    private fun buildIconName(relativePath: String): String {
+        val withoutExt = stripSvgExtension(relativePath)
+        // sanitizeLocalName handles all character replacements
+        val sanitized = sanitizeLocalName(withoutExt)
+        return sanitized.ifBlank { "icon" }
+    }
+
+    private fun ensureUniqueName(baseName: String, existing: Set<String>): String {
+        if (baseName !in existing) return baseName
+
+        var index = 2
+        var candidate: String
+        do {
+            candidate = "${baseName}_${index}"
+            index++
+        } while (candidate in existing)
+        return candidate
+    }
+
+    private fun resolveAgainstProject(path: String): File {
+        val file = File(path)
+        return if (file.isAbsolute) file else File(projectDir, path)
+    }
+
+    private fun stripSvgExtension(path: String): String {
+        return if (path.endsWith(".svg", ignoreCase = true)) {
+            path.substring(0, path.length - 4)
+        } else {
+            path
+        }
+    }
+
+    /**
+     * Sanitize local file path for use as icon name.
+     *
+     * Replaces all non-alphanumeric characters (including path separators, hyphens, etc.)
+     * with underscores, then collapses consecutive underscores and trims from edges.
+     */
+    private fun sanitizeLocalName(input: String): String {
+        return input
+            .replace("/", "_")
+            .replace("\\", "_")
+            .replace("-", "_")  // Hyphens to underscores
+            .replace(Regex("[^a-zA-Z0-9_]"), "_")  // All other special chars
+            .replace(Regex("_+"), "_")  // Collapse multiples
+            .trim('_')  // Trim edges
     }
 }
 

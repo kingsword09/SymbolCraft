@@ -122,12 +122,18 @@ symbolCraft {
         urlTemplate = "https://esm.sh/@mdi/svg@latest/svg/{name}.svg"
     }
 
-    // NEW: External icons with multiple style variants using the new styleParam API
+    // External icons with multiple style variants using the new styleParam API
     externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
         urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg?min=1"
         styleParam("fill") {
             values("", "_fill1")  // unfilled, filled variants
         }
+    }
+
+    // Local icons
+    localIcons("local-test") {
+        directory = project.relativePath("src/commonMain/composeResources/files")
+        include("**/*.svg")
     }
 }
 
