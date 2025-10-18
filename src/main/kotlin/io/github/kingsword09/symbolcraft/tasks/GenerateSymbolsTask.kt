@@ -330,38 +330,61 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         tempDir: File
     ): DownloadStats = coroutineScope {
         val totalIcons = config.values.sumOf { it.size }
+        // Count only remote icons (exclude LocalIconConfig)
+        val remoteIconCount = config.values.sumOf { iconConfigs ->
+            iconConfigs.count { it !is LocalIconConfig }
+        }
+        val localIconCount = totalIcons - remoteIconCount
+
         val completed = AtomicInteger(0)
         val failed = AtomicInteger(0)
         val cached = AtomicInteger(0)
+        val localProcessed = AtomicInteger(0)
 
-        logger.lifecycle("⬇️ Downloading SVG files...")
+        if (remoteIconCount > 0) {
+            logger.lifecycle("⬇️ Downloading SVG files...")
+        }
+        if (localIconCount > 0) {
+            logger.lifecycle("📂 Processing local SVG files...")
+        }
 
         // Create download jobs for parallel execution
         val downloadJobs = config.flatMap { (iconName, iconConfigs) ->
             iconConfigs.map { iconConfig ->
                 async(Dispatchers.IO) {
                     val result = when (iconConfig) {
-                        is LocalIconConfig -> processLocalSvg(
-                            iconName = iconName,
-                            iconConfig = iconConfig,
-                            tempDir = tempDir,
-                            completed = completed,
-                            failed = failed
-                        )
-                        else -> processRemoteSvg(
-                            iconName = iconName,
-                            iconConfig = iconConfig,
-                            downloader = downloader,
-                            tempDir = tempDir,
-                            completed = completed,
-                            failed = failed,
-                            cached = cached
-                        )
-                    }
-
-                    val progress = completed.get() + failed.get()
-                    if (progress % 5 == 0 || progress == totalIcons) {
-                        logger.lifecycle("   Progress: $progress/$totalIcons")
+                        is LocalIconConfig -> {
+                            val result = processLocalSvg(
+                                iconName = iconName,
+                                iconConfig = iconConfig,
+                                tempDir = tempDir,
+                                completed = localProcessed,
+                                failed = failed
+                            )
+                            // Log local processing progress separately
+                            val localProgress = localProcessed.get()
+                            if (localIconCount > 0 && (localProgress % 5 == 0 || localProgress == localIconCount)) {
+                                logger.lifecycle("   Local progress: $localProgress/$localIconCount")
+                            }
+                            result
+                        }
+                        else -> {
+                            val result = processRemoteSvg(
+                                iconName = iconName,
+                                iconConfig = iconConfig,
+                                downloader = downloader,
+                                tempDir = tempDir,
+                                completed = completed,
+                                failed = failed,
+                                cached = cached
+                            )
+                            // Log download progress separately
+                            val downloadProgress = completed.get()
+                            if (remoteIconCount > 0 && (downloadProgress % 5 == 0 || downloadProgress == remoteIconCount)) {
+                                logger.lifecycle("   Download progress: $downloadProgress/$remoteIconCount")
+                            }
+                            result
+                        }
                     }
 
                     result
@@ -374,7 +397,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
         DownloadStats(
             totalCount = totalIcons,
-            successCount = completed.get(),
+            successCount = completed.get() + localProcessed.get(),
             failedCount = failed.get(),
             cachedCount = cached.get(),
             results = results.filterIsInstance<DownloadResult>()
@@ -479,14 +502,17 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     }
 
     private fun logDownloadStats(stats: DownloadStats) {
-        logger.lifecycle("✅ Download completed:")
+        logger.lifecycle("✅ Processing completed:")
         logger.lifecycle("   📁 Total: ${stats.totalCount}")
         logger.lifecycle("   ✅ Success: ${stats.successCount}")
         logger.lifecycle("   ❌ Failed: ${stats.failedCount}")
-        logger.lifecycle("   💾 From cache: ${stats.cachedCount}")
+
+        if (stats.cachedCount > 0) {
+            logger.lifecycle("   💾 From cache: ${stats.cachedCount} (remote icons only)")
+        }
 
         if (stats.failedCount > 0) {
-            logger.warn("⚠️ Some icons failed to download. Generated code may use fallback implementations.")
+            logger.warn("⚠️ Some icons failed to process. Generated code may use fallback implementations.")
         }
     }
 
