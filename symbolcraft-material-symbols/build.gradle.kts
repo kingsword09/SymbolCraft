@@ -56,7 +56,7 @@ kotlin {
 
 android {
     namespace = "io.github.kingsword09.symbolcraft.materialsymbols"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21

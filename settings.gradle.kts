@@ -7,6 +7,15 @@ pluginManagement {
         google()
         mavenCentral()
     }
+    
+    // Force Kotlin version to prevent CI from using dev versions
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.namespace == "org.jetbrains.kotlin") {
+                useVersion("2.0.0")
+            }
+        }
+    }
 }
 
 dependencyResolutionManagement {

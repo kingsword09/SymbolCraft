@@ -42,8 +42,14 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
+    - name: Verify Kotlin version
+      run: |
+        echo "Checking Kotlin version..."
+        ./gradlew :symbolcraft-material-symbols:dependencies --configuration runtimeClasspath | grep kotlin-stdlib || true
+        echo "Expected Kotlin version: 2.0.0"
+
     - name: Build material-symbols (all platforms)
-      run: ./gradlew :symbolcraft-material-symbols:build -x test --stacktrace
+      run: ./gradlew :symbolcraft-material-symbols:build -x test --stacktrace --no-configuration-cache
 
     - name: Run tests
       run: ./gradlew :symbolcraft-material-symbols:test --stacktrace
