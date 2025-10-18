@@ -10,6 +10,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -24,6 +25,45 @@ class GenerateSymbolsTaskTest {
     @BeforeTest
     fun setUp() {
         projectDir = createTempDirectory("symbolcraft-testkit")
+    }
+
+    @Test
+    fun `download only skips conversion but fetches svgs`() {
+        createSettings("symbolcraft-download-only")
+        createBuildScript(
+            """
+                cacheEnabled.set(true)
+                cacheDirectory.set("symbolcraft-cache")
+                download {
+                    enabled.set(true)
+                    outputDirectory.set("src/commonMain/composeResources/files/testsymbols")
+                }
+                materialSymbol("home") {
+                    style()
+                }
+            """.trimIndent()
+        )
+
+        seedMaterialSymbolsCache(iconName = "home")
+
+        val result = runGradle("generateSymbolCraftIcons")
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateSymbolCraftIcons")?.outcome)
+
+        val generatedDir = generatedDir("icons/materialsymbols")
+        assertFalse(generatedDir.toFile().exists(), "Generated Kotlin sources should be absent in download-only mode")
+
+        val tempSvgDir = projectDir.resolve("build/symbolcraft-cache/temp-svgs/material-symbols")
+        assertTrue(tempSvgDir.toFile().exists(), "Temp SVG directory should exist when downloads complete")
+        val svgFiles = tempSvgDir.toFile()
+            .walkTopDown()
+            .filter { it.isFile && it.extension == "svg" }
+            .toList()
+        assertTrue(svgFiles.isNotEmpty(), "Expected at least one SVG file in temp directory")
+
+        val exportDir = projectDir.resolve("src/commonMain/composeResources/files/testsymbols/material-symbols")
+        assertTrue(exportDir.toFile().exists(), "Download directory should be created")
+        val exported = exportDir.resolve("HomeW400Outlined.svg")
+        assertTrue(exported.toFile().exists(), "Expected exported SVG at ${exported}")
     }
 
     @AfterTest

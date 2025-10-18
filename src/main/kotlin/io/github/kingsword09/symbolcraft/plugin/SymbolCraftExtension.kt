@@ -47,6 +47,13 @@ abstract class SymbolCraftExtension {
         objects.newInstance(NamingConfig::class.java)
     }
 
+    internal val downloadConfig: DownloadConfig by lazy {
+        objects.newInstance(DownloadConfig::class.java).apply {
+            enabled.convention(false)
+            outputDirectory.convention("src/commonMain/composeResources/files/symbolcraft")
+        }
+    }
+
     private val iconsConfig = mutableMapOf<String, MutableList<IconConfig>>()
 
     init {
@@ -81,6 +88,64 @@ abstract class SymbolCraftExtension {
     }
 
     internal fun namingConfigSignature(): String = namingConfig.snapshotSignature()
+
+    /**
+     * Configure download behaviour, including download-only mode and SVG export directory.
+     *
+     * Example:
+     * ```
+     * download {
+     *     enabled.set(true)
+     *     outputDirectory.set("src/commonMain/composeResources/files/icons")
+     * }
+     * ```
+     */
+    fun download(action: Action<DownloadConfig>) {
+        action.execute(downloadConfig)
+    }
+
+    fun download(configure: DownloadConfig.() -> Unit) {
+        download(Action { it.configure() })
+    }
+
+    internal fun downloadConfigSignature(): String = downloadConfig.snapshotSignature()
+
+    /**
+     * Convenience helper to toggle download-only mode optionally overriding the output directory.
+     */
+    fun downloadOnly(enable: Boolean = true, outputDir: String? = null) {
+        download { config ->
+            config.enabled.set(enable)
+            if (outputDir != null) {
+                config.outputDirectory.set(outputDir)
+            }
+        }
+    }
+
+    abstract class DownloadConfig @Inject constructor() {
+        abstract val enabled: Property<Boolean>
+        abstract val outputDirectory: Property<String>
+        abstract val cacheEnabled: Property<Boolean>
+
+        fun only(enable: Boolean = true) {
+            enabled.set(enable)
+        }
+
+        fun directory(path: String) {
+            outputDirectory.set(path)
+        }
+
+        fun cache(enable: Boolean) {
+            cacheEnabled.set(enable)
+        }
+
+        fun disableCache() {
+            cache(false)
+        }
+
+        internal fun snapshotSignature(): String =
+            "enabled=${enabled.orNull}|output=${outputDirectory.orNull}|cache=${cacheEnabled.orNull}"
+    }
 
     /**
      * Generic method to add an icon with any IconConfig implementation.
@@ -291,9 +356,26 @@ abstract class SymbolCraftExtension {
             append("|outputDir:").append(outputDirectory.orNull)
             append("|preview:").append(generatePreview.orNull)
             append("|namingConfig:").append(namingConfig.snapshotSignature())
+            append("|downloadConfig:").append(downloadConfigSignature())
         }
         return configString.hashCode().toString()
     }
+}
+
+abstract class DownloadConfig @Inject constructor() {
+    abstract val enabled: Property<Boolean>
+    abstract val outputDirectory: Property<String>
+
+    fun only(enable: Boolean = true) {
+        enabled.set(enable)
+    }
+
+    fun directory(path: String) {
+        outputDirectory.set(path)
+    }
+
+    internal fun snapshotSignature(): String =
+        "enabled=${enabled.orNull}|output=${outputDirectory.orNull}"
 }
 
 /**

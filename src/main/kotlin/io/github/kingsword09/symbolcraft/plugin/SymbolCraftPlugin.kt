@@ -35,6 +35,9 @@ class SymbolCraftPlugin : Plugin<Project> {
             task.inputs.property("symbolsConfig", extension.getConfigHash())
             task.inputs.property("generatePreview", extension.generatePreview)
             task.inputs.property("namingConfigSignature", extension.namingConfigSignature())
+            task.inputs.property("downloadEnabled", extension.downloadConfig.enabled)
+            task.downloadOutputDirectory.set(extension.downloadConfig.outputDirectory)
+            task.downloadCacheEnabledOverride.set(extension.downloadConfig.cacheEnabled)
         }
 
         project.tasks.register("cleanSymbolCraftCache", CleanSymbolsCacheTask::class.java) { task ->
