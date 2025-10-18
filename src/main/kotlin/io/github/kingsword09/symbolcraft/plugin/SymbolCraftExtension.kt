@@ -506,13 +506,22 @@ class LocalIconsBuilder internal constructor(
     /**
      * Add include glob patterns. When none are supplied, every SVG under the directory is included.
      *
+     * Note: In Java's PathMatcher glob implementation, double-star patterns have specific behavior.
+     * For example, `brand` followed by `/` followed by `**` and then `/` and `*.svg` matches
+     * `brand/sub/icon.svg` but NOT `brand/icon.svg`. To ensure both are matched, we automatically
+     * add a variant of the pattern without the double-star prefix when detected.
+     *
      * @sample io.github.kingsword09.symbolcraft.plugin.localIconsIncludeSample
      */
     fun include(vararg patterns: String) {
         patterns.filter { it.isNotBlank() }.forEach { pattern ->
             includePatterns.add(pattern)
+            // Handle Java glob behavior: ensure direct directory matches are also included
             if (pattern.contains("**/")) {
-                includePatterns.add(pattern.replace("**/", ""))
+                val directMatch = pattern.replace("**/", "")
+                if (directMatch != pattern) {
+                    includePatterns.add(directMatch)
+                }
             }
         }
     }
@@ -585,10 +594,16 @@ class LocalIconsBuilder internal constructor(
         return matchers.any { it.matches(relativePath) }
     }
 
+    /**
+     * Build icon name from relative file path.
+     *
+     * Delegates all sanitization to sanitizeLocalName, which handles path separators,
+     * hyphens, and other special characters in a single pass.
+     */
     private fun buildIconName(relativePath: String): String {
         val withoutExt = stripSvgExtension(relativePath)
-        val candidate = withoutExt.replace('/', '_').replace('-', '_')
-        val sanitized = sanitizeLocalName(candidate)
+        // sanitizeLocalName handles all character replacements
+        val sanitized = sanitizeLocalName(withoutExt)
         return sanitized.ifBlank { "icon" }
     }
 
@@ -617,13 +632,20 @@ class LocalIconsBuilder internal constructor(
         }
     }
 
+    /**
+     * Sanitize local file path for use as icon name.
+     *
+     * Replaces all non-alphanumeric characters (including path separators, hyphens, etc.)
+     * with underscores, then collapses consecutive underscores and trims from edges.
+     */
     private fun sanitizeLocalName(input: String): String {
         return input
             .replace("/", "_")
             .replace("\\", "_")
-            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
-            .replace(Regex("_+"), "_")
-            .trim('_')
+            .replace("-", "_")  // Hyphens to underscores
+            .replace(Regex("[^a-zA-Z0-9_]"), "_")  // All other special chars
+            .replace(Regex("_+"), "_")  // Collapse multiples
+            .trim('_')  // Trim edges
     }
 }
 

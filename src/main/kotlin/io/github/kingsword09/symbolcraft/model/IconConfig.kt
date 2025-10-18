@@ -124,18 +124,38 @@ data class LocalIconConfig(
 
     override fun getSignature(): String = buildSignature(relativePath)
 
+    /**
+     * Build signature from relative path for file naming.
+     *
+     * This function has its own sanitization logic that:
+     * 1. Normalizes path separators and hyphens to underscores
+     * 2. Removes dangerous/invalid characters
+     * 3. Converts to PascalCase for Kotlin naming convention
+     * 4. Returns "Local" as fallback for blank/invalid inputs
+     */
     private fun buildSignature(relativePath: String): String {
-        val normalized = relativePath.replace('/', '_').replace('-', '_')
-        val sanitized = sanitizeIconName(normalized)
-        if (sanitized.isBlank()) return "Local"
+        // Normalize separators and hyphens first
+        val normalized = relativePath
+            .replace("/", "_")
+            .replace("\\", "_")
+            .replace("-", "_")
 
-        return sanitized
+        // Remove dangerous characters (keep only alphanumeric and underscores)
+        val cleaned = normalized.replace(Regex("[^a-zA-Z0-9_]"), "_")
+            .replace(Regex("_+"), "_")  // Collapse multiple underscores
+            .trim('_')  // Remove leading/trailing underscores
+
+        // Return "Local" if sanitization resulted in empty/blank string
+        if (cleaned.isBlank()) return "Local"
+
+        // Convert to PascalCase
+        return cleaned
             .split('_')
             .filter { it.isNotBlank() }
             .joinToString(separator = "") { part ->
                 part.replaceFirstChar { ch -> ch.titlecase() }
             }
-            .ifBlank { "Local" }
+            .ifBlank { "Local" }  // Final safety check
     }
 }
 
