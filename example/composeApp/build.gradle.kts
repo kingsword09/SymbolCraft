@@ -8,7 +8,9 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.composeHotReload)
+    // TODO: Hot Reload 1.0.0-beta07 not compatible with Kotlin 2.0.0 Compose Compiler
+    // Wait for Hot Reload 1.0.0 stable or use Kotlin 2.1.0+
+    // alias(libs.plugins.composeHotReload)
     alias(libs.plugins.symbolCraft)
 }
 

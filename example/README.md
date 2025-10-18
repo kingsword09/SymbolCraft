@@ -83,12 +83,17 @@ symbolCraft {
 
 ## Getting Started
 
-### Prerequisites
+> **Important**: This example project is **independent** from the root project. You must publish the plugin to `mavenLocal` first. See [SETUP.md](SETUP.md) for details.
 
-- **JDK 17** or higher
-- **Android Studio** (for Android development)
-- **Xcode** (for iOS development, macOS only)
-- **Gradle 8.0+** (included via wrapper)
+### Step 0: Publish Plugin (Required)
+
+From the root SymbolCraft directory:
+
+```bash
+cd ..
+./gradlew :symbolcraft-plugin:publishToMavenLocal
+cd example
+```
 
 ### Step 1: Generate Icons
 
@@ -227,8 +232,14 @@ The example enables preview generation with `generatePreview.set(true)`. You can
 3. Click the "Preview" panel on the right side
 4. View rendered icons directly in the IDE
 
+## Known Issues
+
+- **Compose Hot Reload**: Not compatible with Kotlin 2.0.0 + Compose Compiler. Currently disabled. See [SETUP.md](SETUP.md#known-issues) for details.
+- **Android Build**: May require compileSdk 35+ for some dependencies. Desktop (JVM) build works perfectly.
+
 ## Learn More
 
+- [Setup Guide](SETUP.md) - Detailed configuration and troubleshooting
 - [SymbolCraft Documentation](../README.md)
 - [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)
 - [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/)

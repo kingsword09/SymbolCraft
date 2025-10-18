@@ -4,10 +4,11 @@
 
 **SymbolCraft** 是一个用于 Kotlin Multiplatform 项目的 Gradle 插件，支持从多个图标库（Material Symbols、Bootstrap Icons、Heroicons 等）按需生成图标。
 
-- **版本**: v0.3.1
+- **版本**: v0.4.0
+- **架构**: Monorepo (多模块单仓库)
 - **状态**: ✅ 已发布到 Gradle Plugin Portal 和 Maven Central
 - **语言**: Kotlin 2.0.0
-- **最低 Gradle 版本**: 8.0+
+- **最低 Gradle 版本**: 8.7+
 - **仓库**: https://github.com/kingsword09/SymbolCraft
 
 ### 核心特性
@@ -26,65 +27,113 @@
 | 技术 | 版本 | 用途 |
 |------|------|------|
 | Kotlin | 2.0.0 | 核心语言 |
-| Gradle | 8.0+ | 构建系统 |
+| Gradle | 8.7+ | 构建系统 |
 | Kotlin Coroutines | 1.8.1 | 并行下载 |
 | Ktor Client | 2.3.12 | HTTP 客户端 |
-| Kotlinx Serialization | - | JSON 序列化 |
+| Kotlinx Serialization | 1.7.1 | JSON 序列化 |
+| Compose Multiplatform | 1.6.11 | UI 框架 |
+| Android Gradle Plugin | 8.5.2 | Android 构建 |
 | svg-to-compose | 0.1.0 | SVG 转换库(io.github.kingsword09 fork) |
 
 ---
 
-## 项目结构
+## 项目结构 (Monorepo)
 
 ```
-SymbolCraft/
-├── build.gradle.kts                    # 插件构建配置
-├── gradle.properties                   # Gradle 配置
-├── settings.gradle.kts                 # Gradle 设置
-├── libs.versions.toml                  # 版本目录
+SymbolCraft/                                    # 根项目
+├── build.gradle.kts                            # 根构建配置（统一版本管理）
+├── settings.gradle.kts                         # 子模块配置
+├── gradle.properties                           # 全局 Gradle 配置
+├── gradle/
+│   └── libs.versions.toml                      # 版本目录（统一依赖管理）
 │
-├── src/main/kotlin/io/github/kingsword09/symbolcraft/
-│   ├── plugin/                         # Gradle 插件核心
-│   │   ├── SymbolCraftPlugin.kt        # 插件入口，注册任务
-│   │   ├── SymbolCraftExtension.kt     # DSL 配置接口
-│   │   └── NamingConfig.kt             # 命名配置
-│   │
-│   ├── tasks/                          # Gradle 任务
-│   │   ├── GenerateSymbolsTask.kt      # 核心生成任务 (@CacheableTask)
-│   │   ├── CleanSymbolsCacheTask.kt    # 清理缓存任务
-│   │   ├── CleanSymbolsIconsTask.kt    # 清理生成文件任务
-│   │   └── ValidateSymbolsConfigTask.kt # 配置验证任务
-│   │
-│   ├── download/                       # 下载模块
-│   │   └── SvgDownloader.kt            # 智能 SVG 下载器（协程并行 + 重试）
-│   │
-│   ├── converter/                      # 转换模块
-│   │   ├── Svg2ComposeConverter.kt     # SVG 到 Compose 转换器
-│   │   └── IconNameTransformer.kt      # 图标命名转换器
-│   │
-│   ├── model/                          # 数据模型
-│   │   └── IconConfig.kt               # 图标配置接口和实现
-│   │
-│   └── utils/                          # 工具类
-│       └── PathUtils.kt                # 路径工具
+├── symbolcraft-plugin/                         # Gradle 插件模块
+│   ├── build.gradle.kts                        # 插件构建配置
+│   └── src/main/kotlin/io/github/kingsword09/symbolcraft/
+│       ├── plugin/                             # Gradle 插件核心
+│       │   ├── SymbolCraftPlugin.kt            # 插件入口，注册任务
+│       │   ├── SymbolCraftExtension.kt         # DSL 配置接口
+│       │   └── NamingConfig.kt                 # 命名配置
+│       │
+│       ├── tasks/                              # Gradle 任务
+│       │   ├── GenerateSymbolsTask.kt          # 核心生成任务 (@CacheableTask)
+│       │   ├── CleanSymbolsCacheTask.kt        # 清理缓存任务
+│       │   ├── CleanSymbolsIconsTask.kt        # 清理生成文件任务
+│       │   └── ValidateSymbolsConfigTask.kt    # 配置验证任务
+│       │
+│       ├── download/                           # 下载模块
+│       │   └── SvgDownloader.kt                # 智能 SVG 下载器（协程并行 + 重试）
+│       │
+│       ├── converter/                          # 转换模块
+│       │   ├── Svg2ComposeConverter.kt         # SVG 到 Compose 转换器
+│       │   └── IconNameTransformer.kt          # 图标命名转换器
+│       │
+│       ├── model/                              # 数据模型
+│       │   └── IconConfig.kt                   # 图标配置接口和实现
+│       │
+│       └── utils/                              # 工具类
+│           └── PathUtils.kt                    # 路径工具
 │
-├── example/                            # 示例项目（Compose Multiplatform）
-│   ├── composeApp/                     # 主应用
+├── symbolcraft-runtime/                        # 运行时库模块（待实现）
+│   ├── build.gradle.kts                        # Kotlin Multiplatform 配置
+│   ├── README.md                               # 模块文档
+│   └── src/
+│       ├── commonMain/kotlin/                  # 通用代码
+│       ├── androidMain/kotlin/                 # Android 特定代码
+│       ├── jvmMain/kotlin/                     # JVM 特定代码
+│       ├── iosMain/kotlin/                     # iOS 特定代码
+│       └── commonTest/kotlin/                  # 测试代码
+│
+├── symbolcraft-material-symbols/               # 预生成图标库模块（待实现）
+│   ├── build.gradle.kts                        # Kotlin Multiplatform 配置
+│   ├── README.md                               # 模块文档
+│   └── src/
+│       ├── commonMain/kotlin/                  # 预生成的图标代码
+│       ├── androidMain/kotlin/
+│       ├── jvmMain/kotlin/
+│       ├── iosMain/kotlin/
+│       └── commonTest/kotlin/
+│
+├── example/                                    # 示例项目（Compose Multiplatform）
+│   ├── composeApp/                             # 主应用
 │   │   ├── src/
-│   │   │   ├── androidMain/           # Android 平台代码
-│   │   │   ├── iosMain/               # iOS 平台代码
-│   │   │   ├── jvmMain/               # Desktop 平台代码
-│   │   │   └── commonMain/            # 通用代码
+│   │   │   ├── androidMain/                   # Android 平台代码
+│   │   │   ├── iosMain/                       # iOS 平台代码
+│   │   │   ├── jvmMain/                       # Desktop 平台代码
+│   │   │   └── commonMain/                    # 通用代码
 │   │   │       ├── kotlin/
-│   │   │       │   └── generated/symbols/  # 生成的图标
+│   │   │       │   └── generated/symbols/     # 生成的图标
 │   │   │       └── composeResources/
-│   │   └── build.gradle.kts            # 使用 SymbolCraft 插件
-│   └── iosApp/                         # iOS 应用
+│   │   └── build.gradle.kts                    # 使用 SymbolCraft 插件
+│   └── iosApp/                                 # iOS 应用
 │
-├── README.md                           # 英文文档
-├── README_ZH.md                        # 中文文档
-└── AGENTS.md                           # 本文件（开发指南）
+├── README.md                                   # 英文文档
+├── README_ZH.md                                # 中文文档
+└── AGENTS.md                                   # 本文件（开发指南）
 ```
+
+### 模块说明
+
+#### **symbolcraft-plugin**
+- **类型**: Gradle Plugin (JVM)
+- **职责**: 提供图标按需生成的 Gradle 插件
+- **发布**: Gradle Plugin Portal + Maven Central
+- **artifactId**: `symbolcraft`
+
+#### **symbolcraft-runtime** (🚧 待实现)
+- **类型**: Kotlin Multiplatform Library
+- **职责**: 提供运行时图标加载、缓存支持
+- **平台**: Android, iOS, JVM, JS
+- **发布**: Maven Central
+- **artifactId**: `symbolcraft-runtime`
+
+#### **symbolcraft-material-symbols** (🚧 待实现)
+- **类型**: Kotlin Multiplatform Library
+- **职责**: 预生成的 Material Symbols 图标库
+- **平台**: Android, iOS, JVM, JS
+- **发布**: Maven Central
+- **artifactId**: `symbolcraft-material-symbols`
+- **依赖**: symbolcraft-runtime
 
 ---
 
@@ -328,31 +377,112 @@ abstract class IconNameTransformer {
 
 ---
 
-## 构建和发布流程
+## 构建和发布流程 (Monorepo)
 
 ### 1. 本地构建
+
+#### 构建所有模块
 ```bash
-./gradlew build                    # 构建插件
-./gradlew test                     # 运行测试（当前无测试）
-./gradlew publishToMavenLocal      # 发布到本地 Maven
+./gradlew clean build -x test              # 构建所有模块（跳过测试）
+./gradlew build                            # 构建所有模块（包含测试）
 ```
 
-### 2. 发布到 Gradle Plugin Portal
+#### 构建单个模块
 ```bash
-./gradlew publishPlugins           # 需要配置 API key
+./gradlew :symbolcraft-plugin:build        # 仅构建插件模块
+./gradlew :symbolcraft-runtime:build       # 仅构建运行时模块
+./gradlew :symbolcraft-material-symbols:build  # 仅构建图标库模块
+```
+
+#### 运行测试
+```bash
+./gradlew test                             # 所有模块测试
+./gradlew :symbolcraft-plugin:test         # 插件模块测试
+```
+
+### 2. 本地发布（测试用）
+
+#### 发布所有模块到本地 Maven
+```bash
+./gradlew publishAllToMavenLocal           # 统一发布所有模块
+```
+
+#### 发布单个模块
+```bash
+./gradlew :symbolcraft-plugin:publishToMavenLocal
+./gradlew :symbolcraft-runtime:publishToMavenLocal
+./gradlew :symbolcraft-material-symbols:publishToMavenLocal
 ```
 
 ### 3. 发布到 Maven Central
+
+#### 发布所有模块（推荐）
 ```bash
-./gradlew publishToMavenCentral    # 需要配置签名
+./gradlew publishAll                       # 统一发布所有模块
 ```
 
-**配置要求**:
-- `gradle.properties` 或环境变量：
-  - `SIGNING_KEY` - GPG 签名密钥
-  - `SIGNING_PASSWORD` - 签名密码
-  - `mavenCentralUsername` - Maven Central 用户名
-  - `mavenCentralPassword` - Maven Central 密码
+#### 发布单个模块
+```bash
+./gradlew :symbolcraft-plugin:publishToMavenCentral
+./gradlew :symbolcraft-runtime:publishToMavenCentral
+./gradlew :symbolcraft-material-symbols:publishToMavenCentral
+```
+
+### 4. 发布到 Gradle Plugin Portal
+```bash
+./gradlew :symbolcraft-plugin:publishPlugins  # 仅插件模块
+```
+
+### 配置要求
+
+#### gradle.properties 或环境变量
+```properties
+# 签名配置
+SIGNING_KEY=<GPG 签名密钥>
+SIGNING_PASSWORD=<签名密码>
+
+# Maven Central 配置
+mavenCentralUsername=<用户名>
+mavenCentralPassword=<密码>
+
+# Gradle Plugin Portal 配置（仅插件模块需要）
+gradle.publish.key=<API Key>
+gradle.publish.secret=<API Secret>
+```
+
+#### gradle.properties 重要配置
+```properties
+# Gradle 优化
+org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
+org.gradle.parallel=true
+org.gradle.caching=true
+
+# Kotlin 配置
+kotlin.code.style=official
+kotlin.mpp.stability.nowarn=true
+kotlin.mpp.androidSourceSetLayoutVersion=2
+kotlin.mpp.androidGradlePluginCompatibility.nowarn=true
+kotlin.apple.xcodeCompatibility.nowarn=true
+
+# AndroidX 支持
+android.useAndroidX=true
+android.enableJetifier=false
+
+# Dokka 配置
+org.jetbrains.dokka.experimental.gradle.pluginMode=V2Enabled
+org.jetbrains.dokka.experimental.gradle.pluginMode.noWarn=true
+```
+
+### 版本管理
+
+所有模块使用统一版本号，在根项目的 `build.gradle.kts` 中配置：
+
+```kotlin
+allprojects {
+    group = "io.github.kingsword09"
+    version = "0.4.0"  // 统一版本
+}
+```
 
 ---
 
