@@ -3,6 +3,7 @@ package io.github.kingsword09.symbolcraft.tasks
 import io.github.kingsword09.symbolcraft.converter.*
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
 import io.github.kingsword09.symbolcraft.model.IconConfig
+import io.github.kingsword09.symbolcraft.model.LocalIconConfig
 import io.github.kingsword09.symbolcraft.utils.PathUtils
 import io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension
 import kotlinx.coroutines.Dispatchers
@@ -339,48 +340,31 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val downloadJobs = config.flatMap { (iconName, iconConfigs) ->
             iconConfigs.map { iconConfig ->
                 async(Dispatchers.IO) {
-                    try {
-                        val cacheKey = iconConfig.getCacheKey(iconName)
-                        val wasCached = downloader.isCached(cacheKey)
-
-                        val svgContent = downloader.downloadSvg(iconName, iconConfig)
-
-                        if (svgContent != null && svgContent.isNotBlank()) {
-                            // Include library ID in the directory structure
-                            val librarySubdir = File(tempDir, iconConfig.libraryId)
-                            librarySubdir.mkdirs()
-
-                            val fileName = "${iconName.replaceFirstChar { it.titlecase() }}${iconConfig.getSignature()}.svg"
-                            val tempFile = File(librarySubdir, fileName)
-                            tempFile.writeText(svgContent)
-
-                            completed.incrementAndGet()
-                            if (wasCached) cached.incrementAndGet()
-
-                            // Progress logging
-                            val progress = completed.get() + failed.get()
-                            if (progress % 5 == 0 || progress == totalIcons) {
-                                logger.lifecycle("   Progress: $progress/$totalIcons")
-                            }
-
-                            DownloadResult.Success(iconName, iconConfig, fileName)
-                        } else {
-                            failed.incrementAndGet()
-                            val errorMsg = if (svgContent == null) "Download returned null" else "Empty SVG content"
-                            logger.warn("   ⚠️ Failed to download: $iconName-${iconConfig.getSignature()} ($errorMsg)")
-                            DownloadResult.Failed(iconName, iconConfig, errorMsg)
-                        }
-                    } catch (e: Exception) {
-                        failed.incrementAndGet()
-                        val detailedError = when {
-                            e.message?.contains("timeout", ignoreCase = true) == true -> "Timeout - network too slow"
-                            e.message?.contains("404", ignoreCase = true) == true -> "Icon not found"
-                            e.message?.contains("connection", ignoreCase = true) == true -> "Network connection failed"
-                            else -> e.message ?: "Unknown error"
-                        }
-                        logger.warn("   ❌ Error downloading $iconName-${iconConfig.getSignature()}: $detailedError")
-                        DownloadResult.Failed(iconName, iconConfig, detailedError)
+                    val result = when (iconConfig) {
+                        is LocalIconConfig -> processLocalSvg(
+                            iconName = iconName,
+                            iconConfig = iconConfig,
+                            tempDir = tempDir,
+                            completed = completed,
+                            failed = failed
+                        )
+                        else -> processRemoteSvg(
+                            iconName = iconName,
+                            iconConfig = iconConfig,
+                            downloader = downloader,
+                            tempDir = tempDir,
+                            completed = completed,
+                            failed = failed,
+                            cached = cached
+                        )
                     }
+
+                    val progress = completed.get() + failed.get()
+                    if (progress % 5 == 0 || progress == totalIcons) {
+                        logger.lifecycle("   Progress: $progress/$totalIcons")
+                    }
+
+                    result
                 }
             }
         }
@@ -395,6 +379,103 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             cachedCount = cached.get(),
             results = results.filterIsInstance<DownloadResult>()
         )
+    }
+
+    private fun processLocalSvg(
+        iconName: String,
+        iconConfig: LocalIconConfig,
+        tempDir: File,
+        completed: AtomicInteger,
+        failed: AtomicInteger
+    ): DownloadResult {
+        return try {
+            val sourceFile = File(iconConfig.absolutePath)
+            if (!sourceFile.exists() || !sourceFile.isFile) {
+                failed.incrementAndGet()
+                val message = "Local SVG not found at ${sourceFile.absolutePath}"
+                logger.warn("   ⚠️ Failed to load local icon $iconName: $message")
+                DownloadResult.Failed(iconName, iconConfig, message)
+            } else {
+                val librarySubdir = File(tempDir, iconConfig.libraryId)
+                librarySubdir.mkdirs()
+
+                val fileName = buildTempSvgFileName(iconName, iconConfig)
+                val targetFile = File(librarySubdir, fileName)
+                sourceFile.copyTo(targetFile, overwrite = true)
+
+                completed.incrementAndGet()
+                DownloadResult.Success(iconName, iconConfig, fileName)
+            }
+        } catch (e: Exception) {
+            failed.incrementAndGet()
+            val message = e.message ?: "Unknown error"
+            logger.warn("   ❌ Error processing local icon $iconName: $message")
+            DownloadResult.Failed(iconName, iconConfig, message)
+        }
+    }
+
+    private suspend fun processRemoteSvg(
+        iconName: String,
+        iconConfig: IconConfig,
+        downloader: SvgDownloader,
+        tempDir: File,
+        completed: AtomicInteger,
+        failed: AtomicInteger,
+        cached: AtomicInteger
+    ): DownloadResult {
+        return try {
+            val cacheKey = iconConfig.getCacheKey(iconName)
+            val wasCached = downloader.isCached(cacheKey)
+
+            val svgContent = downloader.downloadSvg(iconName, iconConfig)
+
+            if (svgContent != null && svgContent.isNotBlank()) {
+                val librarySubdir = File(tempDir, iconConfig.libraryId)
+                librarySubdir.mkdirs()
+
+                val fileName = buildTempSvgFileName(iconName, iconConfig)
+                val tempFile = File(librarySubdir, fileName)
+                tempFile.writeText(svgContent)
+
+                completed.incrementAndGet()
+                if (wasCached) cached.incrementAndGet()
+
+                DownloadResult.Success(iconName, iconConfig, fileName)
+            } else {
+                failed.incrementAndGet()
+                val errorMsg = if (svgContent == null) "Download returned null" else "Empty SVG content"
+                logger.warn("   ⚠️ Failed to download: $iconName-${iconConfig.getSignature()} ($errorMsg)")
+                DownloadResult.Failed(iconName, iconConfig, errorMsg)
+            }
+        } catch (e: Exception) {
+            failed.incrementAndGet()
+            val detailedError = when {
+                e.message?.contains("timeout", ignoreCase = true) == true -> "Timeout - network too slow"
+                e.message?.contains("404", ignoreCase = true) == true -> "Icon not found"
+                e.message?.contains("connection", ignoreCase = true) == true -> "Network connection failed"
+                else -> e.message ?: "Unknown error"
+            }
+            logger.warn("   ❌ Error downloading $iconName-${iconConfig.getSignature()}: $detailedError")
+            DownloadResult.Failed(iconName, iconConfig, detailedError)
+        }
+    }
+
+    private fun buildTempSvgFileName(iconName: String, iconConfig: IconConfig): String {
+        val signature = iconConfig.getSignature()
+
+        if (iconConfig is LocalIconConfig) {
+            val preferredName = signature.ifBlank { iconName }
+            val safeName = preferredName
+                .replace("[^A-Za-z0-9_]".toRegex(), "_")
+                .replace("_+".toRegex(), "_")
+                .trim('_')
+                .ifBlank { "LocalIcon" }
+            return "$safeName.svg"
+        }
+
+        val base = iconName.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+        val suffix = if (signature.isNotBlank()) signature else "Local"
+        return "$base$suffix.svg"
     }
 
     private fun logDownloadStats(stats: DownloadStats) {
@@ -429,9 +510,10 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             }
 
             // Determine subdirectory name for this library
-            val librarySubdir = when (libraryId) {
-                "material-symbols" -> "materialsymbols" // Keep backward compatibility
-                else -> libraryId.removePrefix("external-") // e.g., "bootstrap-icons", "heroicons"
+            val librarySubdir = when {
+                libraryId == "material-symbols" -> "materialsymbols" // Keep backward compatibility
+                libraryId.startsWith("external-") -> libraryId.removePrefix("external-") // e.g., "bootstrap-icons", "heroicons"
+                else -> libraryId
             }
 
             // Create name transformer from extension configuration

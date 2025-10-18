@@ -46,6 +46,9 @@ import io.github.kingsword09.example.icons.official.icons.PersonFill1
 import io.github.kingsword09.example.icons.official.icons.PersonOfficial
 import io.github.kingsword09.example.icons.official.icons.ArrowBackFill1
 import io.github.kingsword09.example.icons.official.icons.ArrowBackOfficial
+import io.github.kingsword09.example.icons.`local-test`.Icons as LocalIcons
+import io.github.kingsword09.example.icons.`local-test`.icons.TelephoneSvgrepoCom
+import io.github.kingsword09.example.icons.`local-test`.icons.TestSvgsPenSvgrepoCom
 
 @Composable
 @Preview
@@ -368,6 +371,30 @@ fun App() {
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text("Arrow Back (Filled) - Official")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = LocalIcons.TelephoneSvgrepoCom,
+                    contentDescription = "telephone-svgrepo-com",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Telephone Svgrepo com")
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = LocalIcons.TestSvgsPenSvgrepoCom,
+                    contentDescription = "pen-svgrepo-com",
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text("Test Svgs Pen Svgrepo com")
             }
         }
     }

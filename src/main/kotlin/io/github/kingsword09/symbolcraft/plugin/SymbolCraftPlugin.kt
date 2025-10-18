@@ -22,6 +22,7 @@ class SymbolCraftPlugin : Plugin<Project> {
             "symbolCraft",
             SymbolCraftExtension::class.java
         )
+        extension.projectDirectory.set(project.layout.projectDirectory.asFile.absolutePath)
 
         val generateTaskProvider = project.tasks.register("generateSymbolCraftIcons", GenerateSymbolsTask::class.java) { task ->
             task.group = "symbolcraft"

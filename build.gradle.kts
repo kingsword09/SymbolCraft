@@ -50,6 +50,7 @@ dependencies {
 
     // Testing
     testImplementation(libs.kotlin.test)
+    testImplementation(gradleTestKit())
 }
 
 // Configure Gradle Plugin Portal publication
@@ -125,6 +126,31 @@ signing {
 // Configure test framework
 tasks.test {
     useJUnitPlatform()
+
+    testLogging {
+        events("passed", "skipped", "failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
+
+    addTestListener(object : org.gradle.api.tasks.testing.TestListener {
+        override fun beforeSuite(suite: org.gradle.api.tasks.testing.TestDescriptor) = Unit
+        override fun beforeTest(test: org.gradle.api.tasks.testing.TestDescriptor) = Unit
+
+        override fun afterTest(test: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) = Unit
+
+        override fun afterSuite(suite: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {
+            if (suite.parent == null) {
+                println(
+                    "\nTest Summary: ${result.resultType} | Total: ${result.testCount}, " +
+                        "Passed: ${result.successfulTestCount}, Failed: ${result.failedTestCount}, " +
+                        "Skipped: ${result.skippedTestCount}"
+                )
+            }
+        }
+    })
 }
 
 // Generate sources and javadoc JARs
