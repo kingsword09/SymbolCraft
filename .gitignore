@@ -3,4 +3,8 @@
 build
 .kotlin
 
+# Local properties
+local.properties
+
+# macOS
 .DS_Store

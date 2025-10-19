@@ -2,8 +2,8 @@ rootProject.name = "example"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
-    includeBuild("..")
     repositories {
+        mavenLocal()  // For local plugin testing
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
@@ -18,6 +18,7 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()  // For local runtime/material-symbols testing
         google {
             mavenContent {
                 includeGroupAndSubgroups("androidx")
