@@ -51,7 +51,6 @@ jobs:
 
     - name: Run tests
       run: ./gradlew :symbolcraft-runtime:test --stacktrace
-      continue-on-error: true
 
     - name: Upload Android AAR
       uses: actions/upload-artifact@v4
@@ -66,7 +65,6 @@ jobs:
         name: runtime-ios-framework
         path: symbolcraft-runtime/build/XCFrameworks/release/*.xcframework
         retention-days: 7
-      continue-on-error: true
 
   validate:
     name: Validate Runtime
