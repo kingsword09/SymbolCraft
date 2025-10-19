@@ -19,6 +19,7 @@
 - 🎯 **确定性构建** - Git 友好的确定性代码生成
 - 🏷️ **灵活命名** - 支持多种命名规则（PascalCase、camelCase、snake_case 等）
 - 👀 **Compose 预览** - 自动生成 @Preview 函数
+- 🗂️ **本地资源** - 支持项目内 SVG 文件转换
 
 ---
 
@@ -31,7 +32,7 @@
 | Kotlin Coroutines | 1.8.1 | 并行下载 |
 | Ktor Client | 2.3.12 | HTTP 客户端 |
 | Kotlinx Serialization | 1.7.1 | JSON 序列化 |
-| Compose Multiplatform | 1.6.11 | UI 框架 |
+| Compose Multiplatform | 1.6.11 | UI 框架（runtime 模块） |
 | Android Gradle Plugin | 8.5.2 | Android 构建 |
 | svg-to-compose | 0.1.0 | SVG 转换库(io.github.kingsword09 fork) |
 
@@ -49,6 +50,7 @@ SymbolCraft/                                    # 根项目
 │
 ├── symbolcraft-plugin/                         # Gradle 插件模块
 │   ├── build.gradle.kts                        # 插件构建配置
+│   ├── README.md                               # 插件模块文档
 │   └── src/main/kotlin/io/github/kingsword09/symbolcraft/
 │       ├── plugin/                             # Gradle 插件核心
 │       │   ├── SymbolCraftPlugin.kt            # 插件入口，注册任务
@@ -74,25 +76,33 @@ SymbolCraft/                                    # 根项目
 │       └── utils/                              # 工具类
 │           └── PathUtils.kt                    # 路径工具
 │
-├── symbolcraft-runtime/                        # 运行时库模块（待实现）
+├── symbolcraft-runtime/                        # 运行时库模块（规划中）
 │   ├── build.gradle.kts                        # Kotlin Multiplatform 配置
 │   ├── README.md                               # 模块文档
+│   ├── AGENTS.md                               # 运行时模块开发指南
 │   └── src/
 │       ├── commonMain/kotlin/                  # 通用代码
+│       │   └── io/github/kingsword09/symbolcraft/runtime/
+│       │       ├── MaterialSymbols.kt          # 主访问入口
+│       │       ├── IconLoader.kt               # 图标加载器
+│       │       ├── IconCache.kt                # 缓存管理
+│       │       └── LazyImageVector.kt          # 懒加载支持
 │       ├── androidMain/kotlin/                 # Android 特定代码
 │       ├── jvmMain/kotlin/                     # JVM 特定代码
 │       ├── iosMain/kotlin/                     # iOS 特定代码
 │       └── commonTest/kotlin/                  # 测试代码
 │
-├── symbolcraft-material-symbols/               # 预生成图标库模块（待实现）
+├── symbolcraft-material-symbols/               # 预生成图标库模块（规划中）
 │   ├── build.gradle.kts                        # Kotlin Multiplatform 配置
 │   ├── README.md                               # 模块文档
+│   ├── AGENTS.md                               # 图标库模块开发指南
 │   └── src/
 │       ├── commonMain/kotlin/                  # 预生成的图标代码
-│       ├── androidMain/kotlin/
-│       ├── jvmMain/kotlin/
-│       ├── iosMain/kotlin/
-│       └── commonTest/kotlin/
+│       │   └── io/github/kingsword09/symbolcraft/icons/
+│       │       ├── outlined/                   # Outlined 样式
+│       │       ├── rounded/                    # Rounded 样式
+│       │       └── sharp/                      # Sharp 样式
+│       └── commonTest/kotlin/                  # 测试代码
 │
 ├── example/                                    # 示例项目（Compose Multiplatform）
 │   ├── composeApp/                             # 主应用
@@ -101,9 +111,7 @@ SymbolCraft/                                    # 根项目
 │   │   │   ├── iosMain/                       # iOS 平台代码
 │   │   │   ├── jvmMain/                       # Desktop 平台代码
 │   │   │   └── commonMain/                    # 通用代码
-│   │   │       ├── kotlin/
-│   │   │       │   └── generated/symbols/     # 生成的图标
-│   │   │       └── composeResources/
+│   │   │       └── kotlin/generated/symbols/  # 生成的图标
 │   │   └── build.gradle.kts                    # 使用 SymbolCraft 插件
 │   └── iosApp/                                 # iOS 应用
 │
@@ -112,35 +120,12 @@ SymbolCraft/                                    # 根项目
 └── AGENTS.md                                   # 本文件（开发指南）
 ```
 
-### 模块说明
-
-#### **symbolcraft-plugin**
-- **类型**: Gradle Plugin (JVM)
-- **职责**: 提供图标按需生成的 Gradle 插件
-- **发布**: Gradle Plugin Portal + Maven Central
-- **artifactId**: `symbolcraft`
-
-#### **symbolcraft-runtime** (🚧 待实现)
-- **类型**: Kotlin Multiplatform Library
-- **职责**: 提供运行时图标加载、缓存支持
-- **平台**: Android, iOS, JVM, JS
-- **发布**: Maven Central
-- **artifactId**: `symbolcraft-runtime`
-
-#### **symbolcraft-material-symbols** (🚧 待实现)
-- **类型**: Kotlin Multiplatform Library
-- **职责**: 预生成的 Material Symbols 图标库
-- **平台**: Android, iOS, JVM, JS
-- **发布**: Maven Central
-- **artifactId**: `symbolcraft-material-symbols`
-- **依赖**: symbolcraft-runtime
-
 ---
 
 ## 核心组件说明
 
 ### 1. **SymbolCraftPlugin** (插件入口)
-**位置**: `src/main/kotlin/io/github/kingsword09/symbolcraft/plugin/SymbolCraftPlugin.kt`
+**位置**: `symbolcraft-plugin/src/main/kotlin/.../plugin/SymbolCraftPlugin.kt`
 
 **职责**:
 - 注册 `symbolCraft` DSL 扩展
@@ -160,7 +145,7 @@ class SymbolCraftPlugin : Plugin<Project> {
         val generateTask = project.tasks.register("generateSymbolCraftIcons", GenerateSymbolsTask::class.java) {
             // 配置任务...
         }
-        
+
         // 自动添加到 Kotlin 编译任务的依赖
         project.afterEvaluate {
             project.tasks.configureEach { task ->
@@ -176,14 +161,15 @@ class SymbolCraftPlugin : Plugin<Project> {
 ---
 
 ### 2. **SymbolCraftExtension** (DSL 配置)
-**位置**: `src/main/kotlin/.../plugin/SymbolCraftExtension.kt`
+**位置**: `symbolcraft-plugin/src/main/kotlin/.../plugin/SymbolCraftExtension.kt`
 
 **职责**:
 - 提供用户友好的 DSL API
-- 管理多图标库的配置（Material Symbols、外部图标库）
+- 管理多图标库的配置（Material Symbols、外部图标库、本地图标）
 - 提供便捷配置方法：
   - `materialSymbol()` / `materialSymbols()` - 配置 Material Symbols 图标
   - `externalIcon()` / `externalIcons()` - 配置外部图标库图标
+  - `localIcons()` - 配置本地 SVG 文件
   - `standardWeights()` - 标准权重（400, 500, 700）
   - `allVariants()` - 所有变体（outlined, rounded, sharp）
   - `bothFills()` - 填充和未填充
@@ -199,22 +185,18 @@ abstract class SymbolCraftExtension {
     abstract val generatePreview: Property<Boolean>         // 生成预览
     abstract val maxRetries: Property<Int>                  // 最大重试次数
     abstract val retryDelayMs: Property<Long>               // 重试延迟
-    
+
     val namingConfig: NamingConfig                          // 命名配置
-    
-    // Builder 类
-    // MaterialSymbolsBuilder - Material Symbols 配置
-    // ExternalIconBuilder - 外部图标配置
 }
 ```
 
 ---
 
 ### 3. **GenerateSymbolsTask** (核心生成任务)
-**位置**: `src/main/kotlin/.../tasks/GenerateSymbolsTask.kt`
+**位置**: `symbolcraft-plugin/src/main/kotlin/.../tasks/GenerateSymbolsTask.kt`
 
 **职责**:
-- 解析用户配置（Material Symbols + 外部图标库）
+- 解析用户配置（Material Symbols + 外部图标库 + 本地图标）
 - 并行下载 SVG 文件（使用 Kotlin 协程）
 - 应用命名转换规则
 - 调用转换器生成 Compose ImageVector 代码
@@ -229,121 +211,8 @@ abstract class SymbolCraftExtension {
 
 **关键流程**:
 ```
-配置解析 → 清理旧文件 → 并行下载 SVG → 命名转换 → 转换为 Compose → 
+配置解析 → 清理旧文件 → 并行下载 SVG → 命名转换 → 转换为 Compose →
 清理未使用缓存 → 生成统计
-```
-
----
-
-### 4. **SvgDownloader** (智能下载器)
-**位置**: `src/main/kotlin/.../download/SvgDownloader.kt`
-
-**职责**:
-- 从多个源下载 SVG 文件（Material Symbols、外部 URL）
-- 管理 7 天有效期的缓存
-- 支持并行下载（Kotlin 协程）
-- 缓存元数据管理（时间戳、URL、哈希）
-- 配置化重试机制
-
-**特性**:
-- 缓存命中检测
-- 自动过期清理
-- 进度跟踪
-- 可配置的错误重试（指数退缩）
-
----
-
-### 5. **Svg2ComposeConverter** (SVG 转换器)
-**位置**: `src/main/kotlin/.../converter/Svg2ComposeConverter.kt`
-
-**职责**:
-- 使用 `svg-to-compose` 库将 SVG 转换为 Compose ImageVector
-- 生成确定性代码（移除时间戳、标准化浮点数）
-- 可选生成 Compose Preview 函数
-- 生成 `__MaterialSymbols.kt` 访问对象
-
-**输出文件**:
-```
-{packageName}/materialsymbols/
-├── SearchW400Outlined.kt       # 单个图标
-├── HomeW500RoundedFill.kt
-└── ...
-
-{packageName}/__MaterialSymbols.kt  # 访问对象
-```
-
----
-
-### 6. **IconConfig** (图标配置接口)
-**位置**: `src/main/kotlin/.../model/IconConfig.kt`
-
-**职责**:
-- 定义图标库配置的通用接口
-- 支持多图标库扩展
-
-**主要实现**:
-- `MaterialSymbolsConfig` - Material Symbols 配置
-  - 包含: SymbolWeight、SymbolVariant、SymbolFill 枚举
-  - 使用 Google Fonts 官方 CDN
-- `ExternalIconConfig` - 外部图标配置
-  - 支持 URL 模板 + 样式参数
-  - 支持多值参数（笛卡尔积）
-
-**接口方法**:
-```kotlin
-interface IconConfig {
-    val libraryId: String
-    fun buildUrl(iconName: String): String
-    fun getCacheKey(iconName: String): String
-    fun getSignature(): String
-}
-```
-
----
-
-### 7. **NamingConfig** (命名配置)
-**位置**: `src/main/kotlin/.../plugin/NamingConfig.kt`
-
-**职责**:
-- 提供图标类名命名转换配置
-- 支持预设和自定义转换器
-
-**预设命名规则**:
-- `pascalCase()` - PascalCase (默认)
-- `camelCase()` - camelCase
-- `snakeCase()` - snake_case / SCREAMING_SNAKE
-- `kebabCase()` - kebab-case
-- `lowerCase()` / `upperCase()` - 全小/大写
-- `customTransformer()` - 自定义逻辑
-
-**配置选项**:
-```kotlin
-abstract class NamingConfig {
-    abstract val namingConvention: Property<NamingConvention>
-    abstract val suffix: Property<String>
-    abstract val prefix: Property<String>
-    abstract val removePrefix: Property<String>
-    abstract val removeSuffix: Property<String>
-    abstract val transformer: Property<IconNameTransformer>
-}
-```
-
----
-
-### 8. **IconNameTransformer** (命名转换器)
-**位置**: `src/main/kotlin/.../converter/IconNameTransformer.kt`
-
-**职责**:
-- 执行具体的命名转换逻辑
-- 支持多种命名约定
-- 提供扩展点供用户自定义
-
-**核心方法**:
-```kotlin
-abstract class IconNameTransformer {
-    abstract fun transform(fileName: String): String
-    open fun getSignature(): String  // 用于缓存签名
-}
 ```
 
 ---
@@ -352,59 +221,49 @@ abstract class IconNameTransformer {
 
 ### 本地开发测试
 
-1. **修改插件代码**
-   ```bash
-   # 编辑 src/main/kotlin/ 下的源文件
-   vim src/main/kotlin/io/github/kingsword09/symbolcraft/plugin/GenerateSymbolsTask.kt
-   ```
+#### 1. 修改插件代码
+```bash
+# 编辑 symbolcraft-plugin/src/main/kotlin/ 下的源文件
+vim symbolcraft-plugin/src/main/kotlin/io/github/kingsword09/symbolcraft/tasks/GenerateSymbolsTask.kt
+```
 
-2. **发布到本地 Maven**
-   ```bash
-   ./gradlew publishToMavenLocal
-   ```
+#### 2. 发布到本地 Maven
+```bash
+# 发布所有模块
+./gradlew publishAllToMavenLocal
 
-3. **在示例项目中测试**
-   ```bash
-   cd example
-   ./gradlew generateSymbolCraftIcons --info
-   ./gradlew :composeApp:run  # Desktop
-   ```
+# 或仅发布插件模块
+./gradlew :symbolcraft-plugin:publishToMavenLocal
+```
 
-4. **清理和重新构建**
-   ```bash
-   ./gradlew clean build
-   ```
+#### 3. 在示例项目中测试
+```bash
+cd example
+./gradlew generateSymbolCraftIcons --info
+./gradlew :composeApp:run  # Desktop
+```
+
+#### 4. 清理和重新构建
+```bash
+./gradlew clean build
+```
 
 ---
 
-## 构建和发布流程 (Monorepo)
+## 构建和发布流程
 
 ### 1. 本地构建
-
-#### 构建所有模块
 ```bash
-./gradlew clean build -x test              # 构建所有模块（跳过测试）
-./gradlew build                            # 构建所有模块（包含测试）
-```
-
-#### 构建单个模块
-```bash
-./gradlew :symbolcraft-plugin:build        # 仅构建插件模块
-./gradlew :symbolcraft-runtime:build       # 仅构建运行时模块
-./gradlew :symbolcraft-material-symbols:build  # 仅构建图标库模块
-```
-
-#### 运行测试
-```bash
-./gradlew test                             # 所有模块测试
-./gradlew :symbolcraft-plugin:test         # 插件模块测试
+./gradlew build                         # 构建所有模块
+./gradlew :symbolcraft-plugin:build    # 仅构建插件
+./gradlew :symbolcraft-plugin:test     # 插件模块测试
 ```
 
 ### 2. 本地发布（测试用）
 
 #### 发布所有模块到本地 Maven
 ```bash
-./gradlew publishAllToMavenLocal           # 统一发布所有模块
+./gradlew publishAllToMavenLocal        # 统一发布所有模块
 ```
 
 #### 发布单个模块
@@ -418,7 +277,7 @@ abstract class IconNameTransformer {
 
 #### 发布所有模块（推荐）
 ```bash
-./gradlew publishAll                       # 统一发布所有模块
+./gradlew publishAll                    # 统一发布所有模块
 ```
 
 #### 发布单个模块
@@ -470,7 +329,6 @@ android.enableJetifier=false
 
 # Dokka 配置
 org.jetbrains.dokka.experimental.gradle.pluginMode=V2Enabled
-org.jetbrains.dokka.experimental.gradle.pluginMode.noWarn=true
 ```
 
 ### 版本管理
@@ -529,7 +387,15 @@ cacheDirectory.set("""C:\Temp\SymbolCraft""")
 ## 测试现状
 
 ### 当前状态
-❌ **无单元测试** - `src/test/` 目录不存在
+✅ **部分单元测试** - 已有测试:
+- `IconNameTransformerTest` - 命名转换测试
+- `GenerateSymbolsTaskTest` - 任务测试（基础）
+- `LocalIconsBuilderTest` - 本地图标构建器测试
+
+### 测试覆盖目标
+- [ ] 核心组件测试覆盖率 > 80%
+- [ ] 集成测试
+- [ ] 性能基准测试
 
 ---
 
@@ -537,47 +403,188 @@ cacheDirectory.set("""C:\Temp\SymbolCraft""")
 
 ### 🔴 高优先级
 
-1. **添加单元测试**
-   - [ ] 创建 `src/test/kotlin` 目录
-   - [ ] 编写核心组件测试（IconNameTransformer、IconConfig 等）
-   - [ ] 配置 CI/CD 测试流水线
-   - ✅ 已完成：IconNameTransformerTest
+#### 1. **补全单元测试**
+- [ ] `SvgDownloader` 测试 - 下载逻辑、缓存、重试机制
+- [ ] `Svg2ComposeConverter` 测试 - SVG 转换、代码生成
+- [ ] `IconConfig` 实现类测试
+- [ ] 集成测试
 
-2. **改进错误处理**
-   - ✅ 已完成：可配置的重试机制（maxRetries、retryDelayMs）
-   - [ ] 更详细的错误消息和分类
-   - [ ] 配置验证前置（避免运行时错误）
+#### 2. **实现 symbolcraft-runtime 模块**
+**状态**: 🚧 规划中
 
-3. **性能监控**
-   - [ ] 添加生成时间统计
-   - [ ] 下载速度统计
-   - [ ] 缓存命中率报告
+**核心功能**:
+- 懒加载图标支持
+- 内存缓存（LRU）
+- `MaterialSymbols` API（类似 `androidx.compose.material.icons.Icons`）
+- 多平台支持（Android、iOS、JVM、JS）
+
+**实施计划**:
+```kotlin
+// 用法示例
+import io.github.kingsword09.symbolcraft.runtime.MaterialSymbols
+
+@Composable
+fun MyScreen() {
+    Icon(
+        imageVector = MaterialSymbols.Outlined.W400.Home,
+        contentDescription = "Home"
+    )
+}
+```
+
+#### 3. **实现 symbolcraft-material-symbols 模块**
+**状态**: 🚧 规划中
+
+**核心功能**:
+- 预生成所有 Material Symbols 图标
+- 按权重/样式拆分模块
+- 配合 Tree Shaking 优化包体积
+
+---
 
 ### 🟡 中优先级
 
-4. **功能增强**
-   - ✅ 已完成：多图标库支持（Material Symbols + 外部图标库）
-   - ✅ 已完成：灵活命名配置（NamingConfig）
-   - [ ] 图标搜索功能（CLI）
-   - [ ] 图标使用分析报告
+#### 4. **Tree Shaking 功能** ⭐ 新功能
+**状态**: 📋 设计阶段
 
-5. **开发者体验**
-   - ✅ 已完成：Dokka V2 文档配置
-   - [ ] 添加更多 KDoc 注释
-   - [ ] 添加视频教程/GIF 演示
-   - [ ] 创建项目模板
+**目标**: 只生成实际使用的图标，避免生成大量未使用的图标
 
-6. **示例扩展**
-   - ✅ 已完成：Compose Multiplatform 示例（Android + iOS + Desktop）
-   - [ ] 纯 Android 示例
-   - [ ] 最佳实践指南
+**技术方案**:
+
+**方案 1: 静态代码扫描（推荐）**
+```kotlin
+symbolCraft {
+    treeShaking {
+        enabled.set(true)
+
+        // 扫描范围
+        scanDirectories.addAll(
+            "src/commonMain/kotlin",
+            "src/androidMain/kotlin"
+        )
+
+        // 扫描策略
+        strategy.set(ScanStrategy.USAGE_BASED)  // 或 IMPORT_BASED
+
+        // 白名单
+        alwaysInclude.addAll("home", "search", "settings")
+    }
+}
+```
+
+**实现步骤**:
+1. **代码扫描器** - 分析 Kotlin 文件中的 import 和图标使用
+2. **引用图构建** - 构建符号引用关系图
+3. **使用追踪** - 识别实际使用的图标
+4. **过滤生成** - 只生成被引用的图标
+
+**处理 import * 的策略**:
+```kotlin
+// Case 1: 具名导入 - 直接识别
+import com.app.symbols.icons.HomeW400Outlined  ✅
+
+// Case 2: 通配符导入 - 需要追踪实际使用
+import com.app.symbols.icons.*
+// 分析代码中的 Icon(HomeW400Outlined, ...) 识别使用
+
+// Case 3: Icons 对象访问 - 解析属性访问
+import com.app.symbols.Icons
+Icon(Icons.HomeW400Outlined, ...)  ✅
+```
+
+**核心组件**:
+```kotlin
+// 图标使用分析器
+class IconUsageAnalyzer(
+    private val scanDirs: Set<File>,
+    private val packageName: String
+) {
+    fun analyze(): Set<String> {
+        // 1. 解析 import 语句
+        // 2. 分析代码中的图标引用
+        // 3. 构建引用图
+        // 4. 返回使用的图标集合
+    }
+}
+
+// 分析任务
+@CacheableTask
+abstract class AnalyzeIconUsageTask : DefaultTask() {
+    @get:InputFiles
+    abstract val scanDirectories: SetProperty<File>
+
+    @get:OutputFile
+    abstract val analysisResultFile: RegularFileProperty
+
+    @TaskAction
+    fun analyze() {
+        val analyzer = IconUsageAnalyzer(...)
+        val result = analyzer.analyze()
+        // 保存分析结果
+    }
+}
+```
+
+**性能优化**:
+- 增量分析（只分析变更的文件）
+- 缓存分析结果
+- 并行扫描多个文件
+
+**参考**: Webpack/Rollup 的 Tree Shaking 原理
+
+---
+
+#### 5. **性能监控**
+- [ ] 生成时间统计
+- [ ] 下载速度统计
+- [ ] 缓存命中率报告
+
+**示例输出**:
+```
+📊 Generation Report:
+   ⏱️ Total time: 3.2s
+   ⬇️ Download: 1.5s (avg 245KB/s)
+   🔄 Conversion: 1.7s
+   💾 Cache hit rate: 66.7% (8/12)
+   📦 Generated: 12 icons, 245KB total
+```
+
+#### 6. **错误处理增强**
+- [ ] 详细的错误分类
+- [ ] 错误恢复策略
+- [ ] 更友好的错误提示
+
+```kotlin
+sealed class SymbolCraftError {
+    data class NetworkError(val url: String, val cause: Throwable)
+    data class CacheError(val path: String, val cause: Throwable)
+    data class ConversionError(val iconName: String, val cause: Throwable)
+    data class ConfigurationError(val message: String)
+}
+```
+
+---
 
 ### 🟢 低优先级
 
-7. **生态工具**
-   - [ ] IntelliJ IDEA 插件（可视化配置）
-   - [ ] Gradle 配置生成向导
-   - [ ] 图标浏览器 GUI
+#### 7. **IntelliJ IDEA 插件**
+**功能**:
+- 可视化配置向导
+- 图标搜索和预览
+- 代码辅助（自动补全、预览 Inlay Hints）
+- 快捷操作（右键菜单生成图标）
+
+#### 8. **CLI 工具**
+```bash
+symbolcraft search "home"           # 搜索图标
+symbolcraft add home --weight 400   # 添加图标到配置
+symbolcraft init                    # 交互式初始化
+```
+
+#### 9. **高级特性**
+- [ ] 图标动态变体生成
+- [ ] 多主题支持
+- [ ] 图标使用分析报告
 
 ---
 
@@ -586,6 +593,7 @@ cacheDirectory.set("""C:\Temp\SymbolCraft""")
 ### 核心依赖
 
 ```kotlin
+// symbolcraft-plugin 依赖
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json")
@@ -595,6 +603,13 @@ dependencies {
 
     compileOnly("org.gradle:gradle-api")
     compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin")
+}
+
+// symbolcraft-runtime 依赖（规划）
+dependencies {
+    implementation("org.jetbrains.compose.runtime:runtime")
+    implementation("org.jetbrains.compose.ui:ui")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 }
 ```
 
@@ -610,7 +625,7 @@ dependencies {
 
 ### 添加新的 Gradle 任务
 
-1. 在 `SymbolCraftPlugin.kt` 中注册任务
+1. 在 `symbolcraft-plugin/.../plugin/SymbolCraftPlugin.kt` 中注册任务
 2. 在 `tasks/` 目录创建任务类继承 `DefaultTask`
 3. 使用 `@TaskAction` 注解标记执行方法
 4. 配置任务的输入/输出以支持增量构建
@@ -631,14 +646,14 @@ dependencies {
 
 ### 修改 SVG 下载逻辑
 
-编辑 `src/main/kotlin/.../download/SvgDownloader.kt`：
+编辑 `symbolcraft-plugin/src/main/kotlin/.../download/SvgDownloader.kt`：
 - 修改 CDN URL
 - 调整缓存策略
 - 增强错误处理
 
 ### 修改代码生成
 
-编辑 `src/main/kotlin/.../converter/Svg2ComposeConverter.kt`：
+编辑 `symbolcraft-plugin/src/main/kotlin/.../converter/Svg2ComposeConverter.kt`：
 - 调整输出格式
 - 修改预览生成
 - 自定义文件命名
@@ -678,6 +693,19 @@ find . -path "*/generated/symbols/*" -name "*.kt"
 du -sh build/symbolcraft-cache/
 ```
 
+### 调试子模块
+```bash
+# 列出所有项目
+./gradlew projects
+
+# 查看特定模块的任务
+./gradlew :symbolcraft-plugin:tasks
+./gradlew :symbolcraft-runtime:tasks
+
+# 构建特定模块
+./gradlew :symbolcraft-plugin:build --info
+```
+
 ---
 
 ## Git 工作流
@@ -687,6 +715,7 @@ du -sh build/symbolcraft-cache/
 - `develop` - 开发分支（如有）
 - `feature/*` - 功能分支
 - `fix/*` - 修复分支
+- `refactor/*` - 重构分支
 
 ### 提交规范（建议）
 ```
@@ -700,11 +729,19 @@ du -sh build/symbolcraft-cache/
 - refactor: 重构
 - test: 测试
 - chore: 构建/工具
+- perf: 性能优化
+
+作用域（scope）:
+- plugin: 插件模块
+- runtime: 运行时模块
+- material-symbols: 图标库模块
+- example: 示例项目
 
 示例:
-feat(downloader): add retry mechanism for failed downloads
-fix(cache): resolve path issues on Windows
+feat(plugin): add tree shaking support
+fix(plugin): resolve cache path issues on Windows
 docs(readme): update installation guide
+refactor(plugin): migrate to multi-module architecture
 ```
 
 ---
@@ -735,14 +772,14 @@ docs(readme): update installation guide
 2. 进行开发和测试
    ```bash
    ./gradlew build
-   ./gradlew publishToMavenLocal
+   ./gradlew publishAllToMavenLocal
    cd example && ./gradlew generateSymbolCraftIcons
    ```
 
 3. 提交更改
    ```bash
    git add .
-   git commit -m "feat: add your feature description"
+   git commit -m "feat(plugin): add your feature description"
    ```
 
 4. 推送并创建 Pull Request
@@ -758,6 +795,7 @@ docs(readme): update installation guide
 - [ ] 本地测试通过
 - [ ] 示例项目可正常运行
 - [ ] PR 描述清晰
+- [ ] 提交信息遵循规范
 
 ---
 
@@ -777,6 +815,9 @@ docs(readme): update installation guide
 - **用户文档（英文）**: [README.md](README.md)
 - **用户文档（中文）**: [README_ZH.md](README_ZH.md)
 - **开发文档**: [AGENTS.md](AGENTS.md)（本文件）
+- **插件模块文档**: [symbolcraft-plugin/README.md](symbolcraft-plugin/README.md)
+- **运行时模块文档**: [symbolcraft-runtime/README.md](symbolcraft-runtime/README.md)
+- **图标库模块文档**: [symbolcraft-material-symbols/README.md](symbolcraft-material-symbols/README.md)
 
 ---
 
@@ -790,45 +831,39 @@ docs(readme): update installation guide
 
 ## 更新日志
 
-### v0.3.1 (最新)
-- 🛡️ **安全强化**: 阻止外部 SVG 中的 XXE 与路径遍历攻击，新增内容类型与尺寸校验，并全面清理危险路径字符。
-- ♻️ **任务拆分**: `GenerateSymbolsTask` 拆分为更小的步骤，日志输出更具可读性，也为后续单元测试做好铺垫。
-- 📚 **文档增强**: 增补关键常量和默认值的设计，方便贡献者快速理解配置。
+### v0.4.0 (规划中)
+- 🏗️ **架构重构**: 迁移到 Monorepo 多模块架构
+  - `symbolcraft-plugin`: Gradle 插件
+  - `symbolcraft-runtime`: 运行时库（规划中）
+  - `symbolcraft-material-symbols`: 预生成图标库（规划中）
+- 🌳 **Tree Shaking**: 静态代码分析，只生成使用的图标（规划中）
+- 📊 **性能监控**: 生成时间、下载速度、缓存命中率统计（规划中）
+- 🔧 **错误处理增强**: 详细错误分类和恢复机制（规划中）
+
+### v0.3.2 (当前)
+- 🔧 修复构建问题
+- 📚 文档改进
+
+### v0.3.1
+- 🛡️ **安全强化**: 阻止外部 SVG 中的 XXE 与路径遍历攻击，新增内容类型与尺寸校验
+- ♻️ **任务拆分**: `GenerateSymbolsTask` 拆分为更小的步骤
+- 📚 **文档增强**: 增补关键常量和默认值的设计
 
 ### v0.3.0
-- 🔄 **多变体外部图标**: `styleParam { values(...) }` 支持笛卡尔积组合，一次声明即可生成多种外部图标变体。
-- ⚡ **指数退避重试**: SVG 下载器支持指数退避重试策略，网络波动下更稳健。
-- 🔗 **官方 CDN**: Material Symbols 默认切换到 Google Fonts 官方 CDN，保障可用性与更新速度。
-- ⚙️ **配置缓存修复**: 解决 Gradle 配置缓存序列化问题，提高增量构建兼容性。
-- 🏷️ **命名转换重构**: 重写 IconNameTransformer，命名配置更加灵活可靠。
+- 🔄 **多变体外部图标**: `styleParam { values(...) }` 支持笛卡尔积组合
+- ⚡ **指数退避重试**: SVG 下载器支持指数退避重试策略
+- 🔗 **官方 CDN**: Material Symbols 默认切换到 Google Fonts 官方 CDN
+- ⚙️ **配置缓存修复**: 解决 Gradle 配置缓存序列化问题
+- 🏷️ **命名转换重构**: 重写 IconNameTransformer
 
 ### v0.2.1
-- 🔥 **重大重构**: 插件重命名为 SymbolCraft（从 MaterialSymbolsPlugin）
+- 🔥 **重大重构**: 插件重命名为 SymbolCraft
 - 🎉 **多图标库支持**: Material Symbols + Bootstrap Icons + Heroicons + 自定义 URL
-- 🏷️ **灵活命名**: 支持 PascalCase、camelCase、snake_case 等多种命名规则
+- 🏷️ **灵活命名**: 支持多种命名规则
 - ⚡ **配置重试**: 添加 maxRetries 和 retryDelayMs 配置
 - 📚 **Dokka V2**: 完整的 API 文档生成支持
-- 📦 **新的 DSL**: externalIcon/externalIcons 方法
-- 🧹 **更新缓存**: symbolcraft-cache 目录（从 material-symbols-cache）
-- 📝 **文档改进**: 更新所有 README 和开发指南
-
-### v0.1.2
-- 🎉 支持绝对路径缓存配置
-- 🧹 智能缓存清理（跳过共享缓存）
-- 📝 更新文档
-
-### v0.1.1
-- 🐛 修复示例预览渲染错误
-- ♻️ 重构 SymbolWeight 为枚举
-- 📦 支持缓存目录的绝对路径
-
-### v0.1.0
-- 🚀 首次发布
-- ✅ 核心功能完成
-- 📚 完整文档
-- 🎨 示例项目
 
 ---
 
-**最后更新**: 2025-10-17
-**文档版本**: 2.0.0
+**最后更新**: 2025-10-19
+**文档版本**: 3.0.0 (Monorepo 架构)

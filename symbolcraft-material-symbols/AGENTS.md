@@ -1,695 +1,664 @@
-  2. MaterialSymbols.kt (主访问入口)
-
-  package io.github.kingsword09.symbolcraft.runtime
-
-  import androidx.compose.runtime.Composable
-  import androidx.compose.runtime.remember
-  import androidx.compose.ui.graphics.vector.ImageVector
-
-  /**
-   * Material Symbols 图标访问入口
-   * 
-   * 提供类似 androidx.compose.material.icons.Icons 的 API 体验
-   * 
-   * 用法:
-   * ```kotlin
-   * Icon(
-   *     imageVector = MaterialSymbols.Outlined.W400.Home,
-   *     contentDescription = "Home"
-   * )
-   * ```
-   */
-  object MaterialSymbols {
-
-      /**
-       * Outlined 样式图标
-       */
-      object Outlined {
-          object W100 : WeightGroup(SymbolWeight.W100, SymbolVariant.OUTLINED)
-          object W200 : WeightGroup(SymbolWeight.W200, SymbolVariant.OUTLINED)
-          object W300 : WeightGroup(SymbolWeight.W300, SymbolVariant.OUTLINED)
-          object W400 : WeightGroup(SymbolWeight.W400, SymbolVariant.OUTLINED)
-          object W500 : WeightGroup(SymbolWeight.W500, SymbolVariant.OUTLINED)
-          object W600 : WeightGroup(SymbolWeight.W600, SymbolVariant.OUTLINED)
-          object W700 : WeightGroup(SymbolWeight.W700, SymbolVariant.OUTLINED)
-      }
-
-      /**
-       * Rounded 样式图标
-       */
-      object Rounded {
-          object W100 : WeightGroup(SymbolWeight.W100, SymbolVariant.ROUNDED)
-          object W200 : WeightGroup(SymbolWeight.W200, SymbolVariant.ROUNDED)
-          object W300 : WeightGroup(SymbolWeight.W300, SymbolVariant.ROUNDED)
-          object W400 : WeightGroup(SymbolWeight.W400, SymbolVariant.ROUNDED)
-          object W500 : WeightGroup(SymbolWeight.W500, SymbolVariant.ROUNDED)
-          object W600 : WeightGroup(SymbolWeight.W600, SymbolVariant.ROUNDED)
-          object W700 : WeightGroup(SymbolWeight.W700, SymbolVariant.ROUNDED)
-      }
-
-      /**
-       * Sharp 样式图标
-       */
-      object Sharp {
-          object W100 : WeightGroup(SymbolWeight.W100, SymbolVariant.SHARP)
-          object W200 : WeightGroup(SymbolWeight.W200, SymbolVariant.SHARP)
-          object W300 : WeightGroup(SymbolWeight.W300, SymbolVariant.SHARP)
-          object W400 : WeightGroup(SymbolWeight.W400, SymbolVariant.SHARP)
-          object W500 : WeightGroup(SymbolWeight.W500, SymbolVariant.SHARP)
-          object W600 : WeightGroup(SymbolWeight.W600, SymbolVariant.SHARP)
-          object W700 : WeightGroup(SymbolWeight.W700, SymbolVariant.SHARP)
-      }
-
-      /**
-       * 直接通过名称获取图标
-       * 
-       * @param name 图标名称 (如 "home")
-       * @param weight 权重 (默认 400)
-       * @param variant 样式 (默认 OUTLINED)
-       * @param fill 是否填充 (默认 false)
-       */
-      @Composable
-      fun get(
-          name: String,
-          weight: SymbolWeight = SymbolWeight.W400,
-          variant: SymbolVariant = SymbolVariant.OUTLINED,
-          fill: Boolean = false
-      ): ImageVector {
-          return remember(name, weight, variant, fill) {
-              IconLoader.load(
-                  IconSpec(
-                      name = name,
-                      weight = weight,
-                      variant = variant,
-                      fill = fill
-                  )
-              )
-          }
-      }
-  }
-
-  /**
-   * 权重组
-   * 用于实现 MaterialSymbols.Outlined.W400.Home 的链式访问
-   */
-  open class WeightGroup(
-      private val weight: SymbolWeight,
-      private val variant: SymbolVariant
-  ) {
-
-      /**
-       * 动态属性委托
-       * 实现 MaterialSymbols.Outlined.W400.Home 的访问方式
-       */
-      operator fun getValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>): ImageVector {
-          val iconName = property.name.lowercase() // Home -> home
-          return IconLoader.load(
-              IconSpec(
-                  name = iconName,
-                  weight = weight,
-                  variant = variant,
-                  fill = false
-              )
-          )
-      }
-
-      /**
-       * 直接通过索引访问
-       * MaterialSymbols.Outlined.W400["home"]
-       */
-      operator fun get(name: String, fill: Boolean = false): ImageVector {
-          return IconLoader.load(
-              IconSpec(
-                  name = name.lowercase(),
-                  weight = weight,
-                  variant = variant,
-                  fill = fill
-              )
-          )
-      }
-  }
-
-  /**
-   * 图标规格
-   */
-  data class IconSpec(
-      val name: String,
-      val weight: SymbolWeight,
-      val variant: SymbolVariant,
-      val fill: Boolean
-  ) {
-      /**
-       * 生成完全限定的图标类名
-       * 例如: io.github.kingsword09.symbolcraft.icons.outlined.w400.HomeW400Outlined
-       */
-      fun toClassName(): String {
-          val variantName = variant.name.lowercase()
-          val weightValue = weight.value
-          val fillSuffix = if (fill) "Fill" else ""
-
-          val capitalizedName = name.split("_")
-              .joinToString("") { it.replaceFirstChar { c -> c.uppercase() } }
-
-          return "io.github.kingsword09.symbolcraft.icons.$variantName.w$weightValue.${capitalizedName}W${weightValue}${variant.suffix}$fillSuffix"
-      }
-  }
-
-  /**
-   * 权重枚举
-   */
-  enum class SymbolWeight(val value: Int) {
-      W100(100),
-      W200(200),
-      W300(300),
-      W400(400),
-      W500(500),
-      W600(600),
-      W700(700)
-  }
-
-  /**
-   * 样式枚举
-   */
-  enum class SymbolVariant(val suffix: String) {
-      OUTLINED("Outlined"),
-      ROUNDED("Rounded"),
-      SHARP("Sharp")
-  }
-
-  3. IconLoader.kt (图标加载器)
-
-  package io.github.kingsword09.symbolcraft.runtime
-
-  import androidx.compose.ui.graphics.vector.ImageVector
-  import kotlinx.coroutines.sync.Mutex
-  import kotlinx.coroutines.sync.withLock
-
-  /**
-   * 图标加载器
-   * 
-   * 负责:
-   * 1. 从预生成的类中加载图标
-   * 2. 管理内存缓存
-   * 3. 处理加载失败
-   */
-  object IconLoader {
-
-      private val cache = IconCache()
-      private val provider = IconProvider.Default
-      private val loadMutex = Mutex()
-
-      /**
-       * 加载图标
-       * 
-       * @param spec 图标规格
-       * @return ImageVector 实例
-       * @throws IconNotFoundException 图标不存在时抛出
-       */
-      fun load(spec: IconSpec): ImageVector {
-          // 1. 尝试从缓存读取
-          cache.get(spec)?.let { return it }
-
-          // 2. 从 provider 加载
-          val icon = provider.load(spec)
-              ?: throw IconNotFoundException(spec)
-
-          // 3. 写入缓存
-          cache.put(spec, icon)
-
-          return icon
-      }
-
-      /**
-       * 预加载图标 (可选优化)
-       */
-      suspend fun preload(specs: List<IconSpec>) {
-          loadMutex.withLock {
-              specs.forEach { spec ->
-                  if (cache.get(spec) == null) {
-                      val icon = provider.load(spec)
-                      if (icon != null) {
-                          cache.put(spec, icon)
-                      }
-                  }
-              }
-          }
-      }
-
-      /**
-       * 清空缓存 (低内存时调用)
-       */
-      fun clearCache() {
-          cache.clear()
-      }
-
-      /**
-       * 获取缓存统计
-       */
-      fun getCacheStats(): CacheStats {
-          return cache.getStats()
-      }
-  }
-
-  /**
-   * 图标提供者接口
-   */
-  interface IconProvider {
-
-      /**
-       * 加载图标
-       * @return 如果图标存在返回 ImageVector，否则返回 null
-       */
-      fun load(spec: IconSpec): ImageVector?
-
-      companion object {
-          /**
-           * 默认提供者
-           * 通过反射/动态加载预生成的图标类
-           */
-          val Default: IconProvider = ReflectionIconProvider()
-      }
-  }
-
-  /**
-   * 反射图标提供者
-   * 使用反射从预生成的类中加载图标
-   */
-  class ReflectionIconProvider : IconProvider {
-
-      override fun load(spec: IconSpec): ImageVector? {
-          val className = spec.toClassName()
-
-          return try {
-              // 使用 Kotlin 反射加载类
-              val clazz = Class.forName(className).kotlin
-
-              // 查找 ImageVector 属性
-              val property = clazz.members
-                  .filterIsInstance<kotlin.reflect.KProperty<*>>()
-                  .firstOrNull { it.returnType.classifier == ImageVector::class }
-
-              // 获取属性值 (通过伴生对象或对象实例)
-              val instance = clazz.objectInstance ?: clazz.companionObjectInstance
-              property?.call(instance) as? ImageVector
-
-          } catch (e: ClassNotFoundException) {
-              null // 图标不存在
-          } catch (e: Exception) {
-              // 记录错误但不崩溃
-              println("Failed to load icon: $className - ${e.message}")
-              null
-          }
-      }
-  }
-
-  /**
-   * 图标未找到异常
-   */
-  class IconNotFoundException(spec: IconSpec) : Exception(
-      "Icon not found: ${spec.name} (weight=${spec.weight.value}, variant=${spec.variant}, fill=${spec.fill})"
-  )
-
-  4. IconCache.kt (缓存管理)
-
-  package io.github.kingsword09.symbolcraft.runtime
-
-  import androidx.compose.ui.graphics.vector.ImageVector
-  import kotlin.concurrent.Volatile
-
-  /**
-   * 图标缓存
-   * 
-   * 使用 LRU 策略管理内存缓存
-   */
-  class IconCache(
-      private val maxSize: Int = 100 // 默认缓存 100 个图标
-  ) {
-
-      // 使用 LinkedHashMap 实现 LRU
-      private val cache = object : LinkedHashMap<IconSpec, ImageVector>(
-          maxSize,
-          0.75f,
-          true // 访问顺序
-      ) {
-          override fun removeEldestEntry(eldest: MutableMap.MutableEntry<IconSpec, ImageVector>?): Boolean {
-              return size > maxSize
-          }
-      }
-
-      @Volatile
-      private var hits = 0L
-
-      @Volatile
-      private var misses = 0L
-
-      /**
-       * 获取图标
-       */
-      @Synchronized
-      fun get(spec: IconSpec): ImageVector? {
-          val icon = cache[spec]
-          if (icon != null) {
-              hits++
-          } else {
-              misses++
-          }
-          return icon
-      }
-
-      /**
-       * 存入图标
-       */
-      @Synchronized
-      fun put(spec: IconSpec, icon: ImageVector) {
-          cache[spec] = icon
-      }
-
-      /**
-       * 清空缓存
-       */
-      @Synchronized
-      fun clear() {
-          cache.clear()
-          hits = 0
-          misses = 0
-      }
-
-      /**
-       * 获取统计信息
-       */
-      @Synchronized
-      fun getStats(): CacheStats {
-          return CacheStats(
-              size = cache.size,
-              hits = hits,
-              misses = misses,
-              hitRate = if (hits + misses > 0) hits.toDouble() / (hits + misses) else 0.0
-          )
-      }
-  }
-
-  /**
-   * 缓存统计
-   */
-  data class CacheStats(
-      val size: Int,
-      val hits: Long,
-      val misses: Long,
-      val hitRate: Double
-  )
-
-  5. LazyImageVector.kt (懒加载包装器)
-
-  package io.github.kingsword09.symbolcraft.runtime
-
-  import androidx.compose.runtime.Composable
-  import androidx.compose.runtime.State
-  import androidx.compose.runtime.produceState
-  import androidx.compose.ui.graphics.vector.ImageVector
-  import kotlinx.coroutines.Dispatchers
-  import kotlinx.coroutines.withContext
-
-  /**
-   * 懒加载 ImageVector 包装器
-   * 
-   * 用于异步加载图标，避免阻塞主线程
-   * 
-   * 用法:
-   * ```kotlin
-   * val homeIcon = rememberLazyIcon(
-   *     spec = IconSpec("home", SymbolWeight.W400, SymbolVariant.OUTLINED, false)
-   * )
-   * 
-   * when (homeIcon.value) {
-   *     is IconLoadState.Loading -> CircularProgressIndicator()
-   *     is IconLoadState.Success -> Icon(homeIcon.value.icon, "Home")
-   *     is IconLoadState.Error -> Text("Failed")
-   * }
-   * ```
-   */
-  sealed class IconLoadState {
-      object Loading : IconLoadState()
-      data class Success(val icon: ImageVector) : IconLoadState()
-      data class Error(val error: Throwable) : IconLoadState()
-  }
-
-  /**
-   * 记住懒加载图标
-   */
-  @Composable
-  fun rememberLazyIcon(spec: IconSpec): State<IconLoadState> {
-      return produceState<IconLoadState>(initialValue = IconLoadState.Loading, spec) {
-          value = try {
-              val icon = withContext(Dispatchers.Default) {
-                  IconLoader.load(spec)
-              }
-              IconLoadState.Success(icon)
-          } catch (e: Exception) {
-              IconLoadState.Error(e)
-          }
-      }
-  }
-
-  /**
-   * 批量预加载图标
-   */
-  @Composable
-  fun rememberPreloadedIcons(specs: List<IconSpec>): State<Map<IconSpec, ImageVector>> {
-      return produceState(initialValue = emptyMap(), specs) {
-          value = withContext(Dispatchers.Default) {
-              specs.mapNotNull { spec ->
-                  try {
-                      spec to IconLoader.load(spec)
-                  } catch (e: Exception) {
-                      null
-                  }
-              }.toMap()
-          }
-      }
-  }
-
-  6. 扩展函数 (便利 API)
-
-  package io.github.kingsword09.symbolcraft.runtime
-
-  import androidx.compose.runtime.Composable
-  import androidx.compose.ui.graphics.vector.ImageVector
-
-  /**
-   * MaterialSymbols 扩展函数
-   */
-
-  /**
-   * 快速访问常用图标
-   */
-  val MaterialSymbols.Outlined.W400.Home: ImageVector
-      get() = this["home"]
-
-  val MaterialSymbols.Outlined.W400.Search: ImageVector
-      get() = this["search"]
-
-  val MaterialSymbols.Outlined.W400.Settings: ImageVector
-      get() = this["settings"]
-
-  val MaterialSymbols.Outlined.W400.Person: ImageVector
-      get() = this["person"]
-
-  val MaterialSymbols.Outlined.W400.Menu: ImageVector
-      get() = this["menu"]
-
-  val MaterialSymbols.Outlined.W400.Close: ImageVector
-      get() = this["close"]
-
-  /**
-   * 便捷获取填充版本
-   */
-  fun WeightGroup.filled(name: String): ImageVector {
-      return this[name, fill = true]
-  }
-
-  /**
-   * Composable 扩展: 记住图标
-   */
-  @Composable
-  fun MaterialSymbols.rememberIcon(
-      name: String,
-      weight: SymbolWeight = SymbolWeight.W400,
-      variant: SymbolVariant = SymbolVariant.OUTLINED,
-      fill: Boolean = false
-  ): ImageVector {
-      return this.get(name, weight, variant, fill)
-  }
-
-  7. 测试
-
-  package io.github.kingsword09.symbolcraft.runtime
-
-  import kotlin.test.Test
-  import kotlin.test.assertEquals
-  import kotlin.test.assertNotNull
-
-  class MaterialSymbolsTest {
-
-      @Test
-      fun testIconSpecClassName() {
-          val spec = IconSpec(
-              name = "home",
-              weight = SymbolWeight.W400,
-              variant = SymbolVariant.OUTLINED,
-              fill = false
-          )
-
-          val expected = "io.github.kingsword09.symbolcraft.icons.outlined.w400.HomeW400Outlined"
-          assertEquals(expected, spec.toClassName())
-      }
-
-      @Test
-      fun testIconSpecWithFill() {
-          val spec = IconSpec(
-              name = "search",
-              weight = SymbolWeight.W500,
-              variant = SymbolVariant.ROUNDED,
-              fill = true
-          )
-
-          val expected = "io.github.kingsword09.symbolcraft.icons.rounded.w500.SearchW500RoundedFill"
-          assertEquals(expected, spec.toClassName())
-      }
-
-      @Test
-      fun testCacheHitRate() {
-          val cache = IconCache(maxSize = 10)
-          val spec = IconSpec("home", SymbolWeight.W400, SymbolVariant.OUTLINED, false)
-
-          // 模拟图标对象
-          val mockIcon = createMockImageVector()
-
-          // 第一次访问 - miss
-          cache.get(spec)
-          var stats = cache.getStats()
-          assertEquals(0, stats.hits)
-          assertEquals(1, stats.misses)
-
-          // 存入缓存
-          cache.put(spec, mockIcon)
-
-          // 第二次访问 - hit
-          assertNotNull(cache.get(spec))
-          stats = cache.getStats()
-          assertEquals(1, stats.hits)
-          assertEquals(1, stats.misses)
-          assertEquals(0.5, stats.hitRate, 0.01)
-      }
-  }
-
-  // 测试辅助函数
-  private fun createMockImageVector(): ImageVector {
-      // 创建一个简单的 mock ImageVector
-      // 实际实现需要根据测试框架调整
-      return ImageVector.Builder(
-          name = "Test",
-          defaultWidth = 24.dp,
-          defaultHeight = 24.dp,
-          viewportWidth = 24f,
-          viewportHeight = 24f
-      ).build()
-  }
-
-  🚀 使用示例
-
-  基础使用
-
-  import io.github.kingsword09.symbolcraft.runtime.MaterialSymbols
-
-  @Composable
-  fun MyApp() {
-      // 方式1: 直接属性访问
-      Icon(MaterialSymbols.Outlined.W400.Home, "Home")
-
-      // 方式2: 索引访问
-      Icon(MaterialSymbols.Outlined.W400["search"], "Search")
-
-      // 方式3: 动态获取
-      val iconName = "settings"
-      Icon(
-          MaterialSymbols.get(
-              name = iconName,
-              weight = SymbolWeight.W500,
-              variant = SymbolVariant.ROUNDED
-          ),
-          "Settings"
-      )
-
-      // 方式4: 填充版本
-      Icon(MaterialSymbols.Rounded.W500.filled("favorite"), "Favorite")
-  }
-
-  高级使用
-
-  @Composable
-  fun AdvancedUsage() {
-      // 懒加载
-      val homeIcon = rememberLazyIcon(
-          IconSpec("home", SymbolWeight.W400, SymbolVariant.OUTLINED, false)
-      )
-
-      when (val state = homeIcon.value) {
-          is IconLoadState.Loading -> CircularProgressIndicator()
-          is IconLoadState.Success -> Icon(state.icon, "Home")
-          is IconLoadState.Error -> Text("Failed to load")
-      }
-
-      // 批量预加载
-      val icons = rememberPreloadedIcons(
-          listOf(
-              IconSpec("home", SymbolWeight.W400, SymbolVariant.OUTLINED, false),
-              IconSpec("search", SymbolWeight.W400, SymbolVariant.OUTLINED, false),
-              IconSpec("settings", SymbolWeight.W400, SymbolVariant.OUTLINED, false)
-          )
-      )
-
-      // 使用预加载的图标
-      icons.value.forEach { (spec, icon) ->
-          Icon(icon, spec.name)
-      }
-  }
-
-  📊 性能优化建议
-
-  1. 缓存大小调整
-
-  // 自定义缓存大小
-  val customCache = IconCache(maxSize = 200) // 增加到 200 个
-
-  2. 预加载关键图标
-
-  @Composable
-  fun App() {
-      // 应用启动时预加载常用图标
-      LaunchedEffect(Unit) {
-          IconLoader.preload(
-              listOf(
-                  IconSpec("home", SymbolWeight.W400, SymbolVariant.OUTLINED, false),
-                  IconSpec("search", SymbolWeight.W400, SymbolVariant.OUTLINED, false),
-                  // ...
-              )
-          )
-      }
-  }
-
-  3. 监控缓存性能
-
-  @Composable
-  fun CacheMonitor() {
-      val stats = remember { IconLoader.getCacheStats() }
-
-      Text("Cache: ${stats.size} icons, Hit rate: ${stats.hitRate * 100}%")
-  }
-
-  📝 发布检查清单
-
-  - 所有单元测试通过
-  - 支持所有目标平台 (Android, iOS, JVM, JS)
-  - API 文档完整
-  - 性能测试通过
-  - 发布到 Maven Central
+# SymbolCraft Material Symbols - 开发指南
+
+## 模块概述
+
+**symbolcraft-material-symbols** 是 SymbolCraft 的预生成图标库模块，包含所有 Material Symbols 图标的预生成版本。
+
+- **版本**: v0.4.0
+- **类型**: Kotlin Multiplatform Library
+- **状态**: 🚧 计划中（未实现）
+- **语言**: Kotlin 2.0.0
+- **平台支持**: Android、iOS、JVM、JS
+- **图标数量**: ~3000+ 图标 × 7 权重 × 3 变体 × 2 填充状态
+
+---
+
+## 核心特性（规划）
+
+- 📦 **预生成图标** - 所有 Material Symbols 图标预先生成并打包
+- 🎨 **完整样式支持** - Outlined、Rounded、Sharp 三种变体
+- ⚖️ **可变字重** - 100-700 全字重支持
+- 🎯 **填充状态** - 填充和未填充版本
+- 💾 **懒加载** - 通过 runtime 模块按需加载
+- 🌳 **Tree-shakable** - 编译时移除未使用的图标
+- 🔧 **模块化** - 按权重/变体拆分，按需引入
+
+---
+
+## 技术栈
+
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| Kotlin | 2.0.0 | 核心语言 |
+| Compose Multiplatform | 1.6.11 | UI 框架 |
+| symbolcraft-runtime | 0.4.0 | 运行时支持 |
+| symbolcraft-plugin | 0.4.0 | 图标生成工具 |
+
+---
+
+## 模块结构
+
+```
+symbolcraft-material-symbols/
+├── build.gradle.kts
+├── README.md
+├── AGENTS.md                          # 本文件（开发指南）
+└── src/
+    ├── commonMain/kotlin/io/github/kingsword09/symbolcraft/materialsymbols/
+    │   ├── MaterialSymbols.kt          # 主访问入口（别名）
+    │   │
+    │   ├── outlined/                   # Outlined 样式
+    │   │   ├── w100/                   # 权重 100
+    │   │   │   ├── Home.kt
+    │   │   │   ├── HomeFill.kt
+    │   │   │   └── ...                 # ~3000 个图标
+    │   │   ├── w200/
+    │   │   ├── w300/
+    │   │   ├── w400/                   # 默认权重
+    │   │   ├── w500/
+    │   │   ├── w600/
+    │   │   └── w700/
+    │   │
+    │   ├── rounded/                    # Rounded 样式
+    │   │   ├── w100/
+    │   │   ├── w200/
+    │   │   ├── w300/
+    │   │   ├── w400/
+    │   │   ├── w500/
+    │   │   ├── w600/
+    │   │   └── w700/
+    │   │
+    │   └── sharp/                      # Sharp 样式
+    │       ├── w100/
+    │       ├── w200/
+    │       ├── w300/
+    │       ├── w400/
+    │       ├── w500/
+    │       ├── w600/
+    │       └── w700/
+    │
+    └── commonTest/kotlin/
+        └── MaterialSymbolsTest.kt
+```
+
+---
+
+## 图标组织方式
+
+### 文件命名规则
+
+每个图标文件遵循以下命名规则：
+
+- **文件名格式**: `{IconName}.kt` 或 `{IconName}Fill.kt`
+- **类名格式**: `{IconName}W{Weight}{Variant}` 或 `{IconName}W{Weight}{Variant}Fill`
+
+**示例**:
+```
+outlined/w400/Home.kt               → HomeW400Outlined
+outlined/w400/HomeFill.kt           → HomeW400OutlinedFill
+rounded/w500/Search.kt              → SearchW500Rounded
+rounded/w500/SearchFill.kt          → SearchW500RoundedFill
+sharp/w700/Settings.kt              → SettingsW700Sharp
+```
+
+### 目录结构
+
+```
+variant (outlined/rounded/sharp)
+  └── weight (w100/w200/w300/w400/w500/w600/w700)
+      └── icon files (Home.kt, HomeFill.kt, ...)
+```
+
+---
+
+## 用法示例
+
+### 基础使用
+
+```kotlin
+import io.github.kingsword09.symbolcraft.materialsymbols.MaterialSymbols
+
+@Composable
+fun MyScreen() {
+    // 方式1: 直接属性访问
+    Icon(
+        imageVector = MaterialSymbols.Outlined.W400.Home,
+        contentDescription = "Home"
+    )
+
+    // 方式2: 索引访问
+    Icon(
+        imageVector = MaterialSymbols.Outlined.W400["search"],
+        contentDescription = "Search"
+    )
+
+    // 方式3: 填充版本
+    Icon(
+        imageVector = MaterialSymbols.Rounded.W500.filled("favorite"),
+        contentDescription = "Favorite"
+    )
+}
+```
+
+### 高级使用
+
+```kotlin
+@Composable
+fun DynamicIcon(iconName: String) {
+    // 动态图标名称
+    Icon(
+        imageVector = MaterialSymbols.get(
+            name = iconName,
+            weight = SymbolWeight.W400,
+            variant = SymbolVariant.OUTLINED
+        ),
+        contentDescription = iconName
+    )
+}
+
+@Composable
+fun IconWithVariants() {
+    val variant by remember { mutableStateOf(SymbolVariant.OUTLINED) }
+    val weight by remember { mutableStateOf(SymbolWeight.W400) }
+
+    Icon(
+        imageVector = MaterialSymbols.get(
+            name = "home",
+            weight = weight,
+            variant = variant
+        ),
+        contentDescription = "Home"
+    )
+}
+```
+
+---
+
+## 实现计划
+
+### 阶段 1: 图标生成策略 (1周)
+
+**任务**:
+- [ ] 设计预生成脚本
+- [ ] 确定图标来源（Material Symbols CDN）
+- [ ] 确定模块拆分策略（全量 vs 按权重拆分）
+- [ ] 设计自动化生成流程
+
+**技术方案**:
+
+**方案 A: 全量单模块** (简单但体积大)
+```
+symbolcraft-material-symbols/
+└── src/commonMain/kotlin/
+    └── ~63,000 个图标文件 (~15-20MB)
+```
+- ✅ 简单直接
+- ❌ 包体积大
+- ❌ 编译时间长
+
+**方案 B: 按权重拆分模块** (推荐)
+```
+symbolcraft-material-symbols-outlined-w400/  # ~3000 个图标 (~2MB)
+symbolcraft-material-symbols-outlined-w500/
+symbolcraft-material-symbols-rounded-w400/
+...
+```
+- ✅ 按需引入，包体积小
+- ✅ 编译快
+- ⚠️ 需要多个模块管理
+
+**方案 C: 混合方案** (最佳)
+```
+symbolcraft-material-symbols/           # 聚合模块（空）
+symbolcraft-material-symbols-core/      # 核心常用图标 (~500个)
+symbolcraft-material-symbols-full/      # 完整图标库（开发用）
+symbolcraft-material-symbols-outlined-w400/  # 拆分模块（生产用）
+...
+```
+
+### 阶段 2: 预生成脚本开发 (1周)
+
+**任务**:
+- [ ] 开发自动化生成脚本
+- [ ] 集成 symbolcraft-plugin
+- [ ] 配置并行生成
+- [ ] 测试生成的图标质量
+
+**生成脚本示例**:
+```kotlin
+// scripts/GenerateAllIcons.main.kts
+import io.github.kingsword09.symbolcraft.plugin.*
+
+/**
+ * 生成所有 Material Symbols 图标
+ * 运行: ./gradlew :symbolcraft-material-symbols:generateAllIcons
+ */
+val generator = IconGenerator(
+    outputDir = File("symbolcraft-material-symbols/src/commonMain/kotlin"),
+    packageName = "io.github.kingsword09.symbolcraft.materialsymbols"
+)
+
+// 从 Material Symbols API 获取所有图标名称
+val allIcons = fetchAllIconNamesFromGoogleFonts()
+
+// 生成配置
+val weights = listOf(100, 200, 300, 400, 500, 600, 700)
+val variants = listOf(
+    SymbolVariant.OUTLINED,
+    SymbolVariant.ROUNDED,
+    SymbolVariant.SHARP
+)
+val fills = listOf(false, true) // unfilled, filled
+
+// 并行生成
+runBlocking {
+    allIcons.chunked(100).map { chunk ->
+        async(Dispatchers.IO) {
+            chunk.forEach { iconName ->
+                weights.forEach { weight ->
+                    variants.forEach { variant ->
+                        fills.forEach { fill ->
+                            generator.generate(
+                                name = iconName,
+                                weight = weight,
+                                variant = variant,
+                                fill = fill
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }.awaitAll()
+}
+```
+
+### 阶段 3: 构建配置 (3天)
+
+**任务**:
+- [ ] 配置 build.gradle.kts
+- [ ] 设置多平台支持
+- [ ] 配置发布参数
+- [ ] 优化编译性能
+
+**build.gradle.kts**:
+```kotlin
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.maven.publish)
+    signing
+}
+
+kotlin {
+    androidTarget()
+    jvm()
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
+
+    sourceSets {
+        commonMain.dependencies {
+            api(project(":symbolcraft-runtime"))
+            implementation(compose.runtime)
+            implementation(compose.ui)
+        }
+    }
+}
+
+// 生成所有图标的任务
+tasks.register("generateAllIcons") {
+    group = "symbolcraft"
+    description = "Generate all Material Symbols icons"
+
+    doLast {
+        exec {
+            commandLine("kotlin", "scripts/GenerateAllIcons.main.kts")
+        }
+    }
+}
+
+// 在编译前自动生成图标
+tasks.named("compileKotlinMetadata") {
+    dependsOn("generateAllIcons")
+}
+```
+
+### 阶段 4: Tree Shaking 集成 (1周)
+
+**任务**:
+- [ ] 设计 Tree Shaking 规则
+- [ ] 实现编译器插件
+- [ ] 集成 ProGuard/R8 规则
+- [ ] 测试 Tree Shaking 效果
+
+**ProGuard/R8 规则**:
+```
+# SymbolCraft Material Symbols - Tree Shaking Rules
+# Auto-generated by SymbolCraft Compiler
+
+# Keep runtime classes
+-keep class io.github.kingsword09.symbolcraft.runtime.** { *; }
+
+# Keep used icons (example)
+-keep class io.github.kingsword09.symbolcraft.materialsymbols.outlined.w400.HomeW400Outlined { *; }
+-keep class io.github.kingsword09.symbolcraft.materialsymbols.outlined.w400.SearchW400Outlined { *; }
+
+# Remove unused icons
+-assumenosideeffects class io.github.kingsword09.symbolcraft.materialsymbols.** {
+    <init>(...);
+}
+```
+
+### 阶段 5: 测试和优化 (1周)
+
+**任务**:
+- [ ] 单元测试
+- [ ] 集成测试
+- [ ] 性能测试（加载时间、内存占用）
+- [ ] 包体积测试
+- [ ] Tree Shaking 效果测试
+
+**测试用例**:
+```kotlin
+class MaterialSymbolsTest {
+    @Test
+    fun testIconLoading() {
+        val icon = MaterialSymbols.Outlined.W400.Home
+        assertNotNull(icon)
+        assertEquals(24.dp, icon.defaultWidth)
+        assertEquals(24.dp, icon.defaultHeight)
+    }
+
+    @Test
+    fun testAllWeights() {
+        listOf(100, 200, 300, 400, 500, 600, 700).forEach { weight ->
+            val icon = MaterialSymbols.Outlined["W$weight"]["home"]
+            assertNotNull(icon)
+        }
+    }
+
+    @Test
+    fun testTreeShaking() {
+        // 验证未使用的图标被移除
+        // 需要配合构建工具测试
+    }
+}
+```
+
+### 阶段 6: 文档和发布 (3天)
+
+**任务**:
+- [ ] 完善 README
+- [ ] 编写迁移指南
+- [ ] 更新示例代码
+- [ ] 发布到 Maven Central
+
+---
+
+## 开发工作流
+
+### 本地开发
+
+#### 1. 生成图标
+```bash
+# 生成所有图标
+./gradlew :symbolcraft-material-symbols:generateAllIcons
+
+# 或生成部分图标（用于测试）
+./gradlew :symbolcraft-material-symbols:generateTestIcons
+```
+
+#### 2. 构建模块
+```bash
+./gradlew :symbolcraft-material-symbols:build
+```
+
+#### 3. 发布到本地 Maven
+```bash
+./gradlew :symbolcraft-material-symbols:publishToMavenLocal
+```
+
+#### 4. 在示例项目中测试
+```bash
+cd example
+# 添加依赖
+# implementation("io.github.kingsword09:symbolcraft-material-symbols:0.4.0-SNAPSHOT")
+./gradlew :composeApp:run
+```
+
+---
+
+## 性能考虑
+
+### 包体积优化
+
+**未优化**:
+- 全量图标：~63,000 个文件
+- 预估大小：~15-20MB
+
+**优化后（Tree Shaking）**:
+- 仅使用的图标：假设 50 个
+- 预估大小：~50KB
+
+### 编译时间优化
+
+**策略**:
+1. **增量编译** - 只重新编译修改的图标
+2. **并行生成** - 使用 Kotlin 协程并行生成
+3. **缓存生成结果** - 避免重复生成
+
+### 内存占用优化
+
+**策略**:
+1. **懒加载** - 通过 runtime 模块按需加载
+2. **LRU 缓存** - 限制内存中的图标数量
+3. **Weak References** - 允许 GC 回收不常用图标
+
+---
+
+## 模块拆分策略
+
+### 推荐拆分方案
+
+```
+symbolcraft-material-symbols/               # 聚合模块（空）
+├── build.gradle.kts                         # 依赖所有子模块
+
+symbolcraft-material-symbols-core/           # 核心常用图标
+├── 500 个最常用的图标
+├── 仅 W400 权重、Outlined 变体
+└── ~1MB
+
+symbolcraft-material-symbols-outlined-w400/  # 按权重拆分
+symbolcraft-material-symbols-outlined-w500/
+symbolcraft-material-symbols-outlined-w700/
+symbolcraft-material-symbols-rounded-w400/
+symbolcraft-material-symbols-rounded-w500/
+symbolcraft-material-symbols-rounded-w700/
+symbolcraft-material-symbols-sharp-w400/
+symbolcraft-material-symbols-sharp-w500/
+symbolcraft-material-symbols-sharp-w700/
+
+symbolcraft-material-symbols-full/           # 完整库（开发用）
+└── 所有图标 (~15-20MB)
+```
+
+### 用户引入方式
+
+```kotlin
+dependencies {
+    // 方式1: 仅核心图标（推荐）
+    implementation("io.github.kingsword09:symbolcraft-material-symbols-core:0.4.0")
+
+    // 方式2: 按需引入特定权重/变体
+    implementation("io.github.kingsword09:symbolcraft-material-symbols-outlined-w400:0.4.0")
+    implementation("io.github.kingsword09:symbolcraft-material-symbols-rounded-w500:0.4.0")
+
+    // 方式3: 完整库（开发阶段）
+    debugImplementation("io.github.kingsword09:symbolcraft-material-symbols-full:0.4.0")
+}
+```
+
+---
+
+## 与 Runtime 模块的集成
+
+### MaterialSymbols 别名
+
+```kotlin
+// symbolcraft-material-symbols/src/commonMain/kotlin/MaterialSymbols.kt
+package io.github.kingsword09.symbolcraft.materialsymbols
+
+import io.github.kingsword09.symbolcraft.runtime.MaterialSymbols as RuntimeMaterialSymbols
+
+/**
+ * MaterialSymbols 别名
+ * 指向 runtime 模块的 MaterialSymbols
+ */
+typealias MaterialSymbols = RuntimeMaterialSymbols
+```
+
+### 图标文件示例
+
+```kotlin
+// symbolcraft-material-symbols/src/commonMain/kotlin/outlined/w400/Home.kt
+package io.github.kingsword09.symbolcraft.materialsymbols.outlined.w400
+
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.unit.dp
+
+val HomeW400Outlined: ImageVector by lazy {
+    ImageVector.Builder(
+        name = "HomeW400Outlined",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = SolidColor(Color.Black)
+        ) {
+            // SVG path data...
+        }
+    }.build()
+}
+```
+
+---
+
+## 依赖关系
+
+### 对外依赖
+```kotlin
+commonMain.dependencies {
+    api(project(":symbolcraft-runtime"))
+    implementation(compose.runtime)
+    implementation(compose.ui)
+}
+```
+
+### 被依赖
+- 用户应用 - 直接依赖此模块获取预生成的图标
+
+---
+
+## 发布清单
+
+### 发布前检查
+- [ ] 所有图标生成成功
+- [ ] 所有平台编译通过
+- [ ] Tree Shaking 测试通过
+- [ ] 包体积符合预期
+- [ ] 文档完整
+- [ ] 示例代码可运行
+- [ ] 版本号更新
+- [ ] CHANGELOG 更新
+
+### 发布命令
+```bash
+# 发布所有子模块到 Maven Central
+./gradlew :symbolcraft-material-symbols:publishToMavenCentral
+./gradlew :symbolcraft-material-symbols-core:publishToMavenCentral
+./gradlew :symbolcraft-material-symbols-outlined-w400:publishToMavenCentral
+# ...
+
+# 或使用统一发布
+./gradlew publishAll
+```
+
+---
+
+## 常见问题
+
+### Q: 为什么需要预生成图标？
+A: 预生成图标提供类似 material-icons-extended 的开发体验，无需配置即可使用所有图标。配合 Tree Shaking，可以在生产构建时移除未使用的图标。
+
+### Q: 如何选择合适的模块？
+A:
+- **开发阶段**: 使用 `symbolcraft-material-symbols-full` 获得完整 IDE 支持
+- **生产构建**: 使用 `symbolcraft-material-symbols-core` 或按需引入特定权重/变体
+- **混合方案**: `debugImplementation` 完整库，`releaseImplementation` 核心库 + Tree Shaking
+
+### Q: Tree Shaking 如何工作？
+A: 编译器插件分析代码中使用的图标，生成 ProGuard/R8 规则，在编译时移除未使用的图标类。
+
+### Q: 包体积会有多大？
+A:
+- **未优化**: 15-20MB（全量图标）
+- **核心库**: ~1MB（500 个常用图标）
+- **Tree Shaking 后**: 取决于实际使用，通常 < 100KB
+
+---
+
+## 贡献指南
+
+### 开发环境设置
+1. Clone 仓库
+2. 确保 Java 17+ 已安装
+3. 运行 `./gradlew :symbolcraft-material-symbols:generateTestIcons` 生成测试图标
+4. 运行测试确认环境正常
+
+### 代码规范
+- 遵循 Kotlin 官方编码规范
+- 所有生成的图标必须通过 lint 检查
+- 提交前运行 `./gradlew :symbolcraft-material-symbols:check`
+
+### 提交规范
+```
+feat(material-symbols): add new icon variants
+fix(material-symbols): resolve icon path issues
+docs(material-symbols): update usage guide
+build(material-symbols): optimize generation script
+```
+
+---
+
+## 资源链接
+
+### 内部文档
+- [根项目 AGENTS.md](../AGENTS.md)
+- [Plugin AGENTS.md](../symbolcraft-plugin/AGENTS.md)
+- [Runtime AGENTS.md](../symbolcraft-runtime/AGENTS.md)
+- [README.md](README.md)
+
+### 外部资源
+- [Material Symbols 官方](https://fonts.google.com/icons)
+- [Material Symbols Demo](https://marella.github.io/material-symbols/demo/)
+- [Material Symbols GitHub](https://github.com/marella/material-symbols)
+
+---
+
+## 联系方式
+
+- **维护者**: [@kingsword09](https://github.com/kingsword09)
+- **Email**: kingsword09@gmail.com
+- **问题反馈**: [GitHub Issues](https://github.com/kingsword09/SymbolCraft/issues)
+
+---
+
+**最后更新**: 2025-10-19
+**文档版本**: 1.0.0 (Material Symbols Module - Planning Stage)
+**状态**: 🚧 未实现 - 规划阶段

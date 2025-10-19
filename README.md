@@ -121,6 +121,54 @@ A Kotlin Multiplatform library with pre-generated Material Symbols icons.
 
 ---
 
+## 🔮 Upcoming in v0.4.0
+
+SymbolCraft v0.4.0 will introduce several exciting features:
+
+### 🌳 Tree Shaking (Planned)
+
+Only generate icons that are actually used in your codebase through static code analysis.
+
+```kotlin
+symbolCraft {
+    treeShaking {
+        enabled.set(true)
+        scanDirectories.addAll("src/commonMain/kotlin", "src/androidMain/kotlin")
+        strategy.set(ScanStrategy.USAGE_BASED)
+        alwaysInclude.addAll("home", "search", "settings")
+    }
+}
+```
+
+**Benefits**:
+- Smaller code generation time
+- Reduced repository size
+- Only compile what you need
+- Automatic dependency tracking
+
+### 📊 Performance Monitoring (Planned)
+
+Detailed statistics about icon generation:
+
+```
+📊 Generation Report:
+   ⏱️ Total time: 3.2s
+   ⬇️ Download: 1.5s (avg 245KB/s)
+   🔄 Conversion: 1.7s
+   💾 Cache hit rate: 66.7% (8/12)
+   📦 Generated: 12 icons, 245KB total
+```
+
+### 🚨 Enhanced Error Handling (Planned)
+
+Better error categorization and recovery:
+- Network errors with retry strategies
+- Cache corruption detection and auto-repair
+- Conversion failures with detailed diagnostics
+- Configuration validation with helpful suggestions
+
+---
+
 ## 🚀 Getting Started
 
 ### Requirements
