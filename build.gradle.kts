@@ -13,12 +13,6 @@ plugins {
 allprojects {
     group = "io.github.kingsword09"
     version = "0.4.0"  // Unified version across all modules
-
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
 }
 
 // Common configuration for all subprojects

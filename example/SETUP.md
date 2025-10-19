@@ -7,7 +7,7 @@
 | 组件 | 版本 | 说明 |
 |------|------|------|
 | **Kotlin** | 2.0.0 | 与根项目一致 |
-| **Compose Multiplatform** | 1.8.0 | 升级以获得更多功能 |
+| **Compose Multiplatform** | 1.7.0 | 升级以获得更多功能 |
 | **Android Gradle Plugin** | 8.5.2 | 匹配根项目 |
 | **Gradle** | 8.14.3 | Wrapper 版本 |
 | **SymbolCraft** | 0.4.0 | 使用 mavenLocal() |
@@ -87,7 +87,7 @@ Example 项目有**独立的版本配置**，不继承根项目：
 ```toml
 [versions]
 kotlin = "2.0.0"               # 与根项目一致
-composeMultiplatform = "1.8.0" # 升级版本
+composeMultiplatform = "1.7.0" # 升级版本
 agp = "8.5.2"                  # 与根项目一致
 symbolcraft = "0.4.0"          # 使用本地发布版本
 ```

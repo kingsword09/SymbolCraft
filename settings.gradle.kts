@@ -4,24 +4,26 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-    
-    // Force Kotlin version to prevent CI from using dev versions
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.namespace == "org.jetbrains.kotlin") {
-                useVersion("2.0.0")
+        google {
+            mavenContent {
+                includeGroupByRegex(".*google.*")
+                includeGroupByRegex(".*android.*")
             }
         }
+        mavenCentral()
     }
 }
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
-        google()
+        google {
+            mavenContent {
+                includeGroupByRegex(".*android.*")
+                includeGroupByRegex(".*androidx.*")
+                includeGroupByRegex(".*google.*")
+            }
+        }
         mavenCentral()
         gradlePluginPortal()
     }
