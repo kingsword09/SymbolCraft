@@ -5,6 +5,13 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
+> **📌 注意**: 你正在查看 **v0.4.0 开发分支**，包含 Monorepo 架构规划。
+>
+> - **稳定版本 (v0.3.2)**: 切换到 [`main`](https://github.com/kingsword09/SymbolCraft/tree/main) 分支
+> - **开发版本 (v0.4.0)**: 此分支包含计划中的功能和架构变更，尚未实现
+>
+> 生产环境请使用 main 分支的稳定版本。
+
 **为 Compose Multiplatform 从多个图标库按需生成图标**
 
 [English](README.md) | [插件文档](symbolcraft-plugin/README_ZH.md)

@@ -5,6 +5,13 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 
+> **📌 Note**: You are viewing the **v0.4.0 development branch** with Monorepo architecture planning.
+>
+> - **Stable Version (v0.3.2)**: Switch to the [`main`](https://github.com/kingsword09/SymbolCraft/tree/main) branch
+> - **Development Version (v0.4.0)**: This branch contains planned features and architectural changes that are not yet implemented
+>
+> For production use, please use the stable version from the main branch.
+
 **Generate icons on-demand from multiple libraries for Compose Multiplatform**
 
 [中文文档](README_ZH.md) | [Plugin Documentation](symbolcraft-plugin/README.md)
