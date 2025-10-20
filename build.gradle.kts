@@ -115,12 +115,7 @@ signing {
     // Always set isRequired to false
     isRequired = false
 
-    if (
-        signingKey != null &&
-            signingPassword != null &&
-            signingKey.isNotBlank() &&
-            signingPassword.isNotBlank()
-    ) {
+    if (!signingKey.isNullOrBlank() && !signingPassword.isNullOrBlank()) {
         useInMemoryPgpKeys(signingKey, signingPassword)
 
         // Configure signing after all publications are created
