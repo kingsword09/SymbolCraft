@@ -1,25 +1,24 @@
 package io.github.kingsword09.symbolcraft.plugin
 
-import io.github.kingsword09.symbolcraft.converter.NamingConvention
 import io.github.kingsword09.symbolcraft.model.*
-import io.github.kingsword09.symbolcraft.plugin.samples.localIconsExcludeSample
-import io.github.kingsword09.symbolcraft.plugin.samples.localIconsIncludeSample
-import org.gradle.api.Action
-import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.Property
-import javax.inject.Inject
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.PathMatcher
+import javax.inject.Inject
+import org.gradle.api.Action
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 
 /**
  * DSL entry point exposed as `symbolCraft { ... }` in a consuming build script.
  *
- * The extension collects icon requests from multiple icon libraries and paths that drive [io.github.kingsword09.symbolcraft.tasks.GenerateSymbolsTask].
+ * The extension collects icon requests from multiple icon libraries and paths that drive
+ * [io.github.kingsword09.symbolcraft.tasks.GenerateSymbolsTask].
  *
  * @property cacheEnabled enables reuse of downloaded SVG assets between builds.
- * @property cacheDirectory directory that hosts cached SVG payloads (relative to `build/` by default).
+ * @property cacheDirectory directory that hosts cached SVG payloads (relative to `build/` by
+ *   default).
  * @property outputDirectory Kotlin source folder where generated code will be written.
  * @property packageName root package used for generated Kotlin types.
  * @property generatePreview toggles Compose preview function generation for each icon.
@@ -27,8 +26,7 @@ import java.nio.file.PathMatcher
  * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
  */
 abstract class SymbolCraftExtension {
-    @get:Inject
-    protected abstract val objects: ObjectFactory
+    @get:Inject protected abstract val objects: ObjectFactory
     abstract val cacheEnabled: Property<Boolean>
     abstract val cacheDirectory: Property<String>
     abstract val outputDirectory: Property<String>
@@ -37,7 +35,7 @@ abstract class SymbolCraftExtension {
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
     abstract val projectDirectory: Property<String>
-    
+
     /**
      * Icon naming configuration。
      *
@@ -107,9 +105,7 @@ abstract class SymbolCraftExtension {
      * @param configFactory Factory function that creates IconConfig for each icon name
      */
     fun iconConfigs(vararg names: String, configFactory: (String) -> IconConfig) {
-        names.forEach { name ->
-            iconConfig(name, configFactory(name))
-        }
+        names.forEach { name -> iconConfig(name, configFactory(name)) }
     }
 
     /**
@@ -129,9 +125,7 @@ abstract class SymbolCraftExtension {
     fun materialSymbol(name: String, configure: MaterialSymbolsBuilder.() -> Unit) {
         val builder = MaterialSymbolsBuilder()
         builder.configure()
-        builder.configs.forEach { config ->
-            iconConfig(name, config)
-        }
+        builder.configs.forEach { config -> iconConfig(name, config) }
     }
 
     /**
@@ -186,9 +180,7 @@ abstract class SymbolCraftExtension {
         val builder = ExternalIconBuilder(libraryName)
         builder.configure()
         val configs = builder.build()
-        configs.forEach { config ->
-            iconConfig(name, config)
-        }
+        configs.forEach { config -> iconConfig(name, config) }
     }
 
     /**
@@ -222,7 +214,11 @@ abstract class SymbolCraftExtension {
      * @param libraryName Library identifier shared by all icons
      * @param configure Configuration block applied to each icon
      */
-    fun externalIcons(vararg names: String, libraryName: String, configure: ExternalIconBuilder.() -> Unit) {
+    fun externalIcons(
+        vararg names: String,
+        libraryName: String,
+        configure: ExternalIconBuilder.() -> Unit,
+    ) {
         names.forEach { name -> externalIcon(name, libraryName, configure) }
     }
 
@@ -238,25 +234,27 @@ abstract class SymbolCraftExtension {
      * }
      * ```
      *
-     * When no include pattern is specified, all SVG files under the directory are discovered recursively.
-     * Paths can be absolute or relative to the project directory. Icon names are derived from the relative file path and
-     * passed through the standard naming transformers.
+     * When no include pattern is specified, all SVG files under the directory are discovered
+     * recursively. Paths can be absolute or relative to the project directory. Icon names are
+     * derived from the relative file path and passed through the standard naming transformers.
      *
-     * @param libraryName Logical grouping displayed in the generated source package (default: `local`)
+     * @param libraryName Logical grouping displayed in the generated source package (default:
+     *   `local`)
      * @param configure Configuration block describing the local icon search
      */
     fun localIcons(libraryName: String = "local", configure: LocalIconsBuilder.() -> Unit) {
-        val projectDir = projectDirectory.orNull
-            ?: throw IllegalStateException("Project directory is not set on SymbolCraftExtension")
+        val projectDir =
+            projectDirectory.orNull
+                ?: throw IllegalStateException(
+                    "Project directory is not set on SymbolCraftExtension"
+                )
 
         validateLocalLibraryName(libraryName)
 
         val builder = LocalIconsBuilder(projectDir)
         builder.configure()
         val localConfigs = builder.build(libraryName)
-        localConfigs.forEach { (iconName, config) ->
-            iconConfig(iconName, config)
-        }
+        localConfigs.forEach { (iconName, config) -> iconConfig(iconName, config) }
     }
 
     private fun validateLocalLibraryName(libraryName: String) {
@@ -265,9 +263,7 @@ abstract class SymbolCraftExtension {
         }
     }
 
-    /**
-     * Returns an immutable snapshot of all icon requests declared via the DSL.
-     */
+    /** Returns an immutable snapshot of all icon requests declared via the DSL. */
     fun getIconsConfig(): Map<String, List<IconConfig>> = iconsConfig.toMap()
 
     /**
@@ -282,9 +278,9 @@ abstract class SymbolCraftExtension {
             append("icons:")
             iconsConfig.toSortedMap().forEach { (name, configs) ->
                 append("$name-[")
-                configs.sortedBy { "${it.libraryId}-${it.getSignature()}" }.forEach { config ->
-                    append("${config.libraryId}:${config.getSignature()},")
-                }
+                configs
+                    .sortedBy { "${it.libraryId}-${it.getSignature()}" }
+                    .forEach { config -> append("${config.libraryId}:${config.getSignature()},") }
                 append("]")
             }
             append("|package:").append(packageName.orNull)
@@ -296,119 +292,99 @@ abstract class SymbolCraftExtension {
     }
 }
 
-/**
- * Builder for Material Symbols configuration.
- */
+/** Builder for Material Symbols configuration. */
 class MaterialSymbolsBuilder {
     val configs = mutableListOf<MaterialSymbolsConfig>()
 
-    /**
-     * Add a single style configuration using SymbolWeight enum.
-     */
+    /** Add a single style configuration using SymbolWeight enum. */
     fun style(
         weight: SymbolWeight = SymbolWeight.W400,
         variant: SymbolVariant = SymbolVariant.OUTLINED,
         fill: SymbolFill = SymbolFill.UNFILLED,
         grade: Int = 0,
-        opticalSize: Int = 24
+        opticalSize: Int = 24,
     ) {
         configs.add(MaterialSymbolsConfig(weight, variant, fill, grade, opticalSize))
     }
 
-    /**
-     * Add a single style configuration using integer weight value.
-     */
+    /** Add a single style configuration using integer weight value. */
     fun style(
         weight: Int,
         variant: SymbolVariant = SymbolVariant.OUTLINED,
         fill: SymbolFill = SymbolFill.UNFILLED,
         grade: Int = 0,
-        opticalSize: Int = 24
+        opticalSize: Int = 24,
     ) {
         val symbolWeight = SymbolWeight.fromValue(weight)
         configs.add(MaterialSymbolsConfig(symbolWeight, variant, fill, grade, opticalSize))
     }
 
-    /**
-     * Add multiple weight variants for the same variant/fill combination.
-     */
+    /** Add multiple weight variants for the same variant/fill combination. */
     fun weights(
         vararg weights: SymbolWeight,
         variant: SymbolVariant = SymbolVariant.OUTLINED,
-        fill: SymbolFill = SymbolFill.UNFILLED
+        fill: SymbolFill = SymbolFill.UNFILLED,
     ) {
-        weights.forEach { weight ->
-            style(weight = weight, variant = variant, fill = fill)
-        }
+        weights.forEach { weight -> style(weight = weight, variant = variant, fill = fill) }
     }
 
-    /**
-     * Add multiple weights expressed as integers.
-     */
+    /** Add multiple weights expressed as integers. */
     fun weights(
         vararg weights: Int,
         variant: SymbolVariant = SymbolVariant.OUTLINED,
-        fill: SymbolFill = SymbolFill.UNFILLED
+        fill: SymbolFill = SymbolFill.UNFILLED,
     ) {
-        weights.forEach { weight ->
-            style(weight = weight, variant = variant, fill = fill)
-        }
+        weights.forEach { weight -> style(weight = weight, variant = variant, fill = fill) }
     }
 
-    /**
-     * Add standard Material Design weight trio (400/500/700).
-     */
+    /** Add standard Material Design weight trio (400/500/700). */
     fun standardWeights(
         variant: SymbolVariant = SymbolVariant.OUTLINED,
-        fill: SymbolFill = SymbolFill.UNFILLED
+        fill: SymbolFill = SymbolFill.UNFILLED,
     ) {
-        weights(SymbolWeight.W400, SymbolWeight.W500, SymbolWeight.W700, variant = variant, fill = fill)
+        weights(
+            SymbolWeight.W400,
+            SymbolWeight.W500,
+            SymbolWeight.W700,
+            variant = variant,
+            fill = fill,
+        )
     }
 
-    /**
-     * Generate all visual variants (outlined, rounded, sharp) for the supplied weight.
-     */
+    /** Generate all visual variants (outlined, rounded, sharp) for the supplied weight. */
     fun allVariants(
         weight: SymbolWeight = SymbolWeight.W400,
-        fill: SymbolFill = SymbolFill.UNFILLED
+        fill: SymbolFill = SymbolFill.UNFILLED,
     ) {
         SymbolVariant.entries.forEach { variant ->
             style(weight = weight, variant = variant, fill = fill)
         }
     }
 
-    /**
-     * Generate all visual variants using integer weight value.
-     */
+    /** Generate all visual variants using integer weight value. */
     fun allVariants(weight: Int, fill: SymbolFill = SymbolFill.UNFILLED) {
         SymbolVariant.entries.forEach { variant ->
             style(weight = weight, variant = variant, fill = fill)
         }
     }
 
-    /**
-     * Add both filled and unfilled versions for the supplied weight/variant pair.
-     */
+    /** Add both filled and unfilled versions for the supplied weight/variant pair. */
     fun bothFills(
         weight: SymbolWeight = SymbolWeight.W400,
-        variant: SymbolVariant = SymbolVariant.OUTLINED
+        variant: SymbolVariant = SymbolVariant.OUTLINED,
     ) {
         style(weight = weight, variant = variant, fill = SymbolFill.UNFILLED)
         style(weight = weight, variant = variant, fill = SymbolFill.FILLED)
     }
 
-    /**
-     * Add both filled and unfilled versions using integer weight value.
-     */
+    /** Add both filled and unfilled versions using integer weight value. */
     fun bothFills(weight: Int, variant: SymbolVariant = SymbolVariant.OUTLINED) {
         style(weight = weight, variant = variant, fill = SymbolFill.UNFILLED)
         style(weight = weight, variant = variant, fill = SymbolFill.FILLED)
     }
 }
 
-/**
- * Builder for external icon configuration with support for multi-value style parameters.
- */
+/** Builder for external icon configuration with support for multi-value style parameters. */
 class ExternalIconBuilder(private val libraryName: String) {
     var urlTemplate: String = ""
     private val singleValueParams = mutableMapOf<String, String>()
@@ -444,9 +420,7 @@ class ExternalIconBuilder(private val libraryName: String) {
     }
 
     fun build(): List<ExternalIconConfig> {
-        require(urlTemplate.isNotBlank()) {
-            "urlTemplate must be specified for external icon"
-        }
+        require(urlTemplate.isNotBlank()) { "urlTemplate must be specified for external icon" }
 
         // If no multi-value params, return single config (backward compatibility)
         if (multiValueParams.isEmpty()) {
@@ -464,9 +438,7 @@ class ExternalIconBuilder(private val libraryName: String) {
         val allParams = mutableMapOf<String, List<String>>()
 
         // Add single-value params as single-item lists
-        singleValueParams.forEach { (key, value) ->
-            allParams[key] = listOf(value)
-        }
+        singleValueParams.forEach { (key, value) -> allParams[key] = listOf(value) }
 
         // Add multi-value params
         allParams.putAll(multiValueParams)
@@ -479,24 +451,16 @@ class ExternalIconBuilder(private val libraryName: String) {
         if (params.isEmpty()) return listOf(emptyMap())
 
         return params.entries.fold(listOf(emptyMap())) { acc, (key, values) ->
-            acc.flatMap { map ->
-                values.map { value ->
-                    map + (key to value)
-                }
-            }
+            acc.flatMap { map -> values.map { value -> map + (key to value) } }
         }
     }
 }
 
-/**
- * Builder for configuring local SVG icons.
- */
-class LocalIconsBuilder internal constructor(
-    private val projectDir: String
-) {
+/** Builder for configuring local SVG icons. */
+class LocalIconsBuilder internal constructor(private val projectDir: String) {
     /**
-     * Root directory used for scanning SVG files. Must point to an existing directory.
-     * Accepts absolute paths or paths relative to the Gradle project directory.
+     * Root directory used for scanning SVG files. Must point to an existing directory. Accepts
+     * absolute paths or paths relative to the Gradle project directory.
      */
     var directory: String? = null
 
@@ -511,33 +475,36 @@ class LocalIconsBuilder internal constructor(
      * `brand/sub/icon.svg` but NOT `brand/icon.svg`. To ensure both are matched, we automatically
      * add a variant of the pattern without the double-star prefix when detected.
      *
-     * @sample io.github.kingsword09.symbolcraft.plugin.localIconsIncludeSample
+     * @sample io.github.kingsword09.symbolcraft.plugin.samples.localIconsIncludeSample
      */
     fun include(vararg patterns: String) {
-        patterns.filter { it.isNotBlank() }.forEach { pattern ->
-            includePatterns.add(pattern)
-            // Handle Java glob behavior: ensure direct directory matches are also included
-            if (pattern.contains("**/")) {
-                val directMatch = pattern.replace("**/", "")
-                if (directMatch != pattern) {
-                    includePatterns.add(directMatch)
+        patterns
+            .filter { it.isNotBlank() }
+            .forEach { pattern ->
+                includePatterns.add(pattern)
+                // Handle Java glob behavior: ensure direct directory matches are also included
+                if (pattern.contains("**/")) {
+                    val directMatch = pattern.replace("**/", "")
+                    if (directMatch != pattern) {
+                        includePatterns.add(directMatch)
+                    }
                 }
             }
-        }
     }
 
     /**
      * Add exclude glob patterns that will be filtered after includes.
      *
-     * @sample io.github.kingsword09.symbolcraft.plugin.localIconsExcludeSample
+     * @sample io.github.kingsword09.symbolcraft.plugin.samples.localIconsExcludeSample
      */
     fun exclude(vararg patterns: String) {
         excludePatterns.addAll(patterns.filter { it.isNotBlank() })
     }
 
     internal fun build(libraryName: String): Map<String, LocalIconConfig> {
-        val dirValue = directory?.takeIf { it.isNotBlank() }
-            ?: throw IllegalStateException("directory must be specified for localIcons")
+        val dirValue =
+            directory?.takeIf { it.isNotBlank() }
+                ?: throw IllegalStateException("directory must be specified for localIcons")
 
         val baseDir = resolveAgainstProject(dirValue).canonicalFile
 
@@ -548,13 +515,15 @@ class LocalIconsBuilder internal constructor(
             "Local icons path must be a directory: ${baseDir.absolutePath}"
         }
 
-        val includes = if (includePatterns.isEmpty()) listOf("**/*.svg", "*.svg") else includePatterns
+        val includes =
+            if (includePatterns.isEmpty()) listOf("**/*.svg", "*.svg") else includePatterns
         val includeMatchers = includes.map { compileGlob(it) }
         val excludeMatchers = excludePatterns.map { compileGlob(it) }
 
         val iconMap = linkedMapOf<String, LocalIconConfig>()
 
-        baseDir.walkTopDown()
+        baseDir
+            .walkTopDown()
             .filter { it.isFile && it.extension.equals("svg", ignoreCase = true) }
             .forEach { file ->
                 val relativePath = baseDir.toPath().relativize(file.toPath())
@@ -567,11 +536,12 @@ class LocalIconsBuilder internal constructor(
 
                 val relativeWithoutExt = stripSvgExtension(relativeNormalized)
 
-                iconMap[iconName] = LocalIconConfig(
-                    libraryName = libraryName,
-                    absolutePath = file.absolutePath,
-                    relativePath = relativeWithoutExt
-                )
+                iconMap[iconName] =
+                    LocalIconConfig(
+                        libraryName = libraryName,
+                        absolutePath = file.absolutePath,
+                        relativePath = relativeWithoutExt,
+                    )
             }
 
         if (iconMap.isEmpty()) {
@@ -597,8 +567,8 @@ class LocalIconsBuilder internal constructor(
     /**
      * Build icon name from relative file path.
      *
-     * Delegates all sanitization to sanitizeLocalName, which handles path separators,
-     * hyphens, and other special characters in a single pass.
+     * Delegates all sanitization to sanitizeLocalName, which handles path separators, hyphens, and
+     * other special characters in a single pass.
      */
     private fun buildIconName(relativePath: String): String {
         val withoutExt = stripSvgExtension(relativePath)
@@ -635,23 +605,21 @@ class LocalIconsBuilder internal constructor(
     /**
      * Sanitize local file path for use as icon name.
      *
-     * Replaces all non-alphanumeric characters (including path separators, hyphens, etc.)
-     * with underscores, then collapses consecutive underscores and trims from edges.
+     * Replaces all non-alphanumeric characters (including path separators, hyphens, etc.) with
+     * underscores, then collapses consecutive underscores and trims from edges.
      */
     private fun sanitizeLocalName(input: String): String {
         return input
             .replace("/", "_")
             .replace("\\", "_")
-            .replace("-", "_")  // Hyphens to underscores
-            .replace(Regex("[^a-zA-Z0-9_]"), "_")  // All other special chars
-            .replace(Regex("_+"), "_")  // Collapse multiples
-            .trim('_')  // Trim edges
+            .replace("-", "_") // Hyphens to underscores
+            .replace(Regex("[^a-zA-Z0-9_]"), "_") // All other special chars
+            .replace(Regex("_+"), "_") // Collapse multiples
+            .trim('_') // Trim edges
     }
 }
 
-/**
- * Builder for multi-value style parameters.
- */
+/** Builder for multi-value style parameters. */
 class StyleParamBuilder {
     internal val valuesList = mutableListOf<String>()
 

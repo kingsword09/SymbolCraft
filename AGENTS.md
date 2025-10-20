@@ -513,6 +513,16 @@ dependencies {
 - 修改预览生成
 - 自定义文件命名
 
+### 运行代码格式化
+
+- `./gradlew ktfmtFormat`：使用 ktfmt 对所有 Kotlin 源码进行格式化。
+- `./gradlew ktfmtCheck`：验证格式是否符合 ktfmt 规则；该任务已接入 `check` 流水线。
+
+### CI 格式检查策略
+
+- GitHub Actions 会在 `build` 工作流的最开始执行 `./gradlew ktfmtCheck`，若格式不合规会立即失败并阻止后续任务。
+- 本地开发默认不强制安装 Git hook，提交前请自行运行 `./gradlew ktfmtFormat`（自动修复）或 `./gradlew ktfmtCheck`（仅校验）以避免 CI 失败。
+
 ---
 
 ## 调试技巧

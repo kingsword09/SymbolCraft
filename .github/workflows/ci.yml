@@ -30,6 +30,9 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x ./gradlew
 
+    - name: Check Kotlin formatting
+      run: ./gradlew ktfmtCheck --stacktrace
+
     - name: Build plugin
       env:
         # Set empty signing vars to skip signing in regular CI builds

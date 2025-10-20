@@ -2,9 +2,7 @@ package io.github.kingsword09.symbolcraft.utils
 
 import java.io.File
 
-/**
- * Utility functions for path resolution and cache management
- */
+/** Utility functions for path resolution and cache management */
 internal object PathUtils {
 
     /**
@@ -28,7 +26,7 @@ internal object PathUtils {
             cacheFile
         } else {
             // Relative path: resolve relative to project build directory
-          File(projectBuildDir, cacheDirPath)
+            File(projectBuildDir, cacheDirPath)
         }
     }
 

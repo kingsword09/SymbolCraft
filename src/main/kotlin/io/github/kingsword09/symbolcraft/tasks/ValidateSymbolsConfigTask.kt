@@ -12,19 +12,20 @@ import org.gradle.api.tasks.TaskAction
  * Exposed to consumers as `validateSymbolsConfig`.
  */
 abstract class ValidateSymbolsConfigTask : DefaultTask() {
-    @get:Internal
-    abstract val extension: Property<SymbolCraftExtension>
+    @get:Internal abstract val extension: Property<SymbolCraftExtension>
 
-    /**
-     * Checks that at least one icon configuration has been declared.
-     */
+    /** Checks that at least one icon configuration has been declared. */
     @TaskAction
     fun validate() {
         val config = extension.get().getIconsConfig()
         if (config.isEmpty()) {
-            throw IllegalStateException("No icons configured. Use symbolCraft { } in build.gradle.kts")
+            throw IllegalStateException(
+                "No icons configured. Use symbolCraft { } in build.gradle.kts"
+            )
         }
         val count = config.values.sumOf { it.size }
-        logger.lifecycle("✅ Valid configuration. Icons: ${config.size}, Total configurations: $count")
+        logger.lifecycle(
+            "✅ Valid configuration. Icons: ${config.size}, Total configurations: $count"
+        )
     }
 }

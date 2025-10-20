@@ -2,9 +2,9 @@ package io.github.kingsword09.symbolcraft.plugin
 
 import io.github.kingsword09.symbolcraft.converter.IconNameTransformer
 import io.github.kingsword09.symbolcraft.converter.NamingConvention
+import javax.inject.Inject
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import javax.inject.Inject
 
 /**
  * Configuration for icon naming transformation.
@@ -29,40 +29,28 @@ import javax.inject.Inject
  * }
  * ```
  */
-abstract class NamingConfig @Inject constructor(
-    private val objects: ObjectFactory
-) {
-    /**
-     * Naming convention to apply (e.g., PASCAL_CASE, CAMEL_CASE).
-     */
+abstract class NamingConfig @Inject constructor(private val objects: ObjectFactory) {
+    /** Naming convention to apply (e.g., PASCAL_CASE, CAMEL_CASE). */
     abstract val namingConvention: Property<NamingConvention>
 
-    /**
-     * Suffix to append to generated class names (e.g., "Icon" → HomeIcon).
-     */
+    /** Suffix to append to generated class names (e.g., "Icon" → HomeIcon). */
     abstract val suffix: Property<String>
 
-    /**
-     * Prefix to prepend to generated class names (e.g., "Ic" → IcHome).
-     */
+    /** Prefix to prepend to generated class names (e.g., "Ic" → IcHome). */
     abstract val prefix: Property<String>
 
-    /**
-     * Prefix to remove from input file names before transformation (e.g., "ic_").
-     */
+    /** Prefix to remove from input file names before transformation (e.g., "ic_"). */
     abstract val removePrefix: Property<String>
 
-    /**
-     * Suffix to remove from input file names before transformation (e.g., "_24dp").
-     */
+    /** Suffix to remove from input file names before transformation (e.g., "_24dp"). */
     abstract val removeSuffix: Property<String>
 
     /**
-     * Custom transformer that takes full control of naming.
-     * When set, this overrides convention-based transformation.
+     * Custom transformer that takes full control of naming. When set, this overrides
+     * convention-based transformation.
      */
     abstract val transformer: Property<IconNameTransformer>
-    
+
     init {
         namingConvention.convention(NamingConvention.PASCAL_CASE)
         suffix.convention("")
@@ -70,9 +58,9 @@ abstract class NamingConfig @Inject constructor(
         removePrefix.convention("")
         removeSuffix.convention("")
     }
-    
+
     // ========= Preset Methods =========
-    
+
     /**
      * Apply PascalCase convention with optional suffix/prefix.
      *
@@ -86,7 +74,7 @@ abstract class NamingConfig @Inject constructor(
         this.suffix.set(suffix)
         this.prefix.set(prefix)
     }
-    
+
     /**
      * Apply camelCase convention with optional suffix/prefix.
      *
@@ -100,7 +88,7 @@ abstract class NamingConfig @Inject constructor(
         this.suffix.set(suffix)
         this.prefix.set(prefix)
     }
-    
+
     /**
      * Apply snake_case or SCREAMING_SNAKE_CASE convention.
      *
@@ -112,11 +100,10 @@ abstract class NamingConfig @Inject constructor(
      */
     fun snakeCase(uppercase: Boolean = false) {
         namingConvention.set(
-            if (uppercase) NamingConvention.SCREAMING_SNAKE 
-            else NamingConvention.SNAKE_CASE
+            if (uppercase) NamingConvention.SCREAMING_SNAKE else NamingConvention.SNAKE_CASE
         )
     }
-    
+
     /**
      * Apply kebab-case convention.
      *
@@ -125,7 +112,7 @@ abstract class NamingConfig @Inject constructor(
     fun kebabCase() {
         namingConvention.set(NamingConvention.KEBAB_CASE)
     }
-    
+
     /**
      * Apply lowercase convention (removes all special characters).
      *
@@ -134,7 +121,7 @@ abstract class NamingConfig @Inject constructor(
     fun lowerCase() {
         namingConvention.set(NamingConvention.LOWER_CASE)
     }
-    
+
     /**
      * Apply UPPERCASE convention (removes all special characters).
      *
@@ -143,12 +130,12 @@ abstract class NamingConfig @Inject constructor(
     fun upperCase() {
         namingConvention.set(NamingConvention.UPPER_CASE)
     }
-    
+
     /**
      * Provide a custom transformer.
      *
-     * This gives you full control over the naming logic and overrides
-     * convention-based transformation.
+     * This gives you full control over the naming logic and overrides convention-based
+     * transformation.
      *
      * Example:
      * ```kotlin
@@ -168,8 +155,8 @@ abstract class NamingConfig @Inject constructor(
     }
 
     /**
-     * Produce a stable snapshot representation of the naming configuration.
-     * Uses IconNameTransformer.getSignature() for stable build caching.
+     * Produce a stable snapshot representation of the naming configuration. Uses
+     * IconNameTransformer.getSignature() for stable build caching.
      */
     internal fun snapshotSignature(): String {
         val builder = StringBuilder()
