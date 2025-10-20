@@ -475,7 +475,7 @@ class LocalIconsBuilder internal constructor(private val projectDir: String) {
      * `brand/sub/icon.svg` but NOT `brand/icon.svg`. To ensure both are matched, we automatically
      * add a variant of the pattern without the double-star prefix when detected.
      *
-     * @sample io.github.kingsword09.symbolcraft.plugin.localIconsIncludeSample
+     * @sample io.github.kingsword09.symbolcraft.plugin.samples.localIconsIncludeSample
      */
     fun include(vararg patterns: String) {
         patterns
@@ -495,7 +495,7 @@ class LocalIconsBuilder internal constructor(private val projectDir: String) {
     /**
      * Add exclude glob patterns that will be filtered after includes.
      *
-     * @sample io.github.kingsword09.symbolcraft.plugin.localIconsExcludeSample
+     * @sample io.github.kingsword09.symbolcraft.plugin.samples.localIconsExcludeSample
      */
     fun exclude(vararg patterns: String) {
         excludePatterns.addAll(patterns.filter { it.isNotBlank() })
