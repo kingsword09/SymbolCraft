@@ -7,26 +7,23 @@ plugins {
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.dokka)
     alias(libs.plugins.dokka.javadoc)
+    alias(libs.plugins.ktfmt)
     `java-gradle-plugin`
     signing
 }
 
 group = "io.github.kingsword09"
+
 version = "0.3.2"
 
-kotlin {
-    jvmToolchain(17)
-}
+kotlin { jvmToolchain(17) }
+
+ktfmt { kotlinLangStyle() }
 
 // Configure Kotlin compiler options
 tasks.withType<KotlinCompile> {
     compilerOptions {
-      freeCompilerArgs.addAll(
-        listOf(
-          "-opt-in=kotlin.RequiresOptIn",
-          "-Xcontext-receivers"
-        )
-      )
+        freeCompilerArgs.addAll(listOf("-opt-in=kotlin.RequiresOptIn", "-Xcontext-receivers"))
     }
 }
 
@@ -63,8 +60,10 @@ gradlePlugin {
             id = "io.github.kingsword09.symbolcraft"
             implementationClass = "io.github.kingsword09.symbolcraft.plugin.SymbolCraftPlugin"
             displayName = "SymbolCraft - Multi-Library Icon Generator"
-            description = "Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching."
-            tags = listOf("KMP", "Compose-Multiplatform", "material", "icons", "symbols", "generator")
+            description =
+                "Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching."
+            tags =
+                listOf("KMP", "Compose-Multiplatform", "material", "icons", "symbols", "generator")
         }
     }
 }
@@ -77,7 +76,9 @@ mavenPublishing {
 
     pom {
         name.set("SymbolCraft")
-        description.set("Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching.")
+        description.set(
+            "Generate icons on-demand from multiple libraries (Material Symbols, Bootstrap Icons, etc.) for Compose Multiplatform with smart caching."
+        )
         inceptionYear.set("2025")
         url.set("https://github.com/kingsword09/SymbolCraft")
 
@@ -108,18 +109,22 @@ mavenPublishing {
 
 signing {
     val signingKey = project.findProperty("signingKey") as String? ?: System.getenv("SIGNING_KEY")
-    val signingPassword = project.findProperty("signingPassword") as String? ?: System.getenv("SIGNING_PASSWORD")
+    val signingPassword =
+        project.findProperty("signingPassword") as String? ?: System.getenv("SIGNING_PASSWORD")
 
     // Always set isRequired to false
     isRequired = false
 
-    if (signingKey != null && signingPassword != null && signingKey.isNotBlank() && signingPassword.isNotBlank()) {
+    if (
+        signingKey != null &&
+            signingPassword != null &&
+            signingKey.isNotBlank() &&
+            signingPassword.isNotBlank()
+    ) {
         useInMemoryPgpKeys(signingKey, signingPassword)
 
         // Configure signing after all publications are created
-        afterEvaluate {
-            sign(publishing.publications)
-        }
+        afterEvaluate { sign(publishing.publications) }
     }
 }
 
@@ -135,22 +140,31 @@ tasks.test {
         showStackTraces = true
     }
 
-    addTestListener(object : org.gradle.api.tasks.testing.TestListener {
-        override fun beforeSuite(suite: org.gradle.api.tasks.testing.TestDescriptor) = Unit
-        override fun beforeTest(test: org.gradle.api.tasks.testing.TestDescriptor) = Unit
+    addTestListener(
+        object : org.gradle.api.tasks.testing.TestListener {
+            override fun beforeSuite(suite: org.gradle.api.tasks.testing.TestDescriptor) = Unit
 
-        override fun afterTest(test: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) = Unit
+            override fun beforeTest(test: org.gradle.api.tasks.testing.TestDescriptor) = Unit
 
-        override fun afterSuite(suite: org.gradle.api.tasks.testing.TestDescriptor, result: org.gradle.api.tasks.testing.TestResult) {
-            if (suite.parent == null) {
-                println(
-                    "\nTest Summary: ${result.resultType} | Total: ${result.testCount}, " +
-                        "Passed: ${result.successfulTestCount}, Failed: ${result.failedTestCount}, " +
-                        "Skipped: ${result.skippedTestCount}"
-                )
+            override fun afterTest(
+                test: org.gradle.api.tasks.testing.TestDescriptor,
+                result: org.gradle.api.tasks.testing.TestResult,
+            ) = Unit
+
+            override fun afterSuite(
+                suite: org.gradle.api.tasks.testing.TestDescriptor,
+                result: org.gradle.api.tasks.testing.TestResult,
+            ) {
+                if (suite.parent == null) {
+                    println(
+                        "\nTest Summary: ${result.resultType} | Total: ${result.testCount}, " +
+                            "Passed: ${result.successfulTestCount}, Failed: ${result.failedTestCount}, " +
+                            "Skipped: ${result.skippedTestCount}"
+                    )
+                }
             }
         }
-    })
+    )
 }
 
 // Generate sources and javadoc JARs
@@ -158,6 +172,8 @@ java {
     withSourcesJar()
     withJavadocJar()
 }
+
+tasks.named("check") { dependsOn("ktfmtCheck") }
 
 // Configure javadocJar to use Dokka V2 output
 tasks.named<Jar>("javadocJar") {
@@ -174,7 +190,7 @@ tasks.jar {
             "Implementation-Vendor" to "kingsword09",
             "Built-By" to System.getProperty("user.name"),
             "Built-JDK" to System.getProperty("java.version"),
-            "Built-Gradle" to gradle.gradleVersion
+            "Built-Gradle" to gradle.gradleVersion,
         )
     }
 }

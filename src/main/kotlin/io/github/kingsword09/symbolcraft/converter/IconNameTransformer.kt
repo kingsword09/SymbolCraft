@@ -5,8 +5,8 @@ import java.io.Serializable
 /**
  * Abstract base class for transforming icon file names into Kotlin class names.
  *
- * Different icon libraries may have different naming conventions.
- * This class allows users to implement custom naming transformers for their specific libraries.
+ * Different icon libraries may have different naming conventions. This class allows users to
+ * implement custom naming transformers for their specific libraries.
  *
  * Implementations must be Serializable to support Gradle's configuration cache.
  *
@@ -29,14 +29,14 @@ abstract class IconNameTransformer : Serializable {
     abstract fun transform(fileName: String): String
 
     /**
-     * Provide a stable signature for this transformer.
-     * This signature is used for Gradle's build cache.
+     * Provide a stable signature for this transformer. This signature is used for Gradle's build
+     * cache.
      *
-     * Default implementation uses the fully qualified class name,
-     * which is stable across builds as long as the class definition doesn't change.
+     * Default implementation uses the fully qualified class name, which is stable across builds as
+     * long as the class definition doesn't change.
      *
-     * Override this method if you need custom signature logic
-     * (e.g., including constructor parameters in the signature).
+     * Override this method if you need custom signature logic (e.g., including constructor
+     * parameters in the signature).
      *
      * @return Stable signature string for build caching
      */
@@ -47,44 +47,28 @@ abstract class IconNameTransformer : Serializable {
     }
 }
 
-/**
- * Naming conventions for icon class names.
- */
+/** Naming conventions for icon class names. */
 enum class NamingConvention {
-    /**
-     * PascalCase: home-icon → HomeIcon
-     */
+    /** PascalCase: home-icon → HomeIcon */
     PASCAL_CASE,
 
-    /**
-     * camelCase: home-icon → homeIcon
-     */
+    /** camelCase: home-icon → homeIcon */
     CAMEL_CASE,
 
-    /**
-     * snake_case: home-icon → home_icon
-     */
+    /** snake_case: home-icon → home_icon */
     SNAKE_CASE,
 
-    /**
-     * SCREAMING_SNAKE_CASE: home-icon → HOME_ICON
-     */
+    /** SCREAMING_SNAKE_CASE: home-icon → HOME_ICON */
     SCREAMING_SNAKE,
 
-    /**
-     * kebab-case: home_icon → home-icon
-     */
+    /** kebab-case: home_icon → home-icon */
     KEBAB_CASE,
 
-    /**
-     * lowercase: HomeIcon → homeicon
-     */
+    /** lowercase: HomeIcon → homeicon */
     LOWER_CASE,
 
-    /**
-     * UPPERCASE: HomeIcon → HOMEICON
-     */
-    UPPER_CASE
+    /** UPPERCASE: HomeIcon → HOMEICON */
+    UPPER_CASE,
 }
 
 /**
@@ -112,42 +96,41 @@ class ConventionNameTransformer(
     private val suffix: String = "",
     private val prefix: String = "",
     private val removePrefix: String = "",
-    private val removeSuffix: String = ""
+    private val removeSuffix: String = "",
 ) : IconNameTransformer() {
 
     override fun transform(fileName: String): String {
         // Clean the file name
-        val cleaned = fileName
-            .removeSuffix(".svg")
-            .let { if (removePrefix.isNotEmpty()) it.removePrefix(removePrefix) else it }
-            .let { if (removeSuffix.isNotEmpty()) it.removeSuffix(removeSuffix) else it }
+        val cleaned =
+            fileName
+                .removeSuffix(".svg")
+                .let { if (removePrefix.isNotEmpty()) it.removePrefix(removePrefix) else it }
+                .let { if (removeSuffix.isNotEmpty()) it.removeSuffix(removeSuffix) else it }
 
         // Apply naming convention
-        val converted = when (convention) {
-            NamingConvention.PASCAL_CASE -> toPascalCase(cleaned)
-            NamingConvention.CAMEL_CASE -> toCamelCase(cleaned)
-            NamingConvention.SNAKE_CASE -> toSnakeCase(cleaned, uppercase = false)
-            NamingConvention.SCREAMING_SNAKE -> toSnakeCase(cleaned, uppercase = true)
-            NamingConvention.KEBAB_CASE -> toKebabCase(cleaned)
-            NamingConvention.LOWER_CASE -> cleaned.lowercase().replace(Regex("[^a-z0-9]"), "")
-            NamingConvention.UPPER_CASE -> cleaned.uppercase().replace(Regex("[^A-Z0-9]"), "")
-        }
+        val converted =
+            when (convention) {
+                NamingConvention.PASCAL_CASE -> toPascalCase(cleaned)
+                NamingConvention.CAMEL_CASE -> toCamelCase(cleaned)
+                NamingConvention.SNAKE_CASE -> toSnakeCase(cleaned, uppercase = false)
+                NamingConvention.SCREAMING_SNAKE -> toSnakeCase(cleaned, uppercase = true)
+                NamingConvention.KEBAB_CASE -> toKebabCase(cleaned)
+                NamingConvention.LOWER_CASE -> cleaned.lowercase().replace(Regex("[^a-z0-9]"), "")
+                NamingConvention.UPPER_CASE -> cleaned.uppercase().replace(Regex("[^A-Z0-9]"), "")
+            }
 
         return "$prefix$converted$suffix"
     }
 
     private fun toPascalCase(input: String): String {
-        return splitWords(input).joinToString("") {
-            it.replaceFirstChar { it.titlecase() }
-        }
+        return splitWords(input).joinToString("") { it.replaceFirstChar { it.titlecase() } }
     }
 
     private fun toCamelCase(input: String): String {
         val words = splitWords(input)
         if (words.isEmpty()) return ""
-        return words.first().lowercase() + words.drop(1).joinToString("") {
-            it.replaceFirstChar { it.titlecase() }
-        }
+        return words.first().lowercase() +
+            words.drop(1).joinToString("") { it.replaceFirstChar { it.titlecase() } }
     }
 
     private fun toSnakeCase(input: String, uppercase: Boolean): String {
@@ -173,8 +156,8 @@ class ConventionNameTransformer(
     }
 
     /**
-     * Override getSignature to include constructor parameters in the signature.
-     * This ensures that changes to the transformer configuration are detected by Gradle's cache.
+     * Override getSignature to include constructor parameters in the signature. This ensures that
+     * changes to the transformer configuration are detected by Gradle's cache.
      */
     override fun getSignature(): String {
         return buildString {
@@ -193,10 +176,7 @@ class ConventionNameTransformer(
     }
 }
 
-
-/**
- * Factory for creating common name transformers.
- */
+/** Factory for creating common name transformers. */
 object NameTransformerFactory {
     /**
      * Create a name transformer for a specific library.
@@ -219,7 +199,7 @@ object NameTransformerFactory {
         ConventionNameTransformer(
             convention = NamingConvention.PASCAL_CASE,
             suffix = suffix,
-            prefix = prefix
+            prefix = prefix,
         )
 
     /**
@@ -232,7 +212,7 @@ object NameTransformerFactory {
         ConventionNameTransformer(
             convention = NamingConvention.CAMEL_CASE,
             suffix = suffix,
-            prefix = prefix
+            prefix = prefix,
         )
 
     /**
@@ -242,32 +222,21 @@ object NameTransformerFactory {
      */
     fun snakeCase(uppercase: Boolean = false): IconNameTransformer =
         ConventionNameTransformer(
-            convention = if (uppercase) NamingConvention.SCREAMING_SNAKE else NamingConvention.SNAKE_CASE
+            convention =
+                if (uppercase) NamingConvention.SCREAMING_SNAKE else NamingConvention.SNAKE_CASE
         )
 
-    /**
-     * Create a transformer with kebab-case convention.
-     */
+    /** Create a transformer with kebab-case convention. */
     fun kebabCase(): IconNameTransformer =
-        ConventionNameTransformer(
-            convention = NamingConvention.KEBAB_CASE
-        )
+        ConventionNameTransformer(convention = NamingConvention.KEBAB_CASE)
 
-    /**
-     * Create a transformer with lowercase convention.
-     */
+    /** Create a transformer with lowercase convention. */
     fun lowerCase(): IconNameTransformer =
-        ConventionNameTransformer(
-            convention = NamingConvention.LOWER_CASE
-        )
+        ConventionNameTransformer(convention = NamingConvention.LOWER_CASE)
 
-    /**
-     * Create a transformer with UPPERCASE convention.
-     */
+    /** Create a transformer with UPPERCASE convention. */
     fun upperCase(): IconNameTransformer =
-        ConventionNameTransformer(
-            convention = NamingConvention.UPPER_CASE
-        )
+        ConventionNameTransformer(convention = NamingConvention.UPPER_CASE)
 
     /**
      * Create a transformer from a naming convention.
@@ -283,13 +252,13 @@ object NameTransformerFactory {
         suffix: String = "",
         prefix: String = "",
         removePrefix: String = "",
-        removeSuffix: String = ""
-    ): IconNameTransformer = ConventionNameTransformer(
-        convention = convention,
-        suffix = suffix,
-        prefix = prefix,
-        removePrefix = removePrefix,
-        removeSuffix = removeSuffix
-    )
-
+        removeSuffix: String = "",
+    ): IconNameTransformer =
+        ConventionNameTransformer(
+            convention = convention,
+            suffix = suffix,
+            prefix = prefix,
+            removePrefix = removePrefix,
+            removeSuffix = removeSuffix,
+        )
 }

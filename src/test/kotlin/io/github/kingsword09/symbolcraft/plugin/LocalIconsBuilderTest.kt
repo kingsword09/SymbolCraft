@@ -37,9 +37,7 @@ class LocalIconsBuilderTest {
         writeSvg("assets/icons/nested/search.svg")
         writeText("assets/icons/notes.txt", "ignore me")
 
-        val configs = buildLocalIcons {
-            directory = "assets/icons"
-        }
+        val configs = buildLocalIcons { directory = "assets/icons" }
 
         assertEquals(2, configs.size)
         assertTrue(configs.containsKey("home"))
@@ -81,9 +79,7 @@ class LocalIconsBuilderTest {
         writeSvg("assets/icons/brand/icon.svg")
         writeSvg("assets/icons/brand/icon!.svg") // sanitized to same base name
 
-        val configs = buildLocalIcons {
-            directory = "assets/icons"
-        }
+        val configs = buildLocalIcons { directory = "assets/icons" }
 
         assertEquals(2, configs.size)
         assertTrue(configs.containsKey("brand_icon"))
@@ -94,18 +90,19 @@ class LocalIconsBuilderTest {
     fun `empty result throws informative error`() {
         writeSvg("assets/icons/readme.svg") // Will be excluded
 
-        val exception = assertFailsWith<IllegalStateException> {
-            buildLocalIcons(libraryName = "empty") {
-                directory = "assets/icons"
-                include("no-match/**")
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                buildLocalIcons(libraryName = "empty") {
+                    directory = "assets/icons"
+                    include("no-match/**")
+                }
             }
-        }
         assertTrue(exception.message?.contains("No SVG icons found") == true)
     }
 
     private fun buildLocalIcons(
         libraryName: String = "local",
-        configure: LocalIconsBuilder.() -> Unit
+        configure: LocalIconsBuilder.() -> Unit,
     ): Map<String, LocalIconConfig> {
         val builder = LocalIconsBuilder(projectDir.toAbsolutePath().toString())
         builder.configure()

@@ -1,5 +1,6 @@
 package io.github.kingsword09.symbolcraft.tasks
 
+import java.io.File
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -7,7 +8,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 /**
  * Task that deletes generated icon files created by [GenerateSymbolsTask].
@@ -18,16 +18,11 @@ import java.io.File
  */
 abstract class CleanSymbolsIconsTask : DefaultTask() {
 
-    @get:Input
-    abstract val packageName: Property<String>
+    @get:Input abstract val packageName: Property<String>
 
-    @get:InputDirectory
-    @get:Optional
-    abstract val outputDirectory: DirectoryProperty
+    @get:InputDirectory @get:Optional abstract val outputDirectory: DirectoryProperty
 
-    /**
-     * Deletes all generated icon files.
-     */
+    /** Deletes all generated icon files. */
     @TaskAction
     fun clean() {
         if (!outputDirectory.isPresent) {
@@ -44,7 +39,8 @@ abstract class CleanSymbolsIconsTask : DefaultTask() {
 
         // Clean all library subdirectories
         if (symbolsDir.exists()) {
-            symbolsDir.walkTopDown()
+            symbolsDir
+                .walkTopDown()
                 .filter { it.isFile && it.extension == "kt" }
                 .forEach { file ->
                     logger.debug("🧹 Deleting generated file: ${file.relativeTo(symbolsDir).path}")
@@ -56,7 +52,8 @@ abstract class CleanSymbolsIconsTask : DefaultTask() {
                 }
 
             // Clean empty directories
-            symbolsDir.walkBottomUp()
+            symbolsDir
+                .walkBottomUp()
                 .filter { it.isDirectory && it != symbolsDir && it.listFiles()?.isEmpty() == true }
                 .forEach { dir ->
                     logger.debug("🧹 Removing empty directory: ${dir.name}")
@@ -76,7 +73,9 @@ abstract class CleanSymbolsIconsTask : DefaultTask() {
                 deletedCount++
                 logger.debug("🧹 Deleted main symbols file")
             } else {
-                logger.warn("   ⚠️ Failed to delete main symbols file: ${mainSymbolsFile.absolutePath}")
+                logger.warn(
+                    "   ⚠️ Failed to delete main symbols file: ${mainSymbolsFile.absolutePath}"
+                )
             }
         }
 

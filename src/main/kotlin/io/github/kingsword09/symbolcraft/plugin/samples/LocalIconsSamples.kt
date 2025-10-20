@@ -2,9 +2,7 @@ package io.github.kingsword09.symbolcraft.plugin.samples
 
 import io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension
 
-/**
- * Sample functions referenced from KDoc to demonstrate local icon configuration.
- */
+/** Sample functions referenced from KDoc to demonstrate local icon configuration. */
 @Suppress("unused") // Referenced via KDoc @sample
 internal fun SymbolCraftExtension.localIconsIncludeSample() {
     localIcons(libraryName = "brand") {

@@ -12,9 +12,6 @@ import io.ktor.http.contentLength
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.ByteReadChannel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.security.MessageDigest
 import kotlin.io.path.Path
@@ -27,6 +24,9 @@ import kotlin.io.path.readLines
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.days
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /**
  * Downloads icon SVG files from CDN with local caching, validation, and retry logic.
@@ -50,22 +50,22 @@ class SvgDownloader(
     private val cacheEnabled: Boolean = true,
     private val maxRetries: Int = 3,
     private val retryDelayMs: Long = 1000L,
-    private val logger: ((String) -> Unit)? = null
+    private val logger: ((String) -> Unit)? = null,
 ) {
     companion object {
         /**
          * Default timeout for HTTP requests in milliseconds (30 seconds).
          *
-         * Rationale: Most SVG files are small (<100KB) and should download quickly.
-         * 30 seconds allows for slow networks while preventing indefinite hangs.
+         * Rationale: Most SVG files are small (<100KB) and should download quickly. 30 seconds
+         * allows for slow networks while preventing indefinite hangs.
          */
         private const val REQUEST_TIMEOUT_MS = 30_000L
 
         /**
          * Cache validity period in days.
          *
-         * Rationale: Icon libraries rarely update existing icons, so 7 days provides
-         * a good balance between freshness and reducing network requests.
+         * Rationale: Icon libraries rarely update existing icons, so 7 days provides a good balance
+         * between freshness and reducing network requests.
          */
         private const val CACHE_MAX_AGE_DAYS = 7
 
@@ -86,38 +86,35 @@ class SvgDownloader(
          *
          * Note: Files larger than this will be rejected with an error.
          */
-        private const val MAX_SVG_SIZE = 10 * 1024 * 1024  // 10 MB
+        private const val MAX_SVG_SIZE = 10 * 1024 * 1024 // 10 MB
 
         /**
          * Maximum number of concurrent HTTP connections.
          *
-         * Rationale: Allows parallel downloads while respecting system resources.
-         * 50 connections balances speed with memory/socket usage.
+         * Rationale: Allows parallel downloads while respecting system resources. 50 connections
+         * balances speed with memory/socket usage.
          */
         const val MAX_CONNECTIONS_COUNT = 50
 
         /**
          * Maximum concurrent connections per route (host).
          *
-         * Rationale: Prevents overwhelming a single CDN server while allowing
-         * reasonable parallelism. Most CDNs can handle 20+ concurrent connections.
+         * Rationale: Prevents overwhelming a single CDN server while allowing reasonable
+         * parallelism. Most CDNs can handle 20+ concurrent connections.
          */
         const val MAX_CONNECTIONS_PER_ROUTE = 20
     }
 
-    private val httpClient = HttpClient(CIO) {
-        engine {
-            requestTimeout = REQUEST_TIMEOUT_MS
-            maxConnectionsCount = MAX_CONNECTIONS_COUNT
-            endpoint {
-                maxConnectionsPerRoute = MAX_CONNECTIONS_PER_ROUTE
+    private val httpClient =
+        HttpClient(CIO) {
+            engine {
+                requestTimeout = REQUEST_TIMEOUT_MS
+                maxConnectionsCount = MAX_CONNECTIONS_COUNT
+                endpoint { maxConnectionsPerRoute = MAX_CONNECTIONS_PER_ROUTE }
             }
         }
-    }
 
-    /**
-     * Log a message using the provided logger or fall back to println
-     */
+    /** Log a message using the provided logger or fall back to println */
     private fun log(message: String) {
         logger?.invoke(message) ?: println(message)
     }
@@ -148,49 +145,52 @@ class SvgDownloader(
      * @param config Icon library configuration
      * @return SVG content as string, or null if download fails after all retries
      */
-    suspend fun downloadSvg(iconName: String, config: IconConfig): String? = withContext(Dispatchers.IO) {
-        val cacheKey = config.getCacheKey(iconName)
+    suspend fun downloadSvg(iconName: String, config: IconConfig): String? =
+        withContext(Dispatchers.IO) {
+            val cacheKey = config.getCacheKey(iconName)
 
-        // Check cache first
-        if (cacheEnabled) {
-            val cachedContent = getCachedSvg(cacheKey)
-            if (cachedContent != null) {
-                return@withContext cachedContent
+            // Check cache first
+            if (cacheEnabled) {
+                val cachedContent = getCachedSvg(cacheKey)
+                if (cachedContent != null) {
+                    return@withContext cachedContent
+                }
             }
-        }
 
-        // Download from URL with retry logic
-        val url = config.buildUrl(iconName)
-        var lastException: Exception? = null
-        repeat(maxRetries) { attemptNumber ->
-            try {
-                val svgContent = downloadSvgInternal(url, cacheKey)
-                if (svgContent != null) {
-                    if (attemptNumber > 0) {
-                        log("✅ Successfully downloaded after ${attemptNumber + 1} attempt(s): $url")
+            // Download from URL with retry logic
+            val url = config.buildUrl(iconName)
+            var lastException: Exception? = null
+            repeat(maxRetries) { attemptNumber ->
+                try {
+                    val svgContent = downloadSvgInternal(url, cacheKey)
+                    if (svgContent != null) {
+                        if (attemptNumber > 0) {
+                            log(
+                                "✅ Successfully downloaded after ${attemptNumber + 1} attempt(s): $url"
+                            )
+                        }
+                        return@withContext svgContent
                     }
-                    return@withContext svgContent
-                }
-            } catch (e: Exception) {
-                lastException = e
-                val remainingRetries = maxRetries - attemptNumber - 1
+                } catch (e: Exception) {
+                    lastException = e
+                    val remainingRetries = maxRetries - attemptNumber - 1
 
-                if (remainingRetries > 0) {
-                    val delayMs = retryDelayMs * (1 shl attemptNumber)
-                    log("⚠️ Attempt ${attemptNumber + 1} failed for $url: ${e.message}")
-                    log("   Retrying in ${delayMs}ms... ($remainingRetries retries remaining)")
-                    delay(delayMs)
+                    if (remainingRetries > 0) {
+                        val delayMs = retryDelayMs * (1 shl attemptNumber)
+                        log("⚠️ Attempt ${attemptNumber + 1} failed for $url: ${e.message}")
+                        log("   Retrying in ${delayMs}ms... ($remainingRetries retries remaining)")
+                        delay(delayMs)
+                    }
                 }
             }
+
+            log(
+                "Error downloading SVG from $url after $maxRetries attempts: ${lastException?.message}"
+            )
+            return@withContext null
         }
 
-        log("Error downloading SVG from $url after $maxRetries attempts: ${lastException?.message}")
-        return@withContext null
-    }
-
-    /**
-     * Internal method to perform a single download attempt.
-     */
+    /** Internal method to perform a single download attempt. */
     private suspend fun downloadSvgInternal(url: String, cacheKey: String): String? {
         log("Downloading SVG from $url")
 
@@ -204,36 +204,45 @@ class SvgDownloader(
         if (response.status.isSuccess()) {
             // Validate content type
             val contentType = response.contentType()
-            if (contentType?.match(ContentType.Text.Xml) != true &&
-                contentType?.match(ContentType.Image.SVG) != true) {
+            if (
+                contentType?.match(ContentType.Text.Xml) != true &&
+                    contentType?.match(ContentType.Image.SVG) != true
+            ) {
                 throw IllegalStateException("Invalid content type: $contentType for URL: $url")
             }
 
             // Validate content size to prevent DoS
             val contentLength = response.contentLength()
             if (contentLength != null && contentLength > MAX_SVG_SIZE) {
-                throw IllegalStateException("SVG too large: $contentLength bytes (max: $MAX_SVG_SIZE) from URL: $url")
+                throw IllegalStateException(
+                    "SVG too large: $contentLength bytes (max: $MAX_SVG_SIZE) from URL: $url"
+                )
             }
 
-            val svgContent = if (contentLength == null) {
-                // Stream read with a limit if content length is unknown
-                val channel = response.body<ByteReadChannel>()
-                val packet = channel.readRemaining(MAX_SVG_SIZE.toLong() + 1)
-                try {
-                    if (packet.remaining > MAX_SVG_SIZE || !channel.isClosedForRead) {
-                        throw IllegalStateException("SVG response exceeds max size of $MAX_SVG_SIZE bytes from URL: $url")
+            val svgContent =
+                if (contentLength == null) {
+                    // Stream read with a limit if content length is unknown
+                    val channel = response.body<ByteReadChannel>()
+                    val packet = channel.readRemaining(MAX_SVG_SIZE.toLong() + 1)
+                    try {
+                        if (packet.remaining > MAX_SVG_SIZE || !channel.isClosedForRead) {
+                            throw IllegalStateException(
+                                "SVG response exceeds max size of $MAX_SVG_SIZE bytes from URL: $url"
+                            )
+                        }
+                        packet.readText()
+                    } finally {
+                        packet.release()
                     }
-                    packet.readText()
-                } finally {
-                    packet.release()
+                } else {
+                    response.bodyAsText()
                 }
-            } else {
-                response.bodyAsText()
-            }
 
             // Validate basic SVG structure
             if (!svgContent.contains("<svg") || !svgContent.contains("</svg>")) {
-                throw IllegalStateException("Invalid SVG structure (missing svg tags) from URL: $url")
+                throw IllegalStateException(
+                    "Invalid SVG structure (missing svg tags) from URL: $url"
+                )
             }
 
             // Security validation: Prevent XXE and other attacks
@@ -246,7 +255,9 @@ class SvgDownloader(
 
             return svgContent
         } else {
-            throw IOException("Failed to download from $url: HTTP ${response.status.value} ${response.status.description}")
+            throw IOException(
+                "Failed to download from $url: HTTP ${response.status.value} ${response.status.description}"
+            )
         }
     }
 
@@ -264,25 +275,30 @@ class SvgDownloader(
      */
     private fun validateSvgSecurity(svgContent: String, url: String) {
         // List of dangerous patterns that should never appear in safe SVG files
-        // Using regex to prevent whitespace-based bypass attacks (e.g., "< script" instead of "<script")
-        val dangerousPatterns = mapOf(
-            Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE) to "XML External Entity (XXE) declaration",
-            Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE) to "DOCTYPE declaration (potential XXE vector)",
-            Regex("<\\s*script", RegexOption.IGNORE_CASE) to "Embedded JavaScript",
-            Regex("javascript:", RegexOption.IGNORE_CASE) to "JavaScript protocol handler",
-            Regex("data:text/html", RegexOption.IGNORE_CASE) to "HTML data URL",
-            Regex("on\\w+\\s*=", RegexOption.IGNORE_CASE) to "Event handler attribute",
-            Regex("<\\s*iframe", RegexOption.IGNORE_CASE) to "Embedded iframe",
-            Regex("<\\s*object", RegexOption.IGNORE_CASE) to "Embedded object",
-            Regex("<\\s*embed", RegexOption.IGNORE_CASE) to "Embedded content",
-            Regex("xlink:href\\s*=\\s*\"?javascript:", RegexOption.IGNORE_CASE) to "XLink JavaScript protocol"
-        )
+        // Using regex to prevent whitespace-based bypass attacks (e.g., "< script" instead of
+        // "<script")
+        val dangerousPatterns =
+            mapOf(
+                Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE) to
+                    "XML External Entity (XXE) declaration",
+                Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE) to
+                    "DOCTYPE declaration (potential XXE vector)",
+                Regex("<\\s*script", RegexOption.IGNORE_CASE) to "Embedded JavaScript",
+                Regex("javascript:", RegexOption.IGNORE_CASE) to "JavaScript protocol handler",
+                Regex("data:text/html", RegexOption.IGNORE_CASE) to "HTML data URL",
+                Regex("on\\w+\\s*=", RegexOption.IGNORE_CASE) to "Event handler attribute",
+                Regex("<\\s*iframe", RegexOption.IGNORE_CASE) to "Embedded iframe",
+                Regex("<\\s*object", RegexOption.IGNORE_CASE) to "Embedded object",
+                Regex("<\\s*embed", RegexOption.IGNORE_CASE) to "Embedded content",
+                Regex("xlink:href\\s*=\\s*\"?javascript:", RegexOption.IGNORE_CASE) to
+                    "XLink JavaScript protocol",
+            )
 
         dangerousPatterns.forEach { (pattern, description) ->
             if (pattern.containsMatchIn(svgContent)) {
                 throw SecurityException(
                     "SVG contains potentially dangerous content from $url: $description (pattern: '${pattern.pattern}'). " +
-                    "This file may be malicious and has been rejected for security reasons."
+                        "This file may be malicious and has been rejected for security reasons."
                 )
             }
         }
@@ -293,19 +309,25 @@ class SvgDownloader(
         val entityDeclRegex = Regex("<!\\s*ENTITY", RegexOption.IGNORE_CASE)
         val doctypeDeclRegex = Regex("<!\\s*DOCTYPE", RegexOption.IGNORE_CASE)
 
-        if (systemEntityRegex.containsMatchIn(svgContent) &&
-            (entityDeclRegex.containsMatchIn(svgContent) || doctypeDeclRegex.containsMatchIn(svgContent))) {
+        if (
+            systemEntityRegex.containsMatchIn(svgContent) &&
+                (entityDeclRegex.containsMatchIn(svgContent) ||
+                    doctypeDeclRegex.containsMatchIn(svgContent))
+        ) {
             throw SecurityException(
                 "SVG contains SYSTEM entity declaration from $url. " +
-                "This is a critical security risk (potential file disclosure) and has been rejected."
+                    "This is a critical security risk (potential file disclosure) and has been rejected."
             )
         }
 
-        if (publicEntityRegex.containsMatchIn(svgContent) &&
-            (entityDeclRegex.containsMatchIn(svgContent) || doctypeDeclRegex.containsMatchIn(svgContent))) {
+        if (
+            publicEntityRegex.containsMatchIn(svgContent) &&
+                (entityDeclRegex.containsMatchIn(svgContent) ||
+                    doctypeDeclRegex.containsMatchIn(svgContent))
+        ) {
             throw SecurityException(
                 "SVG contains PUBLIC entity declaration from $url. " +
-                "This is a security risk and has been rejected."
+                    "This is a security risk and has been rejected."
             )
         }
     }
@@ -337,8 +359,8 @@ class SvgDownloader(
     /**
      * Cache SVG content with metadata for future use.
      *
-     * Uses SHA-256 hash for integrity verification instead of hashCode()
-     * to prevent hash collisions and provide cryptographic integrity.
+     * Uses SHA-256 hash for integrity verification instead of hashCode() to prevent hash collisions
+     * and provide cryptographic integrity.
      *
      * @param cacheKey Unique identifier for this cached file
      * @param content SVG content to cache
@@ -378,9 +400,7 @@ class SvgDownloader(
         httpClient.close()
     }
 
-    /**
-     * Check if an SVG is cached and valid
-     */
+    /** Check if an SVG is cached and valid */
     fun isCached(cacheKey: String): Boolean {
         if (!cacheEnabled) return false
 
@@ -405,9 +425,7 @@ class SvgDownloader(
         return false
     }
 
-    /**
-     * Get cache statistics
-     */
+    /** Get cache statistics */
     fun getCacheStats(): CacheStats {
         if (!cacheEnabled || !cachePath.exists()) {
             return CacheStats(0, 0)
@@ -419,11 +437,11 @@ class SvgDownloader(
         return CacheStats(svgFiles.size, totalSize)
     }
 
-    data class CacheStats(
-        val fileCount: Int,
-        val totalSizeBytes: Long
-    ) {
-        val totalSizeKB: Double get() = totalSizeBytes / 1024.0
-        val totalSizeMB: Double get() = totalSizeKB / 1024.0
+    data class CacheStats(val fileCount: Int, val totalSizeBytes: Long) {
+        val totalSizeKB: Double
+            get() = totalSizeBytes / 1024.0
+
+        val totalSizeMB: Double
+            get() = totalSizeKB / 1024.0
     }
 }

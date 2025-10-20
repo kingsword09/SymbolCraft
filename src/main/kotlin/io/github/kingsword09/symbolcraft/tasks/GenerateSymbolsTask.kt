@@ -4,8 +4,10 @@ import io.github.kingsword09.symbolcraft.converter.*
 import io.github.kingsword09.symbolcraft.download.SvgDownloader
 import io.github.kingsword09.symbolcraft.model.IconConfig
 import io.github.kingsword09.symbolcraft.model.LocalIconConfig
-import io.github.kingsword09.symbolcraft.utils.PathUtils
 import io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension
+import io.github.kingsword09.symbolcraft.utils.PathUtils
+import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -19,47 +21,44 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Gradle task responsible for downloading icons from multiple libraries and converting them into Compose APIs.
+ * Gradle task responsible for downloading icons from multiple libraries and converting them into
+ * Compose APIs.
  *
- * The task is cacheable and honours [io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension] settings supplied via the plugin DSL.
+ * The task is cacheable and honours [io.github.kingsword09.symbolcraft.plugin.SymbolCraftExtension]
+ * settings supplied via the plugin DSL.
  *
  * @property extension lazily provides the extension backing the current project configuration.
  * @property outputDir destination directory for the generated Kotlin sources.
  * @property cacheDirectory path used for storing SVG payloads between executions.
- * @property gradleUserHomeDir exposed for cache resolution when Gradle configuration cache is enabled.
- * @property projectBuildDir points at the consuming project's `build` directory for relative cache resolution.
+ * @property gradleUserHomeDir exposed for cache resolution when Gradle configuration cache is
+ *   enabled.
+ * @property projectBuildDir points at the consuming project's `build` directory for relative cache
+ *   resolution.
  */
 @CacheableTask
 abstract class GenerateSymbolsTask : DefaultTask() {
 
-    @get:Internal
-    abstract val extension: Property<SymbolCraftExtension>
+    @get:Internal abstract val extension: Property<SymbolCraftExtension>
 
     @get:Input
     val symbolsConfigHash: String
         get() = extension.get().getConfigHash()
 
-    @get:OutputDirectory
-    abstract val outputDir: DirectoryProperty
+    @get:OutputDirectory abstract val outputDir: DirectoryProperty
 
-    @get:Input
-    abstract val cacheDirectory: Property<String>
+    @get:Input abstract val cacheDirectory: Property<String>
 
-    @get:Input
-    abstract val gradleUserHomeDir: Property<String>
+    @get:Input abstract val gradleUserHomeDir: Property<String>
 
-    @get:Input
-    abstract val projectBuildDir: Property<String>
+    @get:Input abstract val projectBuildDir: Property<String>
 
     /**
      * Downloads the requested icons and regenerates the Kotlin sources.
      *
-     * The implementation uses structured concurrency to download SVGs in parallel and
-     * cleans stale cache entries when safe to do so.
+     * The implementation uses structured concurrency to download SVGs in parallel and cleans stale
+     * cache entries when safe to do so.
      */
     @TaskAction
     fun generate() = runBlocking {
@@ -79,9 +78,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
-    /**
-     * Prepare the generation context with all required configuration and paths.
-     */
+    /** Prepare the generation context with all required configuration and paths. */
     private fun prepareGenerationContext(): GenerationContext {
         val ext = extension.get()
         val cacheDirPath = cacheDirectory.get()
@@ -96,13 +93,11 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             tempDir = File(cacheBaseDir, "temp-svgs"),
             svgCacheDir = File(cacheBaseDir, "svg-cache"),
             outputDir = outputDir.get().asFile,
-            projectBuildDir = projectBuildDirPath
+            projectBuildDir = projectBuildDirPath,
         )
     }
 
-    /**
-     * Log generation start information.
-     */
+    /** Log generation start information. */
     private fun logGenerationStart(context: GenerationContext) {
         val totalIcons = context.config.values.sumOf { it.size }
         logger.lifecycle("🎨 Generating icons...")
@@ -110,34 +105,30 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         logger.debug("📂 Cache directory: ${context.cacheBaseDir.absolutePath}")
     }
 
-    /**
-     * Perform cleanup operations before generation starts.
-     */
+    /** Perform cleanup operations before generation starts. */
     private fun performPreGenerationCleanup(context: GenerationContext) {
         cleanOldGeneratedFiles(context.outputDir, context.packageName)
 
-        if (context.extension.cacheEnabled.get() &&
-            shouldCleanCache(context.cacheBaseDir, context.projectBuildDir)) {
+        if (
+            context.extension.cacheEnabled.get() &&
+                shouldCleanCache(context.cacheBaseDir, context.projectBuildDir)
+        ) {
             cleanUnusedCache(context.svgCacheDir, context.config)
         }
     }
 
-    /**
-     * Setup and configure the SVG downloader.
-     */
+    /** Setup and configure the SVG downloader. */
     private fun setupDownloader(context: GenerationContext): SvgDownloader {
         return SvgDownloader(
             cacheDirectory = context.svgCacheDir.absolutePath,
             cacheEnabled = context.extension.cacheEnabled.get(),
             maxRetries = context.extension.maxRetries.get(),
             retryDelayMs = context.extension.retryDelayMs.get(),
-            logger = { message -> logger.debug(message) }
+            logger = { message -> logger.debug(message) },
         )
     }
 
-    /**
-     * Execute the main generation workflow.
-     */
+    /** Execute the main generation workflow. */
     private suspend fun executeGeneration(downloader: SvgDownloader, context: GenerationContext) {
         prepareTempDirectory(context.tempDir)
 
@@ -152,15 +143,13 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             context.outputDir,
             context.packageName,
             iconsByLibrary,
-            context.extension
+            context.extension,
         )
 
         logCacheStatistics(downloader)
     }
 
-    /**
-     * Prepare the temporary directory for SVG downloads.
-     */
+    /** Prepare the temporary directory for SVG downloads. */
     private fun prepareTempDirectory(tempDir: File) {
         if (tempDir.exists()) {
             tempDir.deleteRecursively()
@@ -168,46 +157,40 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         tempDir.mkdirs()
     }
 
-    /**
-     * Process and log download results.
-     */
+    /** Process and log download results. */
     private fun processDownloadResults(stats: DownloadStats) {
         logDownloadStats(stats)
     }
 
-    /**
-     * Log cache statistics after generation.
-     */
+    /** Log cache statistics after generation. */
     private fun logCacheStatistics(downloader: SvgDownloader) {
         val cacheStats = downloader.getCacheStats()
-        logger.lifecycle("📦 SVG Cache: ${cacheStats.fileCount} files, ${String.format("%.2f", cacheStats.totalSizeMB)} MB")
+        logger.lifecycle(
+            "📦 SVG Cache: ${cacheStats.fileCount} files, ${String.format("%.2f", cacheStats.totalSizeMB)} MB"
+        )
     }
 
-    /**
-     * Handle generation errors with helpful guidance.
-     */
+    /** Handle generation errors with helpful guidance. */
     private fun handleGenerationError(e: Exception): Nothing {
         logger.error("❌ Generation failed: ${e.message}")
         logger.error("   Stack trace: ${e.stackTraceToString()}")
 
-        val guidance = when {
-            e.message?.contains("network", ignoreCase = true) == true ->
-                "Network issue detected. Check internet connection and try again."
-            e.message?.contains("cache", ignoreCase = true) == true ->
-                "Cache issue detected. Try running with --rerun-tasks or clearing cache."
-            e.message?.contains("SVG", ignoreCase = true) == true ->
-                "SVG processing issue. Check if the requested icons exist in Material Symbols."
-            else ->
-                "Unexpected error. Please check configuration and try again."
-        }
+        val guidance =
+            when {
+                e.message?.contains("network", ignoreCase = true) == true ->
+                    "Network issue detected. Check internet connection and try again."
+                e.message?.contains("cache", ignoreCase = true) == true ->
+                    "Cache issue detected. Try running with --rerun-tasks or clearing cache."
+                e.message?.contains("SVG", ignoreCase = true) == true ->
+                    "SVG processing issue. Check if the requested icons exist in Material Symbols."
+                else -> "Unexpected error. Please check configuration and try again."
+            }
 
         logger.error("   💡 $guidance")
         throw e
     }
 
-    /**
-     * Cleanup downloader resources.
-     */
+    /** Cleanup downloader resources. */
     private fun cleanupDownloader(downloader: SvgDownloader) {
         try {
             downloader.cleanup()
@@ -235,7 +218,9 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         val isInsideBuildDir = PathUtils.isCacheInsideBuildDir(cacheBaseDir, buildDir)
 
         if (!isInsideBuildDir) {
-            logger.lifecycle("ℹ️  Cache cleanup skipped: Using shared cache outside build directory")
+            logger.lifecycle(
+                "ℹ️  Cache cleanup skipped: Using shared cache outside build directory"
+            )
             logger.lifecycle("   Cache location: ${cacheBaseDir.canonicalFile.absolutePath}")
             logger.lifecycle("   Shared caches are preserved to avoid conflicts across projects")
         }
@@ -243,9 +228,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         return isInsideBuildDir
     }
 
-    /**
-     * Clean old generated files to ensure fresh generation
-     */
+    /** Clean old generated files to ensure fresh generation */
     private fun cleanOldGeneratedFiles(outputDir: File, packageName: String) {
         val packagePath = packageName.replace('.', '/')
         val iconsBaseDir = File(outputDir, "$packagePath/icons")
@@ -257,7 +240,9 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         if (iconsBaseDir.exists()) {
             iconsBaseDir.walkTopDown().forEach { file ->
                 if (file.isFile && file.extension == "kt") {
-                    logger.debug("🧹 Cleaning old generated file: ${file.relativeTo(iconsBaseDir).path}")
+                    logger.debug(
+                        "🧹 Cleaning old generated file: ${file.relativeTo(iconsBaseDir).path}"
+                    )
                     file.delete()
                     cleanedCount++
                 }
@@ -276,16 +261,17 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
-    /**
-     * Clean unused SVG cache files that are no longer in the configuration
-     */
+    /** Clean unused SVG cache files that are no longer in the configuration */
     private fun cleanUnusedCache(cacheDir: File, config: Map<String, List<IconConfig>>) {
         if (!cacheDir.exists()) return
 
         // Build set of required cache keys
-        val requiredCacheKeys = config.flatMap { (iconName, configs) ->
-            configs.map { iconConfig -> iconConfig.getCacheKey(iconName) }
-        }.toSet()
+        val requiredCacheKeys =
+            config
+                .flatMap { (iconName, configs) ->
+                    configs.map { iconConfig -> iconConfig.getCacheKey(iconName) }
+                }
+                .toSet()
 
         var cleanedCount = 0
 
@@ -298,7 +284,9 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                     if (file.delete()) {
                         cleanedCount++
                     } else {
-                        logger.warn("   ⚠️ Failed to delete unused cache file: ${file.absolutePath}")
+                        logger.warn(
+                            "   ⚠️ Failed to delete unused cache file: ${file.absolutePath}"
+                        )
                     }
                 }
             }
@@ -309,10 +297,10 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
     }
 
-    /**
-     * Group icons by their library ID for organized output
-     */
-    private fun groupIconsByLibrary(config: Map<String, List<IconConfig>>): Map<String, Set<String>> {
+    /** Group icons by their library ID for organized output */
+    private fun groupIconsByLibrary(
+        config: Map<String, List<IconConfig>>
+    ): Map<String, Set<String>> {
         val libraryMap = mutableMapOf<String, MutableSet<String>>()
 
         config.forEach { (iconName, iconConfigs) ->
@@ -327,13 +315,12 @@ abstract class GenerateSymbolsTask : DefaultTask() {
     private suspend fun downloadSvgsParallel(
         downloader: SvgDownloader,
         config: Map<String, List<IconConfig>>,
-        tempDir: File
+        tempDir: File,
     ): DownloadStats = coroutineScope {
         val totalIcons = config.values.sumOf { it.size }
         // Count only remote icons (exclude LocalIconConfig)
-        val remoteIconCount = config.values.sumOf { iconConfigs ->
-            iconConfigs.count { it !is LocalIconConfig }
-        }
+        val remoteIconCount =
+            config.values.sumOf { iconConfigs -> iconConfigs.count { it !is LocalIconConfig } }
         val localIconCount = totalIcons - remoteIconCount
 
         val completed = AtomicInteger(0)
@@ -349,48 +336,64 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
 
         // Create download jobs for parallel execution
-        val downloadJobs = config.flatMap { (iconName, iconConfigs) ->
-            iconConfigs.map { iconConfig ->
-                async(Dispatchers.IO) {
-                    val result = when (iconConfig) {
-                        is LocalIconConfig -> {
-                            val result = processLocalSvg(
-                                iconName = iconName,
-                                iconConfig = iconConfig,
-                                tempDir = tempDir,
-                                completed = localProcessed,
-                                failed = failed
-                            )
-                            // Log local processing progress separately
-                            val localProgress = localProcessed.get()
-                            if (localIconCount > 0 && (localProgress % 5 == 0 || localProgress == localIconCount)) {
-                                logger.lifecycle("   Local progress: $localProgress/$localIconCount")
+        val downloadJobs =
+            config.flatMap { (iconName, iconConfigs) ->
+                iconConfigs.map { iconConfig ->
+                    async(Dispatchers.IO) {
+                        val result =
+                            when (iconConfig) {
+                                is LocalIconConfig -> {
+                                    val result =
+                                        processLocalSvg(
+                                            iconName = iconName,
+                                            iconConfig = iconConfig,
+                                            tempDir = tempDir,
+                                            completed = localProcessed,
+                                            failed = failed,
+                                        )
+                                    // Log local processing progress separately
+                                    val localProgress = localProcessed.get()
+                                    if (
+                                        localIconCount > 0 &&
+                                            (localProgress % 5 == 0 ||
+                                                localProgress == localIconCount)
+                                    ) {
+                                        logger.lifecycle(
+                                            "   Local progress: $localProgress/$localIconCount"
+                                        )
+                                    }
+                                    result
+                                }
+                                else -> {
+                                    val result =
+                                        processRemoteSvg(
+                                            iconName = iconName,
+                                            iconConfig = iconConfig,
+                                            downloader = downloader,
+                                            tempDir = tempDir,
+                                            completed = completed,
+                                            failed = failed,
+                                            cached = cached,
+                                        )
+                                    // Log download progress separately
+                                    val downloadProgress = completed.get()
+                                    if (
+                                        remoteIconCount > 0 &&
+                                            (downloadProgress % 5 == 0 ||
+                                                downloadProgress == remoteIconCount)
+                                    ) {
+                                        logger.lifecycle(
+                                            "   Download progress: $downloadProgress/$remoteIconCount"
+                                        )
+                                    }
+                                    result
+                                }
                             }
-                            result
-                        }
-                        else -> {
-                            val result = processRemoteSvg(
-                                iconName = iconName,
-                                iconConfig = iconConfig,
-                                downloader = downloader,
-                                tempDir = tempDir,
-                                completed = completed,
-                                failed = failed,
-                                cached = cached
-                            )
-                            // Log download progress separately
-                            val downloadProgress = completed.get()
-                            if (remoteIconCount > 0 && (downloadProgress % 5 == 0 || downloadProgress == remoteIconCount)) {
-                                logger.lifecycle("   Download progress: $downloadProgress/$remoteIconCount")
-                            }
-                            result
-                        }
-                    }
 
-                    result
+                        result
+                    }
                 }
             }
-        }
 
         // Wait for all downloads to complete
         val results = downloadJobs.awaitAll()
@@ -400,7 +403,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             successCount = completed.get() + localProcessed.get(),
             failedCount = failed.get(),
             cachedCount = cached.get(),
-            results = results.filterIsInstance<DownloadResult>()
+            results = results.filterIsInstance<DownloadResult>(),
         )
     }
 
@@ -409,7 +412,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         iconConfig: LocalIconConfig,
         tempDir: File,
         completed: AtomicInteger,
-        failed: AtomicInteger
+        failed: AtomicInteger,
     ): DownloadResult {
         return try {
             val sourceFile = File(iconConfig.absolutePath)
@@ -444,7 +447,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         tempDir: File,
         completed: AtomicInteger,
         failed: AtomicInteger,
-        cached: AtomicInteger
+        cached: AtomicInteger,
     ): DownloadResult {
         return try {
             val cacheKey = iconConfig.getCacheKey(iconName)
@@ -466,19 +469,27 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 DownloadResult.Success(iconName, iconConfig, fileName)
             } else {
                 failed.incrementAndGet()
-                val errorMsg = if (svgContent == null) "Download returned null" else "Empty SVG content"
-                logger.warn("   ⚠️ Failed to download: $iconName-${iconConfig.getSignature()} ($errorMsg)")
+                val errorMsg =
+                    if (svgContent == null) "Download returned null" else "Empty SVG content"
+                logger.warn(
+                    "   ⚠️ Failed to download: $iconName-${iconConfig.getSignature()} ($errorMsg)"
+                )
                 DownloadResult.Failed(iconName, iconConfig, errorMsg)
             }
         } catch (e: Exception) {
             failed.incrementAndGet()
-            val detailedError = when {
-                e.message?.contains("timeout", ignoreCase = true) == true -> "Timeout - network too slow"
-                e.message?.contains("404", ignoreCase = true) == true -> "Icon not found"
-                e.message?.contains("connection", ignoreCase = true) == true -> "Network connection failed"
-                else -> e.message ?: "Unknown error"
-            }
-            logger.warn("   ❌ Error downloading $iconName-${iconConfig.getSignature()}: $detailedError")
+            val detailedError =
+                when {
+                    e.message?.contains("timeout", ignoreCase = true) == true ->
+                        "Timeout - network too slow"
+                    e.message?.contains("404", ignoreCase = true) == true -> "Icon not found"
+                    e.message?.contains("connection", ignoreCase = true) == true ->
+                        "Network connection failed"
+                    else -> e.message ?: "Unknown error"
+                }
+            logger.warn(
+                "   ❌ Error downloading $iconName-${iconConfig.getSignature()}: $detailedError"
+            )
             DownloadResult.Failed(iconName, iconConfig, detailedError)
         }
     }
@@ -488,15 +499,17 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 
         if (iconConfig is LocalIconConfig) {
             val preferredName = signature.ifBlank { iconName }
-            val safeName = preferredName
-                .replace("[^A-Za-z0-9_]".toRegex(), "_")
-                .replace("_+".toRegex(), "_")
-                .trim('_')
-                .ifBlank { "LocalIcon" }
+            val safeName =
+                preferredName
+                    .replace("[^A-Za-z0-9_]".toRegex(), "_")
+                    .replace("_+".toRegex(), "_")
+                    .trim('_')
+                    .ifBlank { "LocalIcon" }
             return "$safeName.svg"
         }
 
-        val base = iconName.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+        val base =
+            iconName.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
         val suffix = if (signature.isNotBlank()) signature else "Local"
         return "$base$suffix.svg"
     }
@@ -512,7 +525,9 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         }
 
         if (stats.failedCount > 0) {
-            logger.warn("⚠️ Some icons failed to process. Generated code may use fallback implementations.")
+            logger.warn(
+                "⚠️ Some icons failed to process. Generated code may use fallback implementations."
+            )
         }
     }
 
@@ -521,7 +536,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
         outputDir: File,
         packageName: String,
         iconsByLibrary: Map<String, Set<String>>,
-        ext: SymbolCraftExtension
+        ext: SymbolCraftExtension,
     ) {
         logger.lifecycle("🔄 Converting SVGs to Compose ImageVectors...")
 
@@ -536,32 +551,38 @@ abstract class GenerateSymbolsTask : DefaultTask() {
             }
 
             // Determine subdirectory name for this library
-            val librarySubdir = when {
-                libraryId == "material-symbols" -> "materialsymbols" // Keep backward compatibility
-                libraryId.startsWith("external-") -> libraryId.removePrefix("external-") // e.g., "bootstrap-icons", "heroicons"
-                else -> libraryId
-            }
+            val librarySubdir =
+                when {
+                    libraryId == "material-symbols" ->
+                        "materialsymbols" // Keep backward compatibility
+                    libraryId.startsWith("external-") ->
+                        libraryId.removePrefix("external-") // e.g., "bootstrap-icons", "heroicons"
+                    else -> libraryId
+                }
 
             // Create name transformer from extension configuration
-            val nameTransformer = if (ext.namingConfig.transformer.isPresent) {
-                // Use custom transformer directly
-                ext.namingConfig.transformer.get()
-            } else {
-                // Use convention-based transformer
-                NameTransformerFactory.fromConvention(
-                    convention = ext.namingConfig.namingConvention.get(),
-                    suffix = ext.namingConfig.suffix.get(),
-                    prefix = ext.namingConfig.prefix.get(),
-                    removePrefix = ext.namingConfig.removePrefix.get(),
-                    removeSuffix = ext.namingConfig.removeSuffix.get()
-                )
-            }
+            val nameTransformer =
+                if (ext.namingConfig.transformer.isPresent) {
+                    // Use custom transformer directly
+                    ext.namingConfig.transformer.get()
+                } else {
+                    // Use convention-based transformer
+                    NameTransformerFactory.fromConvention(
+                        convention = ext.namingConfig.namingConvention.get(),
+                        suffix = ext.namingConfig.suffix.get(),
+                        prefix = ext.namingConfig.prefix.get(),
+                        removePrefix = ext.namingConfig.removePrefix.get(),
+                        removeSuffix = ext.namingConfig.removeSuffix.get(),
+                    )
+                }
 
             logger.lifecycle("   📚 Converting library: $libraryId → icons/$librarySubdir/")
             if (ext.namingConfig.transformer.isPresent) {
                 logger.debug("   🔄 Using custom transformer")
             } else {
-                logger.debug("   🔄 Using transformer: ${ext.namingConfig.namingConvention.get()} (suffix='${ext.namingConfig.suffix.get()}', prefix='${ext.namingConfig.prefix.get()}')")
+                logger.debug(
+                    "   🔄 Using transformer: ${ext.namingConfig.namingConvention.get()} (suffix='${ext.namingConfig.suffix.get()}', prefix='${ext.namingConfig.prefix.get()}')"
+                )
             }
 
             try {
@@ -573,7 +594,7 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                     accessorName = "Icons",
                     allAssetsPropertyName = "AllIcons",
                     librarySubdir = librarySubdir,
-                    nameTransformer = nameTransformer
+                    nameTransformer = nameTransformer,
                 )
                 val iconCount = libraryTempDir.listFiles()?.size ?: 0
                 totalConverted += iconCount
@@ -585,13 +606,19 @@ abstract class GenerateSymbolsTask : DefaultTask() {
                 // Provide specific guidance based on error type
                 when {
                     e.message?.contains("directory", ignoreCase = true) == true -> {
-                        logger.error("   💡 Directory issue: Check input/output directories exist and are writable")
+                        logger.error(
+                            "   💡 Directory issue: Check input/output directories exist and are writable"
+                        )
                     }
                     e.message?.contains("package", ignoreCase = true) == true -> {
-                        logger.error("   💡 Package issue: Check packageName is valid Kotlin package identifier")
+                        logger.error(
+                            "   💡 Package issue: Check packageName is valid Kotlin package identifier"
+                        )
                     }
                     e.message?.contains("SVG", ignoreCase = true) == true -> {
-                        logger.error("   💡 SVG parsing issue: Some downloaded SVG files may be malformed")
+                        logger.error(
+                            "   💡 SVG parsing issue: Some downloaded SVG files may be malformed"
+                        )
                     }
                     else -> {
                         logger.error("   💡 Unexpected conversion error: ${e.javaClass.simpleName}")
@@ -607,8 +634,8 @@ abstract class GenerateSymbolsTask : DefaultTask() {
 /**
  * Context object holding all configuration and paths needed for icon generation.
  *
- * This immutable data class encapsulates the generation state, making it easier to
- * pass around and test individual steps of the generation process.
+ * This immutable data class encapsulates the generation state, making it easier to pass around and
+ * test individual steps of the generation process.
  *
  * @property extension The SymbolCraft extension with user configuration
  * @property config Map of icon names to their configurations
@@ -627,7 +654,7 @@ private data class GenerationContext(
     val tempDir: File,
     val svgCacheDir: File,
     val outputDir: File,
-    val projectBuildDir: String
+    val projectBuildDir: String,
 )
 
 /** Data aggregated from the parallel download stage for logging and diagnostics. */
@@ -636,20 +663,14 @@ data class DownloadStats(
     val successCount: Int,
     val failedCount: Int,
     val cachedCount: Int,
-    val results: List<DownloadResult>
+    val results: List<DownloadResult>,
 )
 
 /** Result wrapper representing either a successful or failed SVG download. */
 sealed class DownloadResult {
-    data class Success(
-        val iconName: String,
-        val config: IconConfig,
-        val fileName: String
-    ) : DownloadResult()
+    data class Success(val iconName: String, val config: IconConfig, val fileName: String) :
+        DownloadResult()
 
-    data class Failed(
-        val iconName: String,
-        val config: IconConfig,
-        val error: String
-    ) : DownloadResult()
+    data class Failed(val iconName: String, val config: IconConfig, val error: String) :
+        DownloadResult()
 }

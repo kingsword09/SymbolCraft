@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 /**
  * Sanitize icon name to prevent path traversal attacks.
  *
- * This function removes or replaces dangerous characters that could be used
- * to access files outside the intended cache directory.
+ * This function removes or replaces dangerous characters that could be used to access files outside
+ * the intended cache directory.
  *
  * Security considerations:
  * - Removes path separators (/ and \)
@@ -59,8 +59,8 @@ private fun sanitizeIconName(iconName: String): String {
  */
 interface IconConfig {
     /**
-     * Unique identifier for the icon library.
-     * Must be unique across all icon libraries to avoid cache conflicts.
+     * Unique identifier for the icon library. Must be unique across all icon libraries to avoid
+     * cache conflicts.
      *
      * Recommended format: "library-name" (e.g., "material-symbols", "font-awesome")
      */
@@ -86,8 +86,8 @@ interface IconConfig {
     fun getCacheKey(iconName: String): String
 
     /**
-     * Generate a signature string used for file naming.
-     * This appears in the generated Kotlin file names.
+     * Generate a signature string used for file naming. This appears in the generated Kotlin file
+     * names.
      *
      * Should be short and descriptive (e.g., "W400Outlined", "Fill", "24px")
      *
@@ -109,7 +109,7 @@ interface IconConfig {
 data class LocalIconConfig(
     val libraryName: String,
     val absolutePath: String,
-    val relativePath: String
+    val relativePath: String,
 ) : IconConfig {
 
     override val libraryId: String = libraryName
@@ -135,15 +135,14 @@ data class LocalIconConfig(
      */
     private fun buildSignature(relativePath: String): String {
         // Normalize separators and hyphens first
-        val normalized = relativePath
-            .replace("/", "_")
-            .replace("\\", "_")
-            .replace("-", "_")
+        val normalized = relativePath.replace("/", "_").replace("\\", "_").replace("-", "_")
 
         // Remove dangerous characters (keep only alphanumeric and underscores)
-        val cleaned = normalized.replace(Regex("[^a-zA-Z0-9_]"), "_")
-            .replace(Regex("_+"), "_")  // Collapse multiple underscores
-            .trim('_')  // Remove leading/trailing underscores
+        val cleaned =
+            normalized
+                .replace(Regex("[^a-zA-Z0-9_]"), "_")
+                .replace(Regex("_+"), "_") // Collapse multiple underscores
+                .trim('_') // Remove leading/trailing underscores
 
         // Return "Local" if sanitization resulted in empty/blank string
         if (cleaned.isBlank()) return "Local"
@@ -152,18 +151,16 @@ data class LocalIconConfig(
         return cleaned
             .split('_')
             .filter { it.isNotBlank() }
-            .joinToString(separator = "") { part ->
-                part.replaceFirstChar { ch -> ch.titlecase() }
-            }
-            .ifBlank { "Local" }  // Final safety check
+            .joinToString(separator = "") { part -> part.replaceFirstChar { ch -> ch.titlecase() } }
+            .ifBlank { "Local" } // Final safety check
     }
 }
 
-/** 
+/**
  * Configuration for Material Symbols icon library.
  *
- * Uses Google Fonts CDN as the source for Material Symbols icons.
- * For custom CDN or backup URLs, use `externalIcon` instead.
+ * Uses Google Fonts CDN as the source for Material Symbols icons. For custom CDN or backup URLs,
+ * use `externalIcon` instead.
  *
  * @property weight Stroke weight (100-700)
  * @property variant Visual variant (outlined, rounded, sharp)
@@ -177,16 +174,18 @@ data class MaterialSymbolsConfig(
     val variant: SymbolVariant = SymbolVariant.OUTLINED,
     val fill: SymbolFill = SymbolFill.UNFILLED,
     val grade: Int = 0,
-    val opticalSize: Int = 24
+    val opticalSize: Int = 24,
 ) : IconConfig {
     override val libraryId = "material-symbols"
 
     override fun buildUrl(iconName: String): String {
-        val weightValue = when {
-            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) && fill == SymbolFill.FILLED -> ""
-            (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) -> "default"
-            else -> "wght${weight.value}"
-        }
+        val weightValue =
+            when {
+                (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) &&
+                    fill == SymbolFill.FILLED -> ""
+                (weight == SymbolWeight.REGULAR || weight == SymbolWeight.W400) -> "default"
+                else -> "wght${weight.value}"
+            }
 
         // Google Fonts official CDN
         return "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols${variant.pathName}/$iconName/$weightValue${fill.shortName}/${opticalSize}px.svg"
@@ -231,7 +230,7 @@ data class MaterialSymbolsConfig(
 data class ExternalIconConfig(
     val libraryName: String,
     val urlTemplate: String,
-    val styleParams: Map<String, String> = emptyMap()
+    val styleParams: Map<String, String> = emptyMap(),
 ) : IconConfig {
     init {
         // Validate URL template format and security
@@ -244,24 +243,23 @@ data class ExternalIconConfig(
     override fun buildUrl(iconName: String): String {
         var url = urlTemplate.replace("{name}", iconName)
 
-        styleParams.forEach { (key, value) ->
-            url = url.replace("{$key}", value)
-        }
+        styleParams.forEach { (key, value) -> url = url.replace("{$key}", value) }
 
         return url
     }
 
     override fun getCacheKey(iconName: String): String {
         val safeName = sanitizeIconName(iconName)
-        // libraryName is already validated in init block with [a-zA-Z0-9_-]+ regex, no need to sanitize again
-        val paramsString = styleParams.entries
-            .sortedBy { it.key }
-            .joinToString("_") { "${it.key}=${it.value}" }
+        // libraryName is already validated in init block with [a-zA-Z0-9_-]+ regex, no need to
+        // sanitize again
+        val paramsString =
+            styleParams.entries.sortedBy { it.key }.joinToString("_") { "${it.key}=${it.value}" }
         return "${safeName}_${libraryName}_${paramsString.hashCode()}"
     }
 
     override fun getSignature(): String {
-        return styleParams.values.joinToString("") { it.replaceFirstChar { c -> c.titlecase() } }
+        return styleParams.values
+            .joinToString("") { it.replaceFirstChar { c -> c.titlecase() } }
             .ifEmpty { libraryName.replaceFirstChar { it.titlecase() } }
     }
 
@@ -272,28 +270,17 @@ data class ExternalIconConfig(
          * @throws IllegalArgumentException if URL template is invalid or insecure
          */
         private fun validateUrlTemplate(urlTemplate: String) {
-            require(urlTemplate.isNotBlank()) {
-                "URL template cannot be blank"
-            }
+            require(urlTemplate.isNotBlank()) { "URL template cannot be blank" }
 
             require(urlTemplate.startsWith("https://", ignoreCase = true)) {
                 "URL template must start with 'https://' for security. Got: $urlTemplate"
             }
 
-            require(!urlTemplate.contains(" ")) {
-                "URL template contains spaces, which is invalid"
-            }
+            require(!urlTemplate.contains(" ")) { "URL template contains spaces, which is invalid" }
 
             // Prevent common injection patterns
-            val dangerousPatterns = listOf(
-                "javascript:",
-                "data:",
-                "file:",
-                "ftp:",
-                "<script",
-                "onload=",
-                "onerror="
-            )
+            val dangerousPatterns =
+                listOf("javascript:", "data:", "file:", "ftp:", "<script", "onload=", "onerror=")
 
             dangerousPatterns.forEach { pattern ->
                 require(!urlTemplate.contains(pattern, ignoreCase = true)) {
@@ -308,9 +295,7 @@ data class ExternalIconConfig(
          * @throws IllegalArgumentException if library name is invalid
          */
         private fun validateLibraryName(libraryName: String) {
-            require(libraryName.isNotBlank()) {
-                "Library name cannot be blank"
-            }
+            require(libraryName.isNotBlank()) { "Library name cannot be blank" }
 
             require(libraryName.matches(Regex("[a-zA-Z0-9_-]+"))) {
                 "Library name can only contain alphanumeric characters, hyphens, and underscores. Got: $libraryName"
@@ -329,50 +314,36 @@ data class ExternalIconConfig(
 enum class SymbolVariant(val shortName: String, val pathName: String) {
     OUTLINED("Outlined", "outlined"),
     ROUNDED("Rounded", "rounded"),
-    SHARP("Sharp", "sharp")
+    SHARP("Sharp", "sharp"),
 }
 
 @Serializable
 enum class SymbolFill(val shortName: String) {
     UNFILLED(""),
-    FILLED("fill1")
+    FILLED("fill1"),
 }
 
 @Serializable
 enum class SymbolWeight(val value: Int) {
-    /**
-     * weight = 100 - Thinnest stroke weight
-     */
+    /** weight = 100 - Thinnest stroke weight */
     W100(100),
 
-    /**
-     * weight = 200 - Extra light stroke weight
-     */
+    /** weight = 200 - Extra light stroke weight */
     W200(200),
 
-    /**
-     * weight = 300 - Light stroke weight
-     */
+    /** weight = 300 - Light stroke weight */
     W300(300),
 
-    /**
-     * weight = 400 - Regular/Normal stroke weight (default)
-     */
+    /** weight = 400 - Regular/Normal stroke weight (default) */
     W400(400),
 
-    /**
-     * weight = 500 - Medium stroke weight
-     */
+    /** weight = 500 - Medium stroke weight */
     W500(500),
 
-    /**
-     * weight = 600 - Semi-bold stroke weight
-     */
+    /** weight = 600 - Semi-bold stroke weight */
     W600(600),
 
-    /**
-     * weight = 700 - Bold stroke weight
-     */
+    /** weight = 700 - Bold stroke weight */
     W700(700);
 
     companion object {
@@ -385,12 +356,12 @@ enum class SymbolWeight(val value: Int) {
         val SEMI_BOLD = W600
         val BOLD = W700
 
-        /**
-         * Get SymbolWeight enum from numeric value
-         */
+        /** Get SymbolWeight enum from numeric value */
         fun fromValue(value: Int): SymbolWeight {
             return entries.find { it.value == value }
-                ?: throw IllegalArgumentException("Unsupported weight: $value. Supported weights: ${entries.map { it.value }}")
+                ?: throw IllegalArgumentException(
+                    "Unsupported weight: $value. Supported weights: ${entries.map { it.value }}"
+                )
         }
     }
 
@@ -410,7 +381,8 @@ object MaterialSymbolsPresets {
     val W500Filled = MaterialSymbolsConfig(weight = SymbolWeight.W500, fill = SymbolFill.FILLED)
 
     // Style variants
-    val W400Rounded = MaterialSymbolsConfig(weight = SymbolWeight.W400, variant = SymbolVariant.ROUNDED)
+    val W400Rounded =
+        MaterialSymbolsConfig(weight = SymbolWeight.W400, variant = SymbolVariant.ROUNDED)
     val W400Sharp = MaterialSymbolsConfig(weight = SymbolWeight.W400, variant = SymbolVariant.SHARP)
 
     // Aliases

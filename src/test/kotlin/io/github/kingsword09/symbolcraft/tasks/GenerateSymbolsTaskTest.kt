@@ -1,6 +1,8 @@
 package io.github.kingsword09.symbolcraft.tasks
 
 import io.github.kingsword09.symbolcraft.model.ExternalIconConfig
+import java.nio.file.Path
+import java.security.MessageDigest
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
@@ -13,8 +15,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import java.nio.file.Path
-import java.security.MessageDigest
 
 @OptIn(ExperimentalPathApi::class)
 class GenerateSymbolsTaskTest {
@@ -42,7 +42,8 @@ class GenerateSymbolsTaskTest {
                 localIcons(libraryName = "brand") {
                     directory = "src/icons"
                 }
-            """.trimIndent()
+            """
+                .trimIndent()
         )
 
         writeSvg("src/icons/brand/telephone-svgrepo-com.svg")
@@ -54,18 +55,23 @@ class GenerateSymbolsTaskTest {
         val libraryDir = generatedDir("icons/brand")
         assertTrue(libraryDir.toFile().exists(), "Expected icons/brand directory to exist")
 
-        val generatedIcons = libraryDir.toFile()
-            .walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .toList()
+        val generatedIcons =
+            libraryDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
 
         assertTrue(generatedIcons.isNotEmpty(), "Expected generated icon files for local library")
 
         val iconNames = generatedIcons.map { it.nameWithoutExtension }
-        assertTrue(iconNames.any { it == "BrandTelephoneSvgrepoCom" }, "Generated names: $iconNames")
-        assertTrue(iconNames.none { it.contains("BrandTelephoneSvgrepoComBrandTelephoneSvgrepoCom") }, "Generated names: $iconNames")
+        assertTrue(
+            iconNames.any { it == "BrandTelephoneSvgrepoCom" },
+            "Generated names: $iconNames",
+        )
+        assertTrue(
+            iconNames.none { it.contains("BrandTelephoneSvgrepoComBrandTelephoneSvgrepoCom") },
+            "Generated names: $iconNames",
+        )
 
-        val telephoneFile = generatedIcons.first { it.nameWithoutExtension == "BrandTelephoneSvgrepoCom" }
+        val telephoneFile =
+            generatedIcons.first { it.nameWithoutExtension == "BrandTelephoneSvgrepoCom" }
         val iconContent = telephoneFile.readText()
         assertTrue(iconContent.contains("package com.test.symbols.icons.brand"))
         assertTrue(iconContent.contains("ImageVector"))
@@ -80,7 +86,8 @@ class GenerateSymbolsTaskTest {
                 localIcons {
                     directory = "src/icons"
                 }
-            """.trimIndent()
+            """
+                .trimIndent()
         )
 
         writeSvg("src/icons/ui/search.svg")
@@ -89,14 +96,18 @@ class GenerateSymbolsTaskTest {
         assertEquals(TaskOutcome.SUCCESS, result.task(":generateSymbolCraftIcons")?.outcome)
 
         val libraryDir = generatedDir("icons/local")
-        assertTrue(libraryDir.toFile().exists(), "Expected icons/local directory for default library id")
+        assertTrue(
+            libraryDir.toFile().exists(),
+            "Expected icons/local directory for default library id",
+        )
 
-        val generatedIcons = libraryDir.toFile()
-            .walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .toList()
+        val generatedIcons =
+            libraryDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
 
-        assertTrue(generatedIcons.isNotEmpty(), "Expected generated icon files in default library directory")
+        assertTrue(
+            generatedIcons.isNotEmpty(),
+            "Expected generated icon files in default library directory",
+        )
         val iconContent = generatedIcons.first().readText()
         assertTrue(iconContent.contains("package com.test.symbols.icons.local"))
     }
@@ -114,7 +125,8 @@ class GenerateSymbolsTaskTest {
                 materialSymbol("home") {
                     style()
                 }
-            """.trimIndent()
+            """
+                .trimIndent()
         )
 
         writeSvg("src/icons/brand/logo.svg")
@@ -129,8 +141,10 @@ class GenerateSymbolsTaskTest {
         assertTrue(localDir.toFile().exists(), "Expected icons/brand directory to exist")
         assertTrue(remoteDir.toFile().exists(), "Expected icons/materialsymbols directory to exist")
 
-        val localIcons = localDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
-        val remoteIcons = remoteDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+        val localIcons =
+            localDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+        val remoteIcons =
+            remoteDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
 
         assertTrue(localIcons.isNotEmpty(), "Expected generated local icon files")
         assertTrue(remoteIcons.isNotEmpty(), "Expected generated remote icon files from cache")
@@ -154,15 +168,17 @@ class GenerateSymbolsTaskTest {
                     urlTemplate = "https://static.example.com/icons/{name}.svg"
                     styleParam("variant", "default")
                 }
-            """.trimIndent()
+            """
+                .trimIndent()
         )
 
         writeSvg("src/icons/brand/logo.svg")
-        val externalConfig = ExternalIconConfig(
-            libraryName = "brandcdn",
-            urlTemplate = "https://static.example.com/icons/{name}.svg",
-            styleParams = mapOf("variant" to "default")
-        )
+        val externalConfig =
+            ExternalIconConfig(
+                libraryName = "brandcdn",
+                urlTemplate = "https://static.example.com/icons/{name}.svg",
+                styleParams = mapOf("variant" to "default"),
+            )
         seedExternalIconCache(iconName = "globe", config = externalConfig)
 
         val result = runGradle("generateSymbolCraftIcons")
@@ -174,10 +190,8 @@ class GenerateSymbolsTaskTest {
         assertTrue(localDir.toFile().exists(), "Expected icons/brand directory to exist")
         assertTrue(externalDir.toFile().exists(), "Expected icons/brandcdn directory to exist")
 
-        val externalIcons = externalDir.toFile()
-            .walkTopDown()
-            .filter { it.isFile && it.extension == "kt" }
-            .toList()
+        val externalIcons =
+            externalDir.toFile().walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
 
         assertTrue(externalIcons.isNotEmpty(), "Expected generated external icon files from cache")
         val externalContent = externalIcons.first().readText()
@@ -198,7 +212,8 @@ class GenerateSymbolsTaskTest {
                 materialSymbol("home") {
                     style()
                 }
-            """.trimIndent()
+            """
+                .trimIndent()
         )
 
         writeSvg("src/icons/brand/logo.svg")
@@ -216,10 +231,7 @@ class GenerateSymbolsTaskTest {
     }
 
     private fun createBuildScript(configBody: String) {
-        writeProjectFile(
-            "build.gradle.kts",
-            buildScript(configBody)
-        )
+        writeProjectFile("build.gradle.kts", buildScript(configBody))
     }
 
     private fun generatedDir(suffix: String): Path =
@@ -232,17 +244,20 @@ class GenerateSymbolsTaskTest {
     }
 
     private fun writeSvg(relativePath: String) {
-        val svgContent = """
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 2a10 10 0 1 1-0.001 20.001A10 10 0 0 1 12 2z" fill="currentColor"/>
-            </svg>
-        """.trimIndent()
+        val svgContent =
+            """
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2a10 10 0 1 1-0.001 20.001A10 10 0 0 1 12 2z" fill="currentColor"/>
+                </svg>
+            """
+                .trimIndent()
         val target = projectDir.resolve(relativePath)
         target.parent?.createDirectories()
         target.writeText(svgContent)
     }
 
-    private fun buildScript(configBody: String): String = """
+    private fun buildScript(configBody: String): String =
+        """
         plugins {
             id("io.github.kingsword09.symbolcraft")
         }
@@ -256,7 +271,8 @@ class GenerateSymbolsTaskTest {
             outputDirectory.set("build/generated/symbols")
             $configBody
         }
-    """.trimIndent()
+    """
+            .trimIndent()
 
     private fun runGradle(vararg arguments: String) =
         GradleRunner.create()
@@ -271,14 +287,17 @@ class GenerateSymbolsTaskTest {
         cacheDir.createDirectories()
 
         val cacheKey = "${sanitize(iconName)}_material-symbols_400_outlined_unfilled"
-        val svgContent = """
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 2a10 10 0 1 1-0.001 20.001A10 10 0 0 1 12 2z" fill="currentColor"/>
-            </svg>
-        """.trimIndent()
+        val svgContent =
+            """
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2a10 10 0 1 1-0.001 20.001A10 10 0 0 1 12 2z" fill="currentColor"/>
+                </svg>
+            """
+                .trimIndent()
         val cacheFile = cacheDir.resolve("$cacheKey.svg")
         val metaFile = cacheDir.resolve("$cacheKey.meta")
-        val url = "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/$iconName/default/24px.svg"
+        val url =
+            "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/$iconName/default/24px.svg"
         val hash = sha256(svgContent)
 
         cacheFile.writeText(svgContent)
@@ -290,11 +309,13 @@ class GenerateSymbolsTaskTest {
         cacheDir.createDirectories()
 
         val cacheKey = config.getCacheKey(iconName)
-        val svgContent = """
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 2a10 10 0 1 1-0.001 20.001A10 10 0 0 1 12 2z" fill="currentColor"/>
-            </svg>
-        """.trimIndent()
+        val svgContent =
+            """
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2a10 10 0 1 1-0.001 20.001A10 10 0 0 1 12 2z" fill="currentColor"/>
+                </svg>
+            """
+                .trimIndent()
         val cacheFile = cacheDir.resolve("$cacheKey.svg")
         val metaFile = cacheDir.resolve("$cacheKey.meta")
         val url = config.buildUrl(iconName)
