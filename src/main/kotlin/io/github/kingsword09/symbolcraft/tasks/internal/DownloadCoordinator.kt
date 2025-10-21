@@ -116,16 +116,8 @@ internal class DownloadCoordinator(
                                         tempDir = tempDir,
                                         completed = localProcessed,
                                         failed = failed,
+                                        totalCount = localIconCount,
                                     )
-                                val localProgress = localProcessed.get()
-                                if (
-                                    localIconCount > 0 &&
-                                        (localProgress % 5 == 0 || localProgress == localIconCount)
-                                ) {
-                                    logger.lifecycle(
-                                        "   Local progress: $localProgress/$localIconCount"
-                                    )
-                                }
                                 result
                             }
                             else -> {
@@ -138,17 +130,8 @@ internal class DownloadCoordinator(
                                         completed = completed,
                                         failed = failed,
                                         cached = cached,
+                                        totalCount = remoteIconCount,
                                     )
-                                val downloadProgress = completed.get()
-                                if (
-                                    remoteIconCount > 0 &&
-                                        (downloadProgress % 5 == 0 ||
-                                            downloadProgress == remoteIconCount)
-                                ) {
-                                    logger.lifecycle(
-                                        "   Download progress: $downloadProgress/$remoteIconCount"
-                                    )
-                                }
                                 result
                             }
                         }
@@ -177,6 +160,7 @@ internal class DownloadCoordinator(
         tempDir: File,
         completed: AtomicInteger,
         failed: AtomicInteger,
+        totalCount: Int,
     ): DownloadResult {
         return try {
             val sourceFile = File(iconConfig.absolutePath)
@@ -193,7 +177,8 @@ internal class DownloadCoordinator(
                 val targetFile = File(librarySubdir, fileName)
                 sourceFile.copyTo(targetFile, overwrite = true)
 
-                completed.incrementAndGet()
+                val progress = completed.incrementAndGet()
+                maybeLogProgress("Local progress", progress, totalCount)
                 DownloadResult.Success(iconName, iconConfig, fileName)
             }
         } catch (e: Exception) {
@@ -218,6 +203,7 @@ internal class DownloadCoordinator(
         completed: AtomicInteger,
         failed: AtomicInteger,
         cached: AtomicInteger,
+        totalCount: Int,
     ): DownloadResult {
         return try {
             val cacheKey = iconConfig.getCacheKey(iconName)
@@ -233,8 +219,9 @@ internal class DownloadCoordinator(
                 val tempFile = File(librarySubdir, fileName)
                 tempFile.writeText(svgContent)
 
-                completed.incrementAndGet()
+                val progress = completed.incrementAndGet()
                 if (wasCached) cached.incrementAndGet()
+                maybeLogProgress("   Download progress", progress, totalCount)
 
                 DownloadResult.Success(iconName, iconConfig, fileName)
             } else {
@@ -306,5 +293,17 @@ internal class DownloadCoordinator(
                 "⚠️ Some icons failed to process. Generated code may use fallback implementations."
             )
         }
+    }
+
+    private fun maybeLogProgress(prefix: String, current: Int, total: Int) {
+        if (total <= 0) return
+        if (current == total || current % PROGRESS_STEP == 0) {
+            val normalizedPrefix = if (prefix.startsWith("   ")) prefix else "   $prefix"
+            logger.lifecycle("$normalizedPrefix: $current/$total")
+        }
+    }
+
+    private companion object {
+        private const val PROGRESS_STEP = 5
     }
 }
