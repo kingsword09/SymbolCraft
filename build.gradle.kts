@@ -14,7 +14,7 @@ plugins {
 
 group = "io.github.kingsword09"
 
-version = "0.3.3"
+version = "0.3.4"
 
 kotlin { jvmToolchain(17) }
 
