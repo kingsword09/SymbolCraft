@@ -135,6 +135,11 @@ symbolCraft {
         directory = project.relativePath("src/commonMain/composeResources/files")
         include("**/*.svg")
     }
+
+    // Simple Icons - for testing Locale issue (GitHub issue #38)
+    externalIcons("github", libraryName = "simple-icons") {
+        urlTemplate = "https://simpleicons.org/icons/{name}.svg"
+    }
 }
 
 compose.desktop {
