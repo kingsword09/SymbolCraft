@@ -87,9 +87,9 @@ symbolCraft {
     // External icons with style variants
     externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), 
                   libraryName = "official") {
-        urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg?min=1"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "_fill1")  // unfilled, filled variants
+            values("", "-fill")  // unfilled, filled variants
         }
     }
 }

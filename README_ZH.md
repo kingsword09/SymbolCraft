@@ -726,12 +726,12 @@ symbolCraft {
 symbolCraft {
     // 单个图标的多个填充变体
     externalIcon("home", libraryName = "official") {
-        urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "fill1")  // unfilled, filled 变体
+            values("", "-fill")  // unfilled, filled 变体
         }
     }
-    // 生成：HomeOfficial.kt, HomeFill1Official.kt
+    // 生成：HomeOfficial.kt, HomeFill.kt
 
     // 多个图标使用相同的变体（适用于底部导航等场景）
     val navIcons = listOf("home", "search", "user", "settings")
@@ -961,9 +961,9 @@ symbolCraft {
 
     // 带样式变体的外部图标
     externalIcons(*listOf("home", "search", "person").toTypedArray(), libraryName = "official") {
-        urlTemplate = "https://example.com/{name}{fill}_24px.svg"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "_fill1")  // unfilled, filled 变体
+            values("", "-fill")  // unfilled, filled 变体
         }
     }
 }

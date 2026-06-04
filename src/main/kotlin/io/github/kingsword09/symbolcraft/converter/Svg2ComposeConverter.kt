@@ -271,7 +271,13 @@ class Svg2ComposeConverter {
                     packageLineIndex = normalizedLines.size
                 }
 
-                normalizedLines.add(line.replace(PREVIEW_ANNOTATION_REGEX, "@$annotationName"))
+                val processedLine =
+                    if (line.contains("@Preview")) {
+                        line.replace(PREVIEW_ANNOTATION_REGEX, "@$annotationName")
+                    } else {
+                        line
+                    }
+                normalizedLines.add(processedLine)
             }
         }
 
