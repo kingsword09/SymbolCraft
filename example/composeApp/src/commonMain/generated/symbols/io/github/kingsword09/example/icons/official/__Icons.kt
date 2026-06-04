@@ -1,15 +1,15 @@
 package io.github.kingsword09.example.icons.official
 
 import androidx.compose.ui.graphics.vector.ImageVector
-import io.github.kingsword09.example.icons.official.icons.ArrowBackFill1
+import io.github.kingsword09.example.icons.official.icons.ArrowBackFill
 import io.github.kingsword09.example.icons.official.icons.ArrowBackOfficial
-import io.github.kingsword09.example.icons.official.icons.HomeFill1
+import io.github.kingsword09.example.icons.official.icons.HomeFill
 import io.github.kingsword09.example.icons.official.icons.HomeOfficial
-import io.github.kingsword09.example.icons.official.icons.PersonFill1
+import io.github.kingsword09.example.icons.official.icons.PersonFill
 import io.github.kingsword09.example.icons.official.icons.PersonOfficial
-import io.github.kingsword09.example.icons.official.icons.SearchFill1
+import io.github.kingsword09.example.icons.official.icons.SearchFill
 import io.github.kingsword09.example.icons.official.icons.SearchOfficial
-import io.github.kingsword09.example.icons.official.icons.SettingsFill1
+import io.github.kingsword09.example.icons.official.icons.SettingsFill
 import io.github.kingsword09.example.icons.official.icons.SettingsOfficial
 import kotlin.collections.List as ____KtList
 
@@ -22,6 +22,6 @@ public val Icons.AllIcons: ____KtList<ImageVector>
     if (__AllIcons != null) {
       return __AllIcons!!
     }
-    __AllIcons= listOf(ArrowBackFill1, ArrowBackOfficial, HomeFill1, HomeOfficial, PersonFill1, PersonOfficial, SearchFill1, SearchOfficial, SettingsFill1, SettingsOfficial)
+    __AllIcons= listOf(ArrowBackFill, ArrowBackOfficial, HomeFill, HomeOfficial, PersonFill, PersonOfficial, SearchFill, SearchOfficial, SettingsFill, SettingsOfficial)
     return __AllIcons!!
   }

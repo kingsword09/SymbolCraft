@@ -36,15 +36,15 @@ import io.github.kingsword09.example.icons.mdi.Icons as MdiIcons
 import io.github.kingsword09.example.icons.mdi.icons.AbTestingMdi
 import io.github.kingsword09.example.icons.mdi.icons.AbacusMdi
 import io.github.kingsword09.example.icons.official.Icons as OfficialIcons
-import io.github.kingsword09.example.icons.official.icons.HomeFill1
+import io.github.kingsword09.example.icons.official.icons.HomeFill
 import io.github.kingsword09.example.icons.official.icons.HomeOfficial
-import io.github.kingsword09.example.icons.official.icons.SearchFill1
+import io.github.kingsword09.example.icons.official.icons.SearchFill
 import io.github.kingsword09.example.icons.official.icons.SearchOfficial
-import io.github.kingsword09.example.icons.official.icons.SettingsFill1
+import io.github.kingsword09.example.icons.official.icons.SettingsFill
 import io.github.kingsword09.example.icons.official.icons.SettingsOfficial
-import io.github.kingsword09.example.icons.official.icons.PersonFill1
+import io.github.kingsword09.example.icons.official.icons.PersonFill
 import io.github.kingsword09.example.icons.official.icons.PersonOfficial
-import io.github.kingsword09.example.icons.official.icons.ArrowBackFill1
+import io.github.kingsword09.example.icons.official.icons.ArrowBackFill
 import io.github.kingsword09.example.icons.official.icons.ArrowBackOfficial
 import io.github.kingsword09.example.icons.`local-test`.Icons as LocalIcons
 import io.github.kingsword09.example.icons.`local-test`.icons.TelephoneSvgrepoCom
@@ -269,7 +269,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.HomeFill1,
+                    imageVector = OfficialIcons.HomeFill,
                     contentDescription = "Home",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -293,7 +293,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.SearchFill1,
+                    imageVector = OfficialIcons.SearchFill,
                     contentDescription = "Search",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -317,7 +317,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.SettingsFill1,
+                    imageVector = OfficialIcons.SettingsFill,
                     contentDescription = "Settings",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -341,7 +341,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.PersonFill1,
+                    imageVector = OfficialIcons.PersonFill,
                     contentDescription = "Person",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -365,7 +365,7 @@ fun App() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = OfficialIcons.ArrowBackFill1,
+                    imageVector = OfficialIcons.ArrowBackFill,
                     contentDescription = "Arrow Back",
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary

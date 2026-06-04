@@ -75,8 +75,8 @@ SymbolCraft/
 │   │   │   ├── iosMain/               # iOS 平台代码
 │   │   │   ├── jvmMain/               # Desktop 平台代码
 │   │   │   └── commonMain/            # 通用代码
+│   │   │       ├── generated/symbols/ # 生成的图标 source root
 │   │   │       ├── kotlin/
-│   │   │       │   └── generated/symbols/  # 生成的图标
 │   │   │       └── composeResources/
 │   │   └── build.gradle.kts            # 使用 SymbolCraft 插件
 │   └── iosApp/                         # iOS 应用

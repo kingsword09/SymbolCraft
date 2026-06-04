@@ -250,30 +250,31 @@ class Svg2ComposeConverter {
         }
 
         val annotationName = annotationClass.substringAfterLast('.')
-        val withoutPreviewImports =
-            content
-                .lines()
-                .filterNot { line ->
-                    val importedClass = line.removePrefix("import ").trim()
-                    line.startsWith("import ") &&
-                        (importedClass in GENERATED_PREVIEW_IMPORTS ||
-                            importedClass == annotationClass)
+        val lines = content.lines()
+        val normalizedLines = ArrayList<String>(lines.size + 1)
+        var lastImportIndex = -1
+        var packageLineIndex = -1
+
+        for (line in lines) {
+            if (line.startsWith("import ")) {
+                val importedClass = line.removePrefix("import ").trim()
+                if (
+                    importedClass in GENERATED_PREVIEW_IMPORTS || importedClass == annotationClass
+                ) {
+                    continue
                 }
-                .joinToString("\n")
 
-        val withAnnotationName =
-            withoutPreviewImports.replace(PREVIEW_ANNOTATION_REGEX, "@$annotationName")
+                normalizedLines.add(line)
+                lastImportIndex = normalizedLines.lastIndex
+            } else {
+                if (line.startsWith("package ")) {
+                    packageLineIndex = normalizedLines.size
+                }
 
-        return addImportIfMissing(withAnnotationName, annotationClass)
-    }
+                normalizedLines.add(line.replace(PREVIEW_ANNOTATION_REGEX, "@$annotationName"))
+            }
+        }
 
-    /** Adds an import after the existing import block, or immediately after the package line. */
-    private fun addImportIfMissing(content: String, qualifiedName: String): String {
-        if (content.lines().any { it == "import $qualifiedName" }) return content
-
-        val lines = content.lines().toMutableList()
-        val lastImportIndex = lines.indexOfLast { it.startsWith("import ") }
-        val packageLineIndex = lines.indexOfFirst { it.startsWith("package ") }
         val insertIndex =
             when {
                 lastImportIndex >= 0 -> lastImportIndex + 1
@@ -281,8 +282,8 @@ class Svg2ComposeConverter {
                 else -> 0
             }
 
-        lines.add(insertIndex, "import $qualifiedName")
-        return lines.joinToString("\n")
+        normalizedLines.add(insertIndex, "import $annotationClass")
+        return normalizedLines.joinToString("\n")
     }
 
     /** Sort imports for deterministic order */

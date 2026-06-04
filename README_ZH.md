@@ -916,9 +916,17 @@ cd example
 示例应用演示了各种配置选项：
 
 ```kotlin
+kotlin {
+    sourceSets {
+        commonMain {
+            kotlin.srcDir("src/commonMain/generated/symbols")
+        }
+    }
+}
+
 symbolCraft {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/generated/symbols")
     generatePreview.set(true)
 
     // 图标命名配置

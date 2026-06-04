@@ -915,9 +915,17 @@ cd example
 The example app demonstrates various configuration options:
 
 ```kotlin
+kotlin {
+    sourceSets {
+        commonMain {
+            kotlin.srcDir("src/commonMain/generated/symbols")
+        }
+    }
+}
+
 symbolCraft {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/generated/symbols")
     generatePreview.set(true)
 
     // Icon naming configuration
