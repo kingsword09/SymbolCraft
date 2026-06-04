@@ -53,6 +53,7 @@ symbolCraft {
 
     // Preview generation configuration (optional)
     generatePreview.set(true)  // Enable preview generation
+    previewAnnotationClass.set("androidx.compose.ui.tooling.preview.Preview")  // Default
 
     // Icon naming configuration (optional)
     naming {
@@ -200,7 +201,58 @@ symbolCraft {
 
 ### Generated preview files
 
-The plugin generates preview functions for your icons using the `svg-to-compose` library's preview generation feature. The exact format depends on your project setup and the library version.
+The plugin generates preview functions for your icons using the `svg-to-compose` library's preview generation feature. SymbolCraft normalizes generated preview annotations to `androidx.compose.ui.tooling.preview.Preview` by default, matching the unified Compose Multiplatform preview annotation.
+
+### Preview annotation by Compose Multiplatform version
+
+For Compose Multiplatform 1.10+ projects, including the example app's Compose Multiplatform 1.11.1 setup, use the default AndroidX preview annotation:
+
+```kotlin
+// commonMain source code
+import androidx.compose.ui.tooling.preview.Preview
+
+@Preview
+@Composable
+fun IconPreview() {
+    // Preview content
+}
+```
+
+```kotlin
+symbolCraft {
+    generatePreview.set(true)
+    // Default: androidx.compose.ui.tooling.preview.Preview
+}
+```
+
+For Compose Multiplatform 1.9.x and older projects, keep using the JetBrains preview annotation explicitly:
+
+```kotlin
+// commonMain source code
+import org.jetbrains.compose.ui.tooling.preview.Preview
+
+@Preview
+@Composable
+fun IconPreview() {
+    // Preview content
+}
+```
+
+```kotlin
+symbolCraft {
+    generatePreview.set(true)
+    previewAnnotationClass.set("org.jetbrains.compose.ui.tooling.preview.Preview")
+}
+```
+
+For a project-specific wrapper annotation, configure its fully qualified class name:
+
+```kotlin
+symbolCraft {
+    generatePreview.set(true)
+    previewAnnotationClass.set("com.yourcompany.preview.IconPreview")
+}
+```
 
 ### View previews in IDE
 
@@ -212,10 +264,7 @@ After generation, you can view previews in Android Studio or IntelliJ IDEA's Pre
 
 ### Multi-platform preview support
 
-The preview generation is handled by the underlying `svg-to-compose` library and supports:
-- **Android projects**: Using `androidx.compose.ui.tooling.preview.Preview`
-- **Desktop projects**: Using `androidx.compose.desktop.ui.tooling.preview.Preview`
-- **Multiplatform projects**: Depending on the library configuration
+By default, generated previews use `androidx.compose.ui.tooling.preview.Preview`, which is available from common source sets in modern Compose Multiplatform projects. If you still target an older Compose Multiplatform version, set `previewAnnotationClass` to the annotation your project provides.
 
 ## 📋 Configuration Options
 
@@ -235,6 +284,7 @@ symbolCraft {
 
     // Preview configuration
     generatePreview.set(false)  // Default: false - Whether to generate Compose @Preview functions
+    previewAnnotationClass.set("androidx.compose.ui.tooling.preview.Preview")  // Default preview annotation
 
     // Download retry configuration
     maxRetries.set(3)  // Default: 3 - Maximum number of retry attempts for failed downloads

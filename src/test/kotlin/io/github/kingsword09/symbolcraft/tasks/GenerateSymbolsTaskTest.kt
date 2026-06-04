@@ -113,6 +113,70 @@ class GenerateSymbolsTaskTest {
     }
 
     @Test
+    fun `generated previews default to unified android x preview annotation`() {
+        createSettings("symbolcraft-preview-default")
+        createBuildScript(
+            """
+                cacheEnabled.set(false)
+                generatePreview.set(true)
+                localIcons {
+                    directory = "src/icons"
+                }
+            """
+                .trimIndent()
+        )
+
+        writeSvg("src/icons/home.svg")
+
+        val result = runGradle("generateSymbolCraftIcons")
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateSymbolCraftIcons")?.outcome)
+
+        val iconContent = firstGeneratedIconContent("icons/local")
+        assertTrue(
+            iconContent.contains("import androidx.compose.ui.tooling.preview.Preview"),
+            iconContent,
+        )
+        assertTrue(
+            !iconContent.contains("import org.jetbrains.compose.ui.tooling.preview.Preview"),
+            iconContent,
+        )
+        assertTrue(iconContent.contains("\n@Preview\n"), iconContent)
+    }
+
+    @Test
+    fun `generated previews can use custom preview annotation class`() {
+        createSettings("symbolcraft-preview-custom")
+        createBuildScript(
+            """
+                cacheEnabled.set(false)
+                generatePreview.set(true)
+                previewAnnotationClass.set("com.test.preview.IconPreview")
+                localIcons {
+                    directory = "src/icons"
+                }
+            """
+                .trimIndent()
+        )
+
+        writeSvg("src/icons/home.svg")
+
+        val result = runGradle("generateSymbolCraftIcons")
+        assertEquals(TaskOutcome.SUCCESS, result.task(":generateSymbolCraftIcons")?.outcome)
+
+        val iconContent = firstGeneratedIconContent("icons/local")
+        assertTrue(iconContent.contains("import com.test.preview.IconPreview"), iconContent)
+        assertTrue(
+            !iconContent.contains("import androidx.compose.ui.tooling.preview.Preview"),
+            iconContent,
+        )
+        assertTrue(
+            !iconContent.contains("import org.jetbrains.compose.ui.tooling.preview.Preview"),
+            iconContent,
+        )
+        assertTrue(iconContent.contains("\n@IconPreview\n"), iconContent)
+    }
+
+    @Test
     fun `local and remote icons generate when remote svg is cached`() {
         createSettings("symbolcraft-mixed")
         createBuildScript(
@@ -236,6 +300,14 @@ class GenerateSymbolsTaskTest {
 
     private fun generatedDir(suffix: String): Path =
         projectDir.resolve("build/generated/symbols/com/test/symbols/$suffix")
+
+    private fun firstGeneratedIconContent(suffix: String): String {
+        val generatedIcon =
+            generatedDir(suffix).resolve("icons").toFile().walkTopDown().first {
+                it.isFile && it.extension == "kt"
+            }
+        return generatedIcon.toPath().readText()
+    }
 
     private fun writeProjectFile(relativePath: String, content: String) {
         val target = projectDir.resolve(relativePath)

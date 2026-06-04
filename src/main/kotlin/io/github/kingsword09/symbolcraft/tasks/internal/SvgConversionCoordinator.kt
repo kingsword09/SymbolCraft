@@ -69,6 +69,7 @@ internal class SvgConversionCoordinator(
                     outputDirectory = context.outputDir,
                     packageName = context.packageName,
                     generatePreview = ext.generatePreview.get(),
+                    previewAnnotationClass = ext.previewAnnotationClass.get(),
                     accessorName = "Icons",
                     allAssetsPropertyName = "AllIcons",
                     librarySubdir = librarySubdir,

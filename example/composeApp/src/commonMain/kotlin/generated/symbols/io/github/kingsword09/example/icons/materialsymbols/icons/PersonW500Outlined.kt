@@ -13,9 +13,9 @@ import androidx.compose.ui.graphics.StrokeJoin.Companion.Miter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.ImageVector.Builder
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.materialsymbols.Icons
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 public val Icons.PersonW500Outlined: ImageVector
     get() {
@@ -24,8 +24,7 @@ public val Icons.PersonW500Outlined: ImageVector
         }
         _personW500Outlined = Builder(name = "PersonW500Outlined", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
-                moveTo(480.0f, 475.93f)
-                quadToRelative(-69.59f, 0.0f, -118.86f, -49.27f)
+                moveTo(361.14f, 426.66f)
                 quadToRelative(-49.27f, -49.27f, -49.27f, -118.86f)
                 quadToRelative(0.0f, -69.58f, 49.27f, -118.74f)
                 quadToRelative(49.27f, -49.15f, 118.86f, -49.15f)
@@ -33,6 +32,7 @@ public val Icons.PersonW500Outlined: ImageVector
                 quadToRelative(49.27f, 49.16f, 49.27f, 118.74f)
                 quadToRelative(0.0f, 69.59f, -49.27f, 118.86f)
                 quadToRelative(-49.27f, 49.27f, -118.86f, 49.27f)
+                reflectiveQuadToRelative(-118.86f, -49.27f)
                 close()
                 moveTo(151.87f, 812.2f)
                 verticalLineToRelative(-120.61f)
@@ -60,15 +60,15 @@ public val Icons.PersonW500Outlined: ImageVector
                 quadToRelative(-5.5f, 8.81f, -5.5f, 19.58f)
                 verticalLineToRelative(28.42f)
                 close()
-                moveTo(479.99f, 384.93f)
-                quadToRelative(31.81f, 0.0f, 54.48f, -22.65f)
+                moveTo(534.47f, 362.28f)
                 quadToRelative(22.66f, -22.65f, 22.66f, -54.47f)
                 quadToRelative(0.0f, -31.81f, -22.65f, -54.35f)
                 quadToRelative(-22.66f, -22.55f, -54.47f, -22.55f)
-                reflectiveQuadToRelative(-54.48f, 22.59f)
-                quadToRelative(-22.66f, 22.59f, -22.66f, 54.3f)
-                quadToRelative(0.0f, 31.82f, 22.65f, 54.48f)
+                reflectiveQuadToRelative(-54.48f, 22.55f)
+                quadToRelative(-22.66f, 22.54f, -22.66f, 54.35f)
+                quadToRelative(0.0f, 31.82f, 22.65f, 54.47f)
                 quadToRelative(22.66f, 22.65f, 54.47f, 22.65f)
+                reflectiveQuadToRelative(54.48f, -22.65f)
                 close()
                 moveTo(480.0f, 307.8f)
                 close()
