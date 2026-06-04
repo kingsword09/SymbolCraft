@@ -725,12 +725,12 @@ symbolCraft {
 symbolCraft {
     // Single icon with multiple fill variants
     externalIcon("home", libraryName = "official") {
-        urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "fill1")  // unfilled, filled variants
+            values("", "-fill")  // unfilled, filled variants
         }
     }
-    // Generates: HomeOfficial.kt, HomeFill1Official.kt
+    // Generates: HomeOfficial.kt, HomeFill.kt
 
     // Multiple icons with the same variants (for bottom navigation, etc.)
     val navIcons = listOf("home", "search", "user", "settings")
@@ -915,9 +915,17 @@ cd example
 The example app demonstrates various configuration options:
 
 ```kotlin
+kotlin {
+    sourceSets {
+        commonMain {
+            kotlin.srcDir("src/commonMain/generated/symbols")
+        }
+    }
+}
+
 symbolCraft {
     packageName.set("io.github.kingsword09.example")
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/generated/symbols")
     generatePreview.set(true)
 
     // Icon naming configuration
@@ -952,9 +960,9 @@ symbolCraft {
 
     // External icons with style variants
     externalIcons(*listOf("home", "search", "person").toTypedArray(), libraryName = "official") {
-        urlTemplate = "https://example.com/{name}{fill}_24px.svg"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "_fill1")  // unfilled, filled variants
+            values("", "-fill")  // unfilled, filled variants
         }
     }
 }

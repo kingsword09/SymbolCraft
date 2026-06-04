@@ -25,9 +25,9 @@ example/
 ├── composeApp/                    # Shared Compose Multiplatform app
 │   ├── src/
 │   │   ├── commonMain/           # Common code for all platforms
+│   │   │   ├── generated/
+│   │   │   │   └── symbols/      # SymbolCraft output source root
 │   │   │   └── kotlin/
-│   │   │       ├── generated/    # Generated icons (gitignored)
-│   │   │       │   └── symbols/  # SymbolCraft output
 │   │   │       └── App.kt        # Main app composable
 │   │   ├── androidMain/          # Android-specific code
 │   │   ├── iosMain/              # iOS-specific code
@@ -41,9 +41,17 @@ example/
 The example demonstrates various configuration options in `composeApp/build.gradle.kts`:
 
 ```kotlin
+kotlin {
+    sourceSets {
+        commonMain {
+            kotlin.srcDir("src/commonMain/generated/symbols")
+        }
+    }
+}
+
 symbolCraft {
     // Output directory for generated icons
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/generated/symbols")
     packageName.set("io.github.kingsword09.example")
     generatePreview.set(true)
 
@@ -79,9 +87,9 @@ symbolCraft {
     // External icons with style variants
     externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), 
                   libraryName = "official") {
-        urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg?min=1"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "_fill1")  // unfilled, filled variants
+            values("", "-fill")  // unfilled, filled variants
         }
     }
 }
@@ -107,7 +115,7 @@ Before building the app, generate the icons:
 This will:
 - Download SVG files from configured sources
 - Convert them to Compose ImageVectors
-- Generate Kotlin files in `composeApp/src/commonMain/kotlin/generated/symbols/`
+- Generate Kotlin files in `composeApp/src/commonMain/generated/symbols/`
 
 ### Step 2: Build and Run
 

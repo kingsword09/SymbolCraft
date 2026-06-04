@@ -37,6 +37,9 @@ kotlin {
             implementation(libs.compose.ui.tooling)
             implementation(libs.androidx.activity.compose)
         }
+        commonMain {
+            kotlin.srcDir("src/commonMain/generated/symbols")
+        }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -86,7 +89,7 @@ android {
 
 symbolCraft {
     // Output directory for generated icons
-    outputDirectory.set("src/commonMain/kotlin/generated/symbols")
+    outputDirectory.set("src/commonMain/generated/symbols")
     packageName.set("io.github.kingsword09.example")
 
     // Enable preview generation (optional)
@@ -124,9 +127,9 @@ symbolCraft {
 
     // External icons with multiple style variants using the new styleParam API
     externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
-        urlTemplate = "https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg"
+        urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "_fill1")  // unfilled, filled variants
+            values("", "-fill")  // unfilled, filled variants
         }
     }
 
