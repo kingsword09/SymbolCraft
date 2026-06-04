@@ -12,6 +12,12 @@ This example showcases:
 - **Compose Preview**: Generated preview functions for all icons
 - **Modern configuration**: Using the latest SymbolCraft DSL features
 
+## Version Baseline
+
+- **Compose Multiplatform**: 1.11.1
+- **Kotlin**: 2.3.21
+- **Preview annotation**: `androidx.compose.ui.tooling.preview.Preview`
+
 ## Project Structure
 
 ```

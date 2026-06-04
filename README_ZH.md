@@ -54,6 +54,7 @@ symbolCraft {
 
     // 预览生成配置（可选）
     generatePreview.set(true)  // 启用预览生成
+    previewAnnotationClass.set("androidx.compose.ui.tooling.preview.Preview")  // 默认值
 
     // 图标命名配置（可选）
     naming {
@@ -201,7 +202,58 @@ symbolCraft {
 
 ### 生成的预览文件
 
-插件使用 `svg-to-compose` 库的预览生成功能为你的图标生成预览函数。具体格式取决于你的项目设置和库版本。
+插件使用 `svg-to-compose` 库的预览生成功能为你的图标生成预览函数。SymbolCraft 默认会把生成的预览注解规范化为 `androidx.compose.ui.tooling.preview.Preview`，匹配 Compose Multiplatform 统一预览注解。
+
+### 不同 Compose Multiplatform 版本的 Preview 注解
+
+Compose Multiplatform 1.10+ 项目，包括示例项目当前使用的 Compose Multiplatform 1.11.1，直接使用默认 AndroidX 预览注解：
+
+```kotlin
+// commonMain 源码
+import androidx.compose.ui.tooling.preview.Preview
+
+@Preview
+@Composable
+fun IconPreview() {
+    // 预览内容
+}
+```
+
+```kotlin
+symbolCraft {
+    generatePreview.set(true)
+    // 默认：androidx.compose.ui.tooling.preview.Preview
+}
+```
+
+Compose Multiplatform 1.9.x 及更旧项目，请显式保留 JetBrains 旧预览注解：
+
+```kotlin
+// commonMain 源码
+import org.jetbrains.compose.ui.tooling.preview.Preview
+
+@Preview
+@Composable
+fun IconPreview() {
+    // 预览内容
+}
+```
+
+```kotlin
+symbolCraft {
+    generatePreview.set(true)
+    previewAnnotationClass.set("org.jetbrains.compose.ui.tooling.preview.Preview")
+}
+```
+
+如果你使用项目内自定义预览注解，可以配置完整注解类名：
+
+```kotlin
+symbolCraft {
+    generatePreview.set(true)
+    previewAnnotationClass.set("com.yourcompany.preview.IconPreview")
+}
+```
 
 ### 在 IDE 中查看预览
 
@@ -213,10 +265,7 @@ symbolCraft {
 
 ### 多平台预览支持
 
-预览生成由底层的 `svg-to-compose` 库处理，支持：
-- **Android 项目**: 使用 `androidx.compose.ui.tooling.preview.Preview`
-- **Desktop 项目**: 使用 `androidx.compose.desktop.ui.tooling.preview.Preview`
-- **多平台项目**: 根据库配置决定
+默认生成的预览使用 `androidx.compose.ui.tooling.preview.Preview`，现代 Compose Multiplatform 项目可以在 common source set 中使用它。如果你仍面向较旧的 Compose Multiplatform 版本，请将 `previewAnnotationClass` 设置为项目实际提供的注解。
 
 ## 📋 配置选项
 
@@ -236,6 +285,7 @@ symbolCraft {
 
     // 预览配置
     generatePreview.set(false)  // 默认：false - 是否生成 Compose @Preview 函数
+    previewAnnotationClass.set("androidx.compose.ui.tooling.preview.Preview")  // 默认预览注解
 
     // 下载重试配置
     maxRetries.set(3)  // 默认：3 - 下载失败时的最大重试次数

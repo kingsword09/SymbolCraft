@@ -33,17 +33,17 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(compose.uiTooling)
+            implementation(libs.compose.ui.tooling.preview)
+            implementation(libs.compose.ui.tooling)
             implementation(libs.androidx.activity.compose)
         }
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            implementation(libs.compose.runtime)
+            implementation(libs.compose.foundation)
+            implementation(libs.compose.material3)
+            implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
+            implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
@@ -124,7 +124,7 @@ symbolCraft {
 
     // External icons with multiple style variants using the new styleParam API
     externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
-        urlTemplate = "https://rawcdn.githack.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg?min=1"
+        urlTemplate = "https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/{name}/materialsymbolsrounded/{name}{fill}_24px.svg"
         styleParam("fill") {
             values("", "_fill1")  // unfilled, filled variants
         }

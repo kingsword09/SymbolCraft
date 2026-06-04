@@ -1,5 +1,6 @@
 package io.github.kingsword09.symbolcraft.plugin
 
+import io.github.kingsword09.symbolcraft.SymbolCraftDefaults
 import io.github.kingsword09.symbolcraft.model.*
 import java.io.File
 import java.nio.file.FileSystems
@@ -22,6 +23,8 @@ import org.gradle.api.provider.Property
  * @property outputDirectory Kotlin source folder where generated code will be written.
  * @property packageName root package used for generated Kotlin types.
  * @property generatePreview toggles Compose preview function generation for each icon.
+ * @property previewAnnotationClass fully qualified Compose preview annotation used when previews
+ *   are generated.
  * @property maxRetries maximum number of retry attempts for failed downloads (default: 3).
  * @property retryDelayMs initial delay between retries in milliseconds (default: 1000ms).
  */
@@ -32,6 +35,7 @@ abstract class SymbolCraftExtension {
     abstract val outputDirectory: Property<String>
     abstract val packageName: Property<String>
     abstract val generatePreview: Property<Boolean>
+    abstract val previewAnnotationClass: Property<String>
     abstract val maxRetries: Property<Int>
     abstract val retryDelayMs: Property<Long>
     abstract val projectDirectory: Property<String>
@@ -53,6 +57,7 @@ abstract class SymbolCraftExtension {
         outputDirectory.convention("src/main/kotlin")
         packageName.convention("io.github.kingsword09.symbolcraft.symbols")
         generatePreview.convention(false)
+        previewAnnotationClass.convention(SymbolCraftDefaults.PREVIEW_ANNOTATION_CLASS)
         maxRetries.convention(3)
         retryDelayMs.convention(1000L)
         projectDirectory.convention("")
@@ -273,7 +278,7 @@ abstract class SymbolCraftExtension {
      */
     fun getConfigHash(): String {
         val configString = buildString {
-            append("version:2.0|")
+            append("version:3.0|")
 
             append("icons:")
             iconsConfig.toSortedMap().forEach { (name, configs) ->
@@ -286,6 +291,7 @@ abstract class SymbolCraftExtension {
             append("|package:").append(packageName.orNull)
             append("|outputDir:").append(outputDirectory.orNull)
             append("|preview:").append(generatePreview.orNull)
+            append("|previewAnnotationClass:").append(previewAnnotationClass.orNull)
             append("|namingConfig:").append(namingConfig.snapshotSignature())
         }
         return configString.hashCode().toString()
