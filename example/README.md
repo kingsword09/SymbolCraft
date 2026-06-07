@@ -15,6 +15,7 @@ This example showcases:
 
 ## Version Baseline
 
+- **SymbolCraft**: 0.5.0
 - **Compose Multiplatform**: 1.11.1
 - **Kotlin**: 2.3.21
 - **Preview annotation**: `androidx.compose.ui.tooling.preview.Preview`
@@ -165,8 +166,8 @@ open iosApp/iosApp.xcodeproj
 
 ### Android
 - **Min SDK**: 24
-- **Target SDK**: 35
-- **Compile SDK**: 35
+- **Target SDK**: 36
+- **Compile SDK**: 36
 
 ### iOS
 - **Deployment Target**: iOS 15.0+
@@ -217,29 +218,46 @@ open iosApp/iosApp.xcodeproj
 Generated icons can be used in Compose like this:
 
 ```kotlin
-import io.github.kingsword09.example.icons.materialsymbols.Icons
-import io.github.kingsword09.example.icons.materialsymbols.icons.*
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import io.github.kingsword09.example.icons.materialsymbols.Icons as MaterialSymbols
+import io.github.kingsword09.example.icons.materialsymbols.icons.HomeW400OutlinedFill
+import io.github.kingsword09.example.icons.materialsymbols.icons.SearchW400Outlined
+import io.github.kingsword09.example.icons.mdi.Icons as MdiIcons
+import io.github.kingsword09.example.icons.mdi.icons.AbacusMdi
+import io.github.kingsword09.example.icons.official.Icons as OfficialIcons
+import io.github.kingsword09.example.icons.official.icons.HomeFill
 
 @Composable
 fun MyScreen() {
-    // Direct import
+    // Material Symbols direct import
     Icon(
         imageVector = SearchW400Outlined,
         contentDescription = "Search"
     )
 
-    // Via Icons accessor object
+    // Filled Material Symbols use Fill in 0.5.0+
     Icon(
-        imageVector = Icons.HomeW500Rounded,
-        contentDescription = "Home"
+        imageVector = HomeW400OutlinedFill,
+        contentDescription = "Home filled"
     )
 
-    // External icons
+    // Material Symbols accessor object
     Icon(
-        imageVector = Icons.AbacusMdi,
+        imageVector = MaterialSymbols.HomeW400OutlinedFill,
+        contentDescription = "Home filled"
+    )
+
+    // External library accessor object
+    Icon(
+        imageVector = MdiIcons.AbacusMdi,
         contentDescription = "Abacus"
+    )
+
+    // External variants from styleParam()
+    Icon(
+        imageVector = OfficialIcons.HomeFill,
+        contentDescription = "Official home filled"
     )
 }
 ```

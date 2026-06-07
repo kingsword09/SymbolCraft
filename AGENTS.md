@@ -4,7 +4,7 @@
 
 **SymbolCraft** 是一个用于 Kotlin Multiplatform 项目的 Gradle 插件，支持从多个图标库（Material Symbols、Bootstrap Icons、Heroicons 等）按需生成图标。
 
-- **版本**: v0.3.1
+- **版本**: v0.5.0
 - **状态**: ✅ 已发布到 Gradle Plugin Portal 和 Maven Central
 - **语言**: Kotlin 2.0.0
 - **最低 Gradle 版本**: 8.0+
@@ -670,7 +670,17 @@ docs(readme): update installation guide
 
 ## 更新日志
 
-### v0.3.1 (最新)
+### v0.5.0 (最新)
+- ⚠️ **破坏性变更**: 内置 `materialSymbol()` / `materialSymbols()` 生成的 filled Material Symbols 名称从 `...fill1` 改为 `...Fill`，避免把 Google Fonts URL 后缀泄漏到 Kotlin API。
+- 📚 **多来源文档**: README 按图标来源补齐内置 Material Symbols、外部 CDN/npm SVG 包、多变体外部源和本地 SVG 的配置示例。
+- 🧪 **示例同步**: example 重新生成 filled Material Symbols，并同步 `HomeW400OutlinedFill`、`SettingsW500RoundedFill` 等新引用。
+
+### v0.4.0
+- 👀 **Compose Preview 配置**: 新增 `previewAnnotationClass`，支持现代 Compose Multiplatform 默认 AndroidX 预览注解，也兼容旧版 JetBrains 预览注解。
+- 🧹 **示例 source root 调整**: example 生成图标目录移动到 `src/commonMain/generated/symbols`，减少 IDE 对 package path 的误报。
+- 🔗 **示例外部源更新**: example 的官方 Material Symbols 外部源切换到 esm.sh，并使用 `-fill` 变体配置。
+
+### v0.3.1
 - 🛡️ **安全强化**: 阻止外部 SVG 中的 XXE 与路径遍历攻击，新增内容类型与尺寸校验，并全面清理危险路径字符。
 - ♻️ **任务拆分**: `GenerateSymbolsTask` 拆分为更小的步骤，日志输出更具可读性，也为后续单元测试做好铺垫。
 - 📚 **文档增强**: 增补关键常量和默认值的设计，方便贡献者快速理解配置。
@@ -710,5 +720,5 @@ docs(readme): update installation guide
 
 ---
 
-**最后更新**: 2025-10-17
-**文档版本**: 2.0.0
+**最后更新**: 2026-06-07
+**文档版本**: 2.1.0

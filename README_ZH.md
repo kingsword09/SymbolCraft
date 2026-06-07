@@ -393,6 +393,27 @@ symbolCraft {
 - `HomeW500RoundedFill.kt` - Home 图标，500 权重，圆角风格，已填充
 - `PersonW700Sharp.kt` - Person 图标，700 权重，尖角风格，未填充
 
+### 从 0.4.x 迁移到 0.5.0
+
+`0.5.0` 修复了已填充 Material Symbols 的生成命名问题。DSL 写法不变，但生成的 filled 图标名称会使用 `Fill`，不再把 Google Fonts URL 后缀 `fill1` 暴露到 Kotlin 名称里。
+
+```kotlin
+symbolCraft {
+    materialSymbol("home") {
+        bothFills(weight = 400)
+    }
+}
+```
+
+更新已填充 Material Symbols 的引用：
+
+```text
+旧：MaterialSymbols.HomeW400Outlinedfill1
+新：MaterialSymbols.HomeW400OutlinedFill
+```
+
+这个变更只影响通过内置 `materialSymbol()` / `materialSymbols()` DSL 且使用 `SymbolFill.FILLED` 或 `bothFills()` 生成的图标。`externalIcon(s)` 的名称仍然来自你自己配置的 style 参数值。
+
 ## 🛠 Gradle 任务
 
 插件提供以下 Gradle 任务：
@@ -858,7 +879,7 @@ symbolCraft {
 ### 示例应用特性
 
 - **多平台**: 支持 Android、iOS 和 Desktop (JVM)
-- **生成图标**: 使用 SymbolCraft 生成 Material Symbols 图标
+- **生成图标**: 使用 SymbolCraft 从内置 Material Symbols、外部 SVG 源和本地 SVG 文件生成图标
 - **预览支持**: 包含所有图标的生成 Compose 预览
 - **真实使用**: 展示实际实现模式
 
@@ -868,7 +889,7 @@ symbolCraft {
 # 进入示例目录
 cd example
 
-# 生成 Material Symbols 图标
+# 生成配置的图标
 ./gradlew generateSymbolCraftIcons
 
 # 运行 Android 应用
@@ -929,11 +950,22 @@ symbolCraft {
     }
 
     // 带样式变体的外部图标
-    externalIcons(*listOf("home", "search", "person").toTypedArray(), libraryName = "official") {
+    externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
         urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
             values("", "-fill")  // unfilled, filled 变体
         }
+    }
+
+    // 本地 SVG 文件
+    localIcons("local-test") {
+        directory = project.relativePath("src/commonMain/composeResources/files")
+        include("**/*.svg")
+    }
+
+    // Simple Icons
+    externalIcons("github", libraryName = "simple-icons") {
+        urlTemplate = "https://simpleicons.org/icons/{name}.svg"
     }
 }
 ```

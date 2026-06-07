@@ -392,6 +392,27 @@ Examples:
 - `HomeW500RoundedFill.kt` - Home icon, 500 weight, rounded style, filled
 - `PersonW700Sharp.kt` - Person icon, 700 weight, sharp style, unfilled
 
+### Migrating from 0.4.x to 0.5.0
+
+`0.5.0` fixes a generated-name issue for filled Material Symbols. The DSL does not change, but generated filled names now use `Fill` instead of leaking the Google Fonts URL suffix `fill1`.
+
+```kotlin
+symbolCraft {
+    materialSymbol("home") {
+        bothFills(weight = 400)
+    }
+}
+```
+
+Update filled Material Symbols references:
+
+```text
+Before: MaterialSymbols.HomeW400Outlinedfill1
+After:  MaterialSymbols.HomeW400OutlinedFill
+```
+
+This only affects icons generated through the built-in `materialSymbol()` / `materialSymbols()` DSL with `SymbolFill.FILLED` or `bothFills()`. `externalIcon(s)` names still come from the style parameter values you configure.
+
 ## 🛠 Gradle Tasks
 
 The plugin provides the following Gradle tasks:
@@ -857,7 +878,7 @@ The project includes a complete Kotlin Multiplatform example application that de
 ### Example app features
 
 - **Multi-platform**: Supports Android, iOS, and Desktop (JVM)
-- **Generated icons**: Uses SymbolCraft to generate Material Symbols icons
+- **Generated icons**: Uses SymbolCraft to generate icons from built-in Material Symbols, external SVG sources, and local SVG files
 - **Preview support**: Includes generated Compose previews for all icons
 - **Real-world usage**: Shows practical implementation patterns
 
@@ -867,7 +888,7 @@ The project includes a complete Kotlin Multiplatform example application that de
 # Navigate to example directory
 cd example
 
-# Generate Material Symbols icons
+# Generate configured icons
 ./gradlew generateSymbolCraftIcons
 
 # Run Android app
@@ -928,11 +949,22 @@ symbolCraft {
     }
 
     // External icons with style variants
-    externalIcons(*listOf("home", "search", "person").toTypedArray(), libraryName = "official") {
+    externalIcons(*listOf("home", "search", "person", "settings", "arrow_back").toTypedArray(), libraryName = "official") {
         urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
             values("", "-fill")  // unfilled, filled variants
         }
+    }
+
+    // Local SVG files
+    localIcons("local-test") {
+        directory = project.relativePath("src/commonMain/composeResources/files")
+        include("**/*.svg")
+    }
+
+    // Simple Icons
+    externalIcons("github", libraryName = "simple-icons") {
+        urlTemplate = "https://simpleicons.org/icons/{name}.svg"
     }
 }
 ```
