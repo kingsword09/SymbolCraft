@@ -8,7 +8,8 @@ This example showcases:
 - **Multi-platform support**: Android, iOS, and Desktop (JVM)
 - **Icon generation**: Using SymbolCraft to generate icons from multiple sources
 - **Material Symbols**: Various weights, variants, and fill states
-- **External icon libraries**: MDI (Material Design Icons) integration
+- **External icon libraries**: MDI, esm.sh Material Symbols, and Simple Icons
+- **Local SVG files**: Checked-in project icons from Compose resources
 - **Compose Preview**: Generated preview functions for all icons
 - **Modern configuration**: Using the latest SymbolCraft DSL features
 
@@ -91,6 +92,17 @@ symbolCraft {
         styleParam("fill") {
             values("", "-fill")  // unfilled, filled variants
         }
+    }
+
+    // Local SVG files stored in the project
+    localIcons("local-test") {
+        directory = project.relativePath("src/commonMain/composeResources/files")
+        include("**/*.svg")
+    }
+
+    // Simple Icons
+    externalIcons("github", libraryName = "simple-icons") {
+        urlTemplate = "https://simpleicons.org/icons/{name}.svg"
     }
 }
 ```

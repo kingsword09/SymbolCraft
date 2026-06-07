@@ -188,7 +188,7 @@ data class MaterialSymbolsConfig(
             }
 
         // Google Fonts official CDN
-        return "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols${variant.pathName}/$iconName/$weightValue${fill.shortName}/${opticalSize}px.svg"
+        return "https://fonts.gstatic.com/s/i/short-term/release/materialsymbols${variant.pathName}/$iconName/$weightValue${fill.urlSuffix}/${opticalSize}px.svg"
     }
 
     override fun getCacheKey(iconName: String): String {
@@ -199,7 +199,7 @@ data class MaterialSymbolsConfig(
     override fun getSignature(): String = buildString {
         append("W").append(weight.value)
         append(variant.shortName)
-        append(fill.shortName)
+        append(fill.signatureSuffix)
         if (grade != 0) append("G").append(grade)
     }
 }
@@ -318,9 +318,9 @@ enum class SymbolVariant(val shortName: String, val pathName: String) {
 }
 
 @Serializable
-enum class SymbolFill(val shortName: String) {
-    UNFILLED(""),
-    FILLED("fill1"),
+enum class SymbolFill(val urlSuffix: String, val signatureSuffix: String) {
+    UNFILLED("", ""),
+    FILLED("fill1", "Fill"),
 }
 
 @Serializable

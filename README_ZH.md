@@ -642,147 +642,116 @@ symbolCraft {
 }
 ```
 
-### 外部图标库
+### 图标来源配置
 
-你可以使用 URL 模板添加其他图标库或自定义来源的图标。
+根据 SVG 的来源选择对应的 DSL 入口。
 
-**理解参数：**
+#### 内置 Material Symbols
 
-- **`name`**: 具体的图标名称（如 "bell"、"home"）- 会替换 URL 模板中的 `{name}`
-- **`libraryName`**: 图标库标识符（如 "bootstrap-icons"）- 用于缓存隔离，避免不同库之间的冲突
-
-**单个图标配置：**
+Google Material Symbols 推荐使用 `materialSymbol()` 或 `materialSymbols()`。这条路径由 SymbolCraft 内部维护 Google Fonts 下载 URL，用户不需要关心 CDN 路径细节。
 
 ```kotlin
 symbolCraft {
-    // 单个外部图标
-    externalIcon(
-        name = "bell",
-        libraryName = "bootstrap-icons"
-    ) {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
-    }
-}
-```
-
-**同一库的多个图标：**
-
-```kotlin
-symbolCraft {
-    // 定义图标列表
-    val bootstrapIcons = listOf("bell", "house", "person", "gear")
-
-    // 使用 externalIcons() 批量配置
-    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    materialSymbol("home") {
+        bothFills(weight = 400)
     }
 
-    // 带样式参数
-    val heroIcons = listOf("home", "search", "user", "cog")
-    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
-        urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
-        styleParam("size", "24")
-    }
-}
-```
-
-**使用多个不同图标库：**
-
-```kotlin
-symbolCraft {
-    // Material Symbols 图标
-    materialSymbol("favorite") {
+    materialSymbols("search", "settings", "person") {
         standardWeights()
     }
+}
+```
 
-    // Bootstrap Icons
-    val bootstrapIcons = listOf("bell", "calendar", "envelope")
-    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+已填充 Material Symbols 生成的 Kotlin 名称使用 `Fill`：
+
+```kotlin
+MaterialSymbols.HomeW400Outlined
+MaterialSymbols.HomeW400OutlinedFill
+```
+
+`0.5.0` 破坏性变更：
+
+```text
+0.4.x: MaterialSymbols.HomeW400Outlinedfill1
+0.5.0: MaterialSymbols.HomeW400OutlinedFill
+```
+
+`fill1` 仍然只在内部用于 Google Fonts 下载 URL，不再暴露到生成的 Kotlin 名称中。
+
+#### 外部 CDN 或 npm SVG 包
+
+单个 SVG 使用 `externalIcon()`，同一来源的一组 SVG 使用 `externalIcons()`。`urlTemplate` 必须是完整的 `https://` URL。SymbolCraft 会把 `{name}` 替换为图标名称。
+
+```kotlin
+symbolCraft {
+    externalIcons("abacus", "ab-testing", libraryName = "mdi") {
+        urlTemplate = "https://esm.sh/@mdi/svg@latest/svg/{name}.svg"
     }
 
-    // Heroicons
-    val heroIcons = listOf("home", "user", "cog")
-    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
-        urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+    externalIcons("bell", "calendar", "clock", libraryName = "bootstrap-icons") {
+        urlTemplate = "https://esm.sh/bootstrap-icons@latest/icons/{name}.svg"
     }
 
-    // Feather Icons
-    val featherIcons = listOf("activity", "airplay", "alert-circle")
-    externalIcons(*featherIcons.toTypedArray(), libraryName = "feather-icons") {
+    externalIcons("activity", "airplay", libraryName = "feather") {
         urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
     }
 
-    // Font Awesome (如果有 CDN 支持)
-    externalIcon("github", libraryName = "font-awesome") {
-        urlTemplate = "https://example-fa-cdn.com/svgs/brands/{name}.svg"
+    externalIcons("github", "kotlin", libraryName = "simple-icons") {
+        urlTemplate = "https://simpleicons.org/icons/{name}.svg"
     }
 }
 ```
 
-**多样式变体的图标**（如 outline/solid、filled/unfilled）：
+#### 带变体的外部来源
+
+远程路径里存在 style、size、fill、theme 等变体时，用 `styleParam()`。多个参数会生成笛卡尔积组合。
 
 ```kotlin
 symbolCraft {
-    // 单个图标的多个填充变体
-    externalIcon("home", libraryName = "official") {
+    externalIcons("home", "search", "person", libraryName = "official") {
         urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "-fill")  // unfilled, filled 变体
+            values("", "-fill")
         }
     }
-    // 生成：HomeOfficial.kt, HomeFill.kt
+    // 生成类似 HomeOfficial、HomeFill 的名称。
 
-    // 多个图标使用相同的变体（适用于底部导航等场景）
-    val navIcons = listOf("home", "search", "user", "settings")
-    externalIcons(*navIcons.toTypedArray(), libraryName = "heroicons") {
-        urlTemplate = "{cdn}/heroicons/24/{style}/{name}.svg"
+    externalIcons("home", "user", "cog", libraryName = "heroicons") {
+        urlTemplate = "https://cdn.jsdelivr.net/npm/heroicons@latest/24/{style}/{name}.svg"
         styleParam("style") {
-            values("outline", "solid")  // outline 和 solid 变体
+            values("outline", "solid")
         }
     }
-    // 为所有图标生成 outline 和 solid 两个版本
 
-    // 复杂的多参数组合
-    externalIcon("icon", libraryName = "custom") {
-        urlTemplate = "https://cdn.com/{size}/{weight}/{name}.svg"
+    externalIcon("status", libraryName = "internal") {
+        urlTemplate = "https://cdn.example.com/icons/{size}/{theme}/{name}.svg"
         styleParam("size") {
-            values("24", "48")  // 两种尺寸
+            values("24", "48")
         }
-        styleParam("weight") {
-            values("regular", "bold")  // 两种粗细
+        styleParam("theme") {
+            values("light", "dark")
         }
     }
-    // 生成：Icon24RegularCustom.kt, Icon24BoldCustom.kt, Icon48RegularCustom.kt, Icon48BoldCustom.kt
 }
 ```
 
-**使用完整 URL：**
+#### 本地 SVG 文件
+
+项目内维护的品牌、产品或私有业务图标，使用 `localIcons()`。
 
 ```kotlin
 symbolCraft {
-    // 从 esm.sh 获取 Bootstrap Icons
-    val bootstrapIcons = listOf("bell", "calendar", "clock", "envelope")
-    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "https://esm.sh/bootstrap-icons/fill/{name}.svg"
-    }
-
-    // 从 jsdelivr 获取 Feather Icons
-    externalIcon("activity", libraryName = "feather") {
-        urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
-    }
-
-    // 自定义图标服务器
-    externalIcon("my-icon", libraryName = "mylib") {
-        urlTemplate = "https://my-cdn.com/icons/{size}/{name}.svg"
-        styleParam("size", "24")
+    localIcons(libraryName = "brand") {
+        directory = "src/commonMain/composeResources/files/icons"
+        include("**/*.svg")
+        exclude("draft/**")
     }
 }
 ```
 
 **URL 模板占位符：**
 - `{name}` - 替换为图标名称
-- `{key}` - 替换为自定义样式参数值（使用 `styleParam()`）
+- `{key}` - 替换为 `styleParam("key", ...)` 定义的自定义样式参数值
 
 ### 自定义缓存配置
 

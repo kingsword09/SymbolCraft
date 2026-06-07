@@ -641,147 +641,116 @@ symbolCraft {
 }
 ```
 
-### External Icon Libraries
+### Icon Sources
 
-You can add icons from other libraries or custom sources using URL templates.
+Choose the DSL entry point based on where the SVGs come from.
 
-**Understanding parameters:**
+#### Built-in Material Symbols
 
-- **`name`**: The specific icon name (e.g., "bell", "home") - replaces `{name}` in URL template
-- **`libraryName`**: Library identifier (e.g., "bootstrap-icons") - used for cache isolation to avoid conflicts between different libraries
-
-**Single icon configuration:**
+Use `materialSymbol()` or `materialSymbols()` for Google Material Symbols. This is the recommended path for Material Symbols because SymbolCraft owns the Google Fonts URL details.
 
 ```kotlin
 symbolCraft {
-    // Single external icon
-    externalIcon(
-        name = "bell",
-        libraryName = "bootstrap-icons"
-    ) {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
-    }
-}
-```
-
-**Multiple icons from the same library:**
-
-```kotlin
-symbolCraft {
-    // Define icon list
-    val bootstrapIcons = listOf("bell", "house", "person", "gear")
-
-    // Use externalIcons() for batch configuration
-    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+    materialSymbol("home") {
+        bothFills(weight = 400)
     }
 
-    // With style parameters
-    val heroIcons = listOf("home", "search", "user", "cog")
-    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
-        urlTemplate = "{cdn}/heroicons/{size}/{name}.svg"
-        styleParam("size", "24")
-    }
-}
-```
-
-**Using multiple different icon libraries:**
-
-```kotlin
-symbolCraft {
-    // Material Symbols icons
-    materialSymbol("favorite") {
+    materialSymbols("search", "settings", "person") {
         standardWeights()
     }
+}
+```
 
-    // Bootstrap Icons
-    val bootstrapIcons = listOf("bell", "calendar", "envelope")
-    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "{cdn}/bootstrap-icons/fill/{name}.svg"
+Generated filled Material Symbols use `Fill` in their Kotlin names:
+
+```kotlin
+MaterialSymbols.HomeW400Outlined
+MaterialSymbols.HomeW400OutlinedFill
+```
+
+Breaking change in `0.5.0`:
+
+```text
+0.4.x: MaterialSymbols.HomeW400Outlinedfill1
+0.5.0: MaterialSymbols.HomeW400OutlinedFill
+```
+
+`fill1` is still used internally for the Google Fonts download URL, but it is no longer exposed in generated Kotlin names.
+
+#### External CDN or npm SVG Packages
+
+Use `externalIcon()` for one SVG and `externalIcons()` for a batch from the same source. `urlTemplate` must be a full `https://` URL. SymbolCraft replaces `{name}` with the icon name.
+
+```kotlin
+symbolCraft {
+    externalIcons("abacus", "ab-testing", libraryName = "mdi") {
+        urlTemplate = "https://esm.sh/@mdi/svg@latest/svg/{name}.svg"
     }
 
-    // Heroicons
-    val heroIcons = listOf("home", "user", "cog")
-    externalIcons(*heroIcons.toTypedArray(), libraryName = "heroicons") {
-        urlTemplate = "{cdn}/heroicons/24/solid/{name}.svg"
+    externalIcons("bell", "calendar", "clock", libraryName = "bootstrap-icons") {
+        urlTemplate = "https://esm.sh/bootstrap-icons@latest/icons/{name}.svg"
     }
 
-    // Feather Icons
-    val featherIcons = listOf("activity", "airplay", "alert-circle")
-    externalIcons(*featherIcons.toTypedArray(), libraryName = "feather-icons") {
+    externalIcons("activity", "airplay", libraryName = "feather") {
         urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
     }
 
-    // Font Awesome (if CDN is available)
-    externalIcon("github", libraryName = "font-awesome") {
-        urlTemplate = "https://example-fa-cdn.com/svgs/brands/{name}.svg"
+    externalIcons("github", "kotlin", libraryName = "simple-icons") {
+        urlTemplate = "https://simpleicons.org/icons/{name}.svg"
     }
 }
 ```
 
-**Icons with multiple style variants** (e.g., outline/solid, filled/unfilled):
+#### External Sources With Variants
+
+Use `styleParam()` when the remote file path has style, size, fill, theme, or other variant placeholders. SymbolCraft generates the Cartesian product of all parameter values.
 
 ```kotlin
 symbolCraft {
-    // Single icon with multiple fill variants
-    externalIcon("home", libraryName = "official") {
+    externalIcons("home", "search", "person", libraryName = "official") {
         urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
         styleParam("fill") {
-            values("", "-fill")  // unfilled, filled variants
+            values("", "-fill")
         }
     }
-    // Generates: HomeOfficial.kt, HomeFill.kt
+    // Generates names such as HomeOfficial and HomeFill.
 
-    // Multiple icons with the same variants (for bottom navigation, etc.)
-    val navIcons = listOf("home", "search", "user", "settings")
-    externalIcons(*navIcons.toTypedArray(), libraryName = "heroicons") {
-        urlTemplate = "{cdn}/heroicons/24/{style}/{name}.svg"
+    externalIcons("home", "user", "cog", libraryName = "heroicons") {
+        urlTemplate = "https://cdn.jsdelivr.net/npm/heroicons@latest/24/{style}/{name}.svg"
         styleParam("style") {
-            values("outline", "solid")  // outline and solid variants
+            values("outline", "solid")
         }
     }
-    // Generates outline and solid versions for all icons
 
-    // Complex multi-parameter combinations
-    externalIcon("icon", libraryName = "custom") {
-        urlTemplate = "https://cdn.com/{size}/{weight}/{name}.svg"
+    externalIcon("status", libraryName = "internal") {
+        urlTemplate = "https://cdn.example.com/icons/{size}/{theme}/{name}.svg"
         styleParam("size") {
-            values("24", "48")  // two sizes
+            values("24", "48")
         }
-        styleParam("weight") {
-            values("regular", "bold")  // two weights
+        styleParam("theme") {
+            values("light", "dark")
         }
     }
-    // Generates: Icon24RegularCustom.kt, Icon24BoldCustom.kt, Icon48RegularCustom.kt, Icon48BoldCustom.kt
 }
 ```
 
-**Using full URLs:**
+#### Local SVG Files
+
+Use `localIcons()` when SVG files are checked into your repository, such as brand, product, or private app icons.
 
 ```kotlin
 symbolCraft {
-    // Bootstrap Icons from esm.sh
-    val bootstrapIcons = listOf("bell", "calendar", "clock", "envelope")
-    externalIcons(*bootstrapIcons.toTypedArray(), libraryName = "bootstrap-icons") {
-        urlTemplate = "https://esm.sh/bootstrap-icons/fill/{name}.svg"
-    }
-
-    // Feather Icons from jsdelivr
-    externalIcon("activity", libraryName = "feather") {
-        urlTemplate = "https://cdn.jsdelivr.net/npm/feather-icons/dist/icons/{name}.svg"
-    }
-
-    // Custom icon server
-    externalIcon("my-icon", libraryName = "mylib") {
-        urlTemplate = "https://my-cdn.com/icons/{size}/{name}.svg"
-        styleParam("size", "24")
+    localIcons(libraryName = "brand") {
+        directory = "src/commonMain/composeResources/files/icons"
+        include("**/*.svg")
+        exclude("draft/**")
     }
 }
 ```
 
 **URL Template Placeholders:**
 - `{name}` - Replaced with the icon name
-- `{key}` - Replaced with custom style parameter values (using `styleParam()`)
+- `{key}` - Replaced with custom style parameter values from `styleParam("key", ...)`
 
 ### Custom cache configuration
 

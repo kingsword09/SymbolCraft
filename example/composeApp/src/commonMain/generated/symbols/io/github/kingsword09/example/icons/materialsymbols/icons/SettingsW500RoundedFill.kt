@@ -17,12 +17,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.kingsword09.example.icons.materialsymbols.Icons
 
-public val Icons.SettingsW500Roundedfill1: ImageVector
+public val Icons.SettingsW500RoundedFill: ImageVector
     get() {
-        if (_settingsW500Roundedfill1 != null) {
-            return _settingsW500Roundedfill1!!
+        if (_settingsW500RoundedFill != null) {
+            return _settingsW500RoundedFill!!
         }
-        _settingsW500Roundedfill1 = Builder(name = "SettingsW500Roundedfill1", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
+        _settingsW500RoundedFill = Builder(name = "SettingsW500RoundedFill", defaultWidth = 24.0.dp, defaultHeight = 24.0.dp, viewportWidth = 960.0f, viewportHeight = 960.0f).apply {
             path(fill = SolidColor(Color(0xFF000000)), stroke = null, strokeLineWidth = 0.0f, strokeLineCap = Butt, strokeLineJoin = Miter, strokeLineMiter = 4.0f, pathFillType = NonZero) {
                 moveTo(428.46f, 888.13f)
                 quadToRelative(-28.2f, 0.0f, -48.54f, -18.6f)
@@ -96,15 +96,15 @@ public val Icons.SettingsW500Roundedfill1: ImageVector
             }
         }
         .build()
-        return _settingsW500Roundedfill1!!
+        return _settingsW500RoundedFill!!
     }
 
-private var _settingsW500Roundedfill1: ImageVector? = null
+private var _settingsW500RoundedFill: ImageVector? = null
 
 @Preview
 @Composable
 private fun Preview() {
     Box(modifier = Modifier.padding(12.dp)) {
-        Image(imageVector = Icons.SettingsW500Roundedfill1, contentDescription = "")
+        Image(imageVector = Icons.SettingsW500RoundedFill, contentDescription = "")
     }
 }
