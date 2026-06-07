@@ -165,9 +165,9 @@ abstract class SymbolCraftExtension {
      *
      * // Multi-value style parameters for variants
      * externalIcon("home", libraryName = "official") {
-     *     urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+     *     urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
      *     styleParam("fill") {
-     *         values("", "fill1")  // unfilled, filled variants
+     *         values("", "-fill")  // unfilled, filled variants
      *     }
      * }
      *
@@ -208,9 +208,9 @@ abstract class SymbolCraftExtension {
      *
      * // Multi-value style parameters for variants
      * externalIcons("home", "search", "settings", libraryName = "official") {
-     *     urlTemplate = "https://example.com/{name}_{fill}_24px.svg"
+     *     urlTemplate = "https://esm.sh/@material-symbols/svg-400@latest/rounded/{name}{fill}.svg"
      *     styleParam("fill") {
-     *         values("", "fill1")  // unfilled, filled variants
+     *         values("", "-fill")  // unfilled, filled variants
      *     }
      * }
      * ```
@@ -412,7 +412,7 @@ class ExternalIconBuilder(private val libraryName: String) {
      * Example:
      * ```kotlin
      * styleParam("fill") {
-     *     values("", "fill1")  // unfilled, filled variants
+     *     values("", "-fill")  // unfilled, filled variants
      * }
      * ```
      *
@@ -634,7 +634,7 @@ class StyleParamBuilder {
      *
      * Example:
      * ```kotlin
-     * values("", "fill1")           // unfilled, filled
+     * values("", "-fill")           // unfilled, filled
      * values("outline", "solid")    // outline, solid
      * values("24", "48")            // different sizes
      * ```
